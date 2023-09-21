@@ -158,3 +158,6 @@ test/torturethread
 docs/output
 SDL.tag
 doxygen_warn.txt
+
+*.vcxproj
+*.vcxproj.filters
