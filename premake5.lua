@@ -1,6 +1,22 @@
+workspace "SDL3"
+    platforms "x64"
+    architecture "x64"
+    location "build"
+    
+    configurations
+    {
+        "Debug",
+        "Release",
+        "Dist"
+    }
+
+    outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
+
 project "SDL"
-    kind "StaticLib"
+    kind "SharedLib"
     language "C++"
+    staticruntime "Off"
+
     targetdir("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
     objdir("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
 
@@ -166,7 +182,7 @@ project "SDL"
 
     -- Configuration-specific settings
     filter { "configurations:Debug" }
-        defines { "_DEBUG", "DLL_EXPORT" }
+        defines { "_DEBUG", "DLL_EXPORT"}
         symbols "On"
         runtime "Debug"
 
@@ -192,3 +208,4 @@ project "SDL"
     filter { "system:windows" }
         characterset "Unicode"
         systemversion "latest"
+        defines { "_WINDOWS"}
