@@ -1,17 +1,3 @@
-workspace "SDL3"
-    platforms "x64"
-    architecture "x64"
-    location "build"
-    
-    configurations
-    {
-        "Debug",
-        "Release",
-        "Dist"
-    }
-
-    outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
-
 project "SDL"
     kind "SharedLib"
     language "C++"
