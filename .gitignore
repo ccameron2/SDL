@@ -1,5 +1,3 @@
-build/
-build-*/
 !build-scripts/
 buildbot/
 /VERSION.txt
@@ -158,6 +156,3 @@ test/torturethread
 docs/output
 SDL.tag
 doxygen_warn.txt
-
-*.vcxproj
-*.vcxproj.filters

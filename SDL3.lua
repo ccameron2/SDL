@@ -1,7 +1,7 @@
 project "SDL"
-    kind "SharedLib"
-    language "C++"
-    staticruntime "Off"
+    kind "StaticLib"
+    language "C"
+    staticruntime "on"
 
     targetdir("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
     objdir("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
@@ -168,17 +168,9 @@ project "SDL"
 
     -- Configuration-specific settings
     filter { "configurations:Debug" }
-        defines { "_DEBUG", "DLL_EXPORT"}
+        defines { "_DEBUG"}
         symbols "On"
         runtime "Debug"
-
-    filter { "configurations:Release" }
-        defines { "NDEBUG", "DLL_EXPORT" }
-        optimize "On"
-        runtime "Release"
-
-    filter { "platforms:x64" }
-        architecture "x86_64"
 
     -- Additional dependencies
     links {
@@ -186,12 +178,30 @@ project "SDL"
         "winmm.lib",
         "imm32.lib",
         "version.lib",
-        "vcruntime.lib",
-        "libucrt.lib"
+        --"vcruntimed.lib",
+        --"libucrtd.lib"
     }
+
+    filter { "configurations:Release" }
+        defines { "NDEBUG" }
+        optimize "On"
+        runtime "Release"
+
+    -- Additional dependencies
+    links {
+        "setupapi.lib",
+        "winmm.lib",
+        "imm32.lib",
+        "version.lib",
+        --"vcruntime.lib",
+        --"libucrt.lib"
+    }
+    
+    filter { "platforms:x64" }
+        architecture "x86_64"
 
     -- Windows-specific settings
     filter { "system:windows" }
         characterset "Unicode"
         systemversion "latest"
-        defines { "_WINDOWS"}
+        defines { "_WINDOWS","HAVE_LIBC","WIN32","SDL_STATIC_LIB"}
