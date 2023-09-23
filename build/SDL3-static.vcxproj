@@ -438,6 +438,26 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:/Users/CCame/source/repos/Fennec/Fennec/vendor/SDL/build/CMakeFiles/SDL3-static.dir/RelWithDebInfo/cmake_pch.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
       <ScanSourceforModuleDependencies Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</ScanSourceforModuleDependencies>
     </ClCompile>
+    <ClCompile Include="C:\Users\CCame\source\repos\Fennec\Fennec\vendor\SDL\src\audio\SDL_audioqueue.c">
+      <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:/Users/CCame/source/repos/Fennec/Fennec/vendor/SDL/build/CMakeFiles/SDL3-static.dir/Debug/cmake_pch.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <ScanSourceforModuleDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ScanSourceforModuleDependencies>
+      <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:/Users/CCame/source/repos/Fennec/Fennec/vendor/SDL/build/CMakeFiles/SDL3-static.dir/Release/cmake_pch.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <ScanSourceforModuleDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ScanSourceforModuleDependencies>
+      <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:/Users/CCame/source/repos/Fennec/Fennec/vendor/SDL/build/CMakeFiles/SDL3-static.dir/MinSizeRel/cmake_pch.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <ScanSourceforModuleDependencies Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</ScanSourceforModuleDependencies>
+      <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:/Users/CCame/source/repos/Fennec/Fennec/vendor/SDL/build/CMakeFiles/SDL3-static.dir/RelWithDebInfo/cmake_pch.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <ScanSourceforModuleDependencies Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</ScanSourceforModuleDependencies>
+    </ClCompile>
+    <ClCompile Include="C:\Users\CCame\source\repos\Fennec\Fennec\vendor\SDL\src\audio\SDL_audioresample.c">
+      <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:/Users/CCame/source/repos/Fennec/Fennec/vendor/SDL/build/CMakeFiles/SDL3-static.dir/Debug/cmake_pch.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <ScanSourceforModuleDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ScanSourceforModuleDependencies>
+      <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:/Users/CCame/source/repos/Fennec/Fennec/vendor/SDL/build/CMakeFiles/SDL3-static.dir/Release/cmake_pch.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <ScanSourceforModuleDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ScanSourceforModuleDependencies>
+      <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:/Users/CCame/source/repos/Fennec/Fennec/vendor/SDL/build/CMakeFiles/SDL3-static.dir/MinSizeRel/cmake_pch.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <ScanSourceforModuleDependencies Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</ScanSourceforModuleDependencies>
+      <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:/Users/CCame/source/repos/Fennec/Fennec/vendor/SDL/build/CMakeFiles/SDL3-static.dir/RelWithDebInfo/cmake_pch.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <ScanSourceforModuleDependencies Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</ScanSourceforModuleDependencies>
+    </ClCompile>
     <ClCompile Include="C:\Users\CCame\source\repos\Fennec\Fennec\vendor\SDL\src\audio\SDL_audiotypecvt.c">
       <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:/Users/CCame/source/repos/Fennec/Fennec/vendor/SDL/build/CMakeFiles/SDL3-static.dir/Debug/cmake_pch.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
       <ScanSourceforModuleDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ScanSourceforModuleDependencies>

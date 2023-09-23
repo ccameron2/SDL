@@ -46,6 +46,12 @@
     <ClCompile Include="C:\Users\CCame\source\repos\Fennec\Fennec\vendor\SDL\src\audio\SDL_audiodev.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="C:\Users\CCame\source\repos\Fennec\Fennec\vendor\SDL\src\audio\SDL_audioqueue.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\CCame\source\repos\Fennec\Fennec\vendor\SDL\src\audio\SDL_audioresample.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="C:\Users\CCame\source\repos\Fennec\Fennec\vendor\SDL\src\audio\SDL_audiotypecvt.c">
       <Filter>Source Files</Filter>
     </ClCompile>
