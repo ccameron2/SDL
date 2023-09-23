@@ -27,7 +27,6 @@ __pycache__
 *.rej
 
 # for CMake
-CMakeFiles/
 CMakeCache.txt
 cmake_install.cmake
 cmake_uninstall.cmake
