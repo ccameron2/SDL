@@ -1,7 +1,0 @@
-C:/Users/CCame/source/repos/Fennec/Fennec/vendor/SDL/build/CMakeFiles/SDL3-static.dir
-C:/Users/CCame/source/repos/Fennec/Fennec/vendor/SDL/build/CMakeFiles/SDL3_test.dir
-C:/Users/CCame/source/repos/Fennec/Fennec/vendor/SDL/build/CMakeFiles/uninstall.dir
-C:/Users/CCame/source/repos/Fennec/Fennec/vendor/SDL/build/CMakeFiles/PACKAGE.dir
-C:/Users/CCame/source/repos/Fennec/Fennec/vendor/SDL/build/CMakeFiles/INSTALL.dir
-C:/Users/CCame/source/repos/Fennec/Fennec/vendor/SDL/build/CMakeFiles/ALL_BUILD.dir
-C:/Users/CCame/source/repos/Fennec/Fennec/vendor/SDL/build/CMakeFiles/ZERO_CHECK.dir
