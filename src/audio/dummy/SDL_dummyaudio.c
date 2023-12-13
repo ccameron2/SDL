@@ -22,15 +22,16 @@
 
 // Output audio to nowhere...
 
-#include "../SDL_audio_c.h"
+#include "../SDL_sysaudio.h"
 #include "SDL_dummyaudio.h"
 
 // !!! FIXME: this should be an SDL hint, not an environment variable.
 #define DUMMYENVR_IODELAY "SDL_DUMMYAUDIODELAY"
 
-static void DUMMYAUDIO_WaitDevice(SDL_AudioDevice *device)
+static int DUMMYAUDIO_WaitDevice(SDL_AudioDevice *device)
 {
     SDL_Delay(device->hidden->io_delay);
+    return 0;
 }
 
 static int DUMMYAUDIO_OpenDevice(SDL_AudioDevice *device)
@@ -39,13 +40,13 @@ static int DUMMYAUDIO_OpenDevice(SDL_AudioDevice *device)
 
     device->hidden = (struct SDL_PrivateAudioData *) SDL_calloc(1, sizeof(*device->hidden));
     if (!device->hidden) {
-        return SDL_OutOfMemory();
+        return -1;
     }
 
     if (!device->iscapture) {
         device->hidden->mixbuf = (Uint8 *) SDL_malloc(device->buffer_size);
         if (!device->hidden->mixbuf) {
-            return SDL_OutOfMemory();
+            return -1;
         }
     }
 

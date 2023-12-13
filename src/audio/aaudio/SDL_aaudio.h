@@ -27,14 +27,12 @@
 
 void AAUDIO_ResumeDevices(void);
 void AAUDIO_PauseDevices(void);
-SDL_bool AAUDIO_DetectBrokenPlayState(void);
 
 #else
 
 #define AAUDIO_ResumeDevices()
 #define AAUDIO_PauseDevices()
-#define AAUDIO_DetectBrokenPlayState() (SDL_FALSE)
 
 #endif
 
-#endif /* SDL_aaudio_h_ */
+#endif // SDL_aaudio_h_

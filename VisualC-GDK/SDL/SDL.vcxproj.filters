@@ -175,6 +175,12 @@
     <Filter Include="video\gdk">
       <UniqueIdentifier>{3ad16a8a-0ed8-439c-a771-383af2e2867f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="main">
+      <UniqueIdentifier>{00002ddb6c5ea921181bf32d50e40000}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="main\generic">
+      <UniqueIdentifier>{00000a808f8ba6b489985f82a4e80000}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\SDL3\SDL_begin_code.h">
@@ -294,6 +300,9 @@
     <ClInclude Include="..\..\include\SDL3\SDL_opengles2_khrplatform.h">
       <Filter>API Headers</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\SDL3\SDL_pen.h">
+      <Filter>API Headers</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\include\SDL3\SDL_pixels.h">
       <Filter>API Headers</Filter>
     </ClInclude>
@@ -304,6 +313,9 @@
       <Filter>API Headers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\SDL3\SDL_power.h">
+      <Filter>API Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\SDL3\SDL_properties.h">
       <Filter>API Headers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\SDL3\SDL_quit.h">
@@ -327,9 +339,6 @@
     <ClInclude Include="..\..\include\SDL3\SDL_sensor.h">
       <Filter>API Headers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\SDL3\SDL_shape.h">
-      <Filter>API Headers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\SDL3\SDL_stdinc.h">
       <Filter>API Headers</Filter>
     </ClInclude>
@@ -337,9 +346,6 @@
       <Filter>API Headers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\SDL3\SDL_system.h">
-      <Filter>API Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\SDL3\SDL_syswm.h">
       <Filter>API Headers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\SDL3\SDL_test.h">
@@ -396,7 +402,11 @@
     <ClInclude Include="..\..\include\SDL3\SDL_vulkan.h">
       <Filter>API Headers</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\main\SDL_main_callbacks.h">
+      <Filter>main</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\SDL_error_c.h" />
+    <ClInclude Include="..\..\src\SDL_hashtable.h" />
     <ClInclude Include="..\..\src\SDL_list.h" />
     <ClInclude Include="..\..\include\SDL3\SDL_metal.h">
       <Filter>API Headers</Filter>
@@ -587,9 +597,6 @@
     <ClInclude Include="..\..\src\video\SDL_rect_c.h">
       <Filter>video</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\video\SDL_shape_internals.h">
-      <Filter>video</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\video\SDL_sysvideo.h">
       <Filter>video</Filter>
     </ClInclude>
@@ -620,9 +627,6 @@
     <ClInclude Include="..\..\src\video\yuv2rgb\yuv_rgb_std_func.h">
       <Filter>video\yuv2rgb</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\video\windows\SDL_vkeys.h">
-      <Filter>video\windows</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\video\windows\SDL_windowsclipboard.h">
       <Filter>video\windows</Filter>
     </ClInclude>
@@ -645,9 +649,6 @@
       <Filter>video\windows</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\video\windows\SDL_windowsopengl.h">
-      <Filter>video\windows</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\video\windows\SDL_windowsshape.h">
       <Filter>video\windows</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\video\windows\SDL_windowsvideo.h">
@@ -822,6 +823,7 @@
     <ClInclude Include="..\..\src\SDL_hints_c.h" />
     <ClInclude Include="..\..\src\SDL_internal.h" />
     <ClInclude Include="..\..\src\SDL_log_c.h" />
+    <ClInclude Include="..\..\src\SDL_properties_c.h" />
     <ClInclude Include="..\..\src\render\direct3d12\SDL_shaders_d3d12.h">
       <Filter>render\direct3d12</Filter>
     </ClInclude>
@@ -841,12 +843,20 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\audio\wasapi\SDL_wasapi.c" />
+    <ClCompile Include="..\..\src\main\generic\SDL_sysmain_callbacks.c">
+      <Filter>main\generic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\SDL_main_callbacks.c">
+      <Filter>main</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\SDL.c" />
     <ClCompile Include="..\..\src\SDL_assert.c" />
     <ClCompile Include="..\..\src\SDL_error.c" />
     <ClCompile Include="..\..\src\SDL_guid.c" />
+    <ClCompile Include="..\..\src\SDL_hashtable.c" />
     <ClCompile Include="..\..\src\SDL_hints.c" />
     <ClCompile Include="..\..\src\SDL_list.c" />
+    <ClCompile Include="..\..\src\SDL_properties.c" />
     <ClCompile Include="..\..\src\SDL_utils.c" />
     <ClCompile Include="..\..\src\audio\SDL_audio.c">
       <Filter>audio</Filter>
@@ -878,6 +888,13 @@
     <ClCompile Include="..\..\src\atomic\SDL_spinlock.c">
       <Filter>atomic</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\core\SDL_core_unsupported.c">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\core\SDL_runapp.c">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Inclu
     <ClCompile Include="..\..\src\core\windows\SDL_hid.c">
       <Filter>core\windows</Filter>
     </ClCompile>
@@ -912,6 +929,9 @@
       <Filter>events</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\events\SDL_mouse.c">
+      <Filter>events</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\events\SDL_pen.c">
       <Filter>events</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\events\SDL_quit.c">
@@ -1082,6 +1102,9 @@
     <ClCompile Include="..\..\src\joystick\hidapi\SDL_hidapi_steam.c">
       <Filter>joystick\hidapi</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\joystick\hidapi\SDL_hidapi_steamdeck.c">
+      <Filter>joystick\hidapi</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\joystick\hidapi\SDL_hidapi_switch.c">
       <Filter>joystick\hidapi</Filter>
     </ClCompile>
@@ -1163,9 +1186,6 @@
     <ClCompile Include="..\..\src\video\SDL_rect.c">
       <Filter>video</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\video\SDL_shape.c">
-      <Filter>video</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\video\SDL_stretch.c">
       <Filter>video</Filter>
     </ClCompile>
@@ -1173,6 +1193,9 @@
       <Filter>video</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\video\SDL_video.c">
+      <Filter>video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\video\SDL_video_unsupported.c">
       <Filter>video</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\video\SDL_yuv.c">
@@ -1218,9 +1241,6 @@
       <Filter>video\windows</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\video\windows\SDL_windowsopengles.c">
-      <Filter>video\windows</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\video\windows\SDL_windowsshape.c">
       <Filter>video\windows</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\video\windows\SDL_windowsvideo.c">
@@ -1301,6 +1321,9 @@
     <ClCompile Include="..\..\src\render\SDL_render.c">
       <Filter>render</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\render\SDL_render_unsupported.c">
+      <Filter>render</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\render\SDL_yuv_sw.c">
       <Filter>render</Filter>
     </ClCompile>
@@ -1368,6 +1391,9 @@
     <ClCompile Include="..\..\src\stdlib\SDL_mslibc.c">
       <Filter>stdlib</Filter>
     </ClCompile>
+    <MASM Include="..\..\src\stdlib\SDL_mslibc_x64.asm">
+      <Filter>stdlib</Filter>
+    </MASM>
     <ClCompile Include="..\..\src\core\gdk\SDL_gdk.cpp">
       <Filter>core\gdk</Filter>
     </ClCompile>
