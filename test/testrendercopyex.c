@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 1997-2023 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -78,7 +78,7 @@ static void Draw(DrawState *s)
     s->sprite_rect.x = (float)((viewport.w - s->sprite_rect.w) / 2);
     s->sprite_rect.y = (float)((viewport.h - s->sprite_rect.h) / 2);
 
-    SDL_RenderTextureRotated(s->renderer, s->sprite, NULL, &s->sprite_rect, (double)s->sprite_rect.w, center, (SDL_RendererFlip)s->scale_direction);
+    SDL_RenderTextureRotated(s->renderer, s->sprite, NULL, &s->sprite_rect, (double)s->sprite_rect.w, center, SDL_FLIP_NONE);
 
     SDL_SetRenderTarget(s->renderer, NULL);
     SDL_RenderTexture(s->renderer, target, NULL, NULL);
