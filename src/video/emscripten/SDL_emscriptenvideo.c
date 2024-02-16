@@ -116,7 +116,8 @@ static SDL_VideoDevice *Emscripten_CreateDevice(void)
 
 VideoBootStrap Emscripten_bootstrap = {
     EMSCRIPTENVID_DRIVER_NAME, "SDL emscripten video driver",
-    Emscripten_CreateDevice
+    Emscripten_CreateDevice,
+    NULL /* no ShowMessageBox implementation */
 };
 
 int Emscripten_VideoInit(SDL_VideoDevice *_this)
@@ -298,6 +299,7 @@ static int Emscripten_SetWindowFullscreen(SDL_VideoDevice *_this, SDL_Window *wi
             EmscriptenFullscreenStrategy strategy;
             SDL_bool is_fullscreen_desktop = !window->fullscreen_exclusive;
 
+            SDL_zero(strategy);
             strategy.scaleMode = is_fullscreen_desktop ? EMSCRIPTEN_FULLSCREEN_SCALE_STRETCH : EMSCRIPTEN_FULLSCREEN_SCALE_ASPECT;
 
             if (!is_fullscreen_desktop) {

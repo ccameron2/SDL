@@ -36,7 +36,7 @@
 /* This is included in only one place because it has a large static list of controllers */
 #include "controller_type.h"
 
-#if defined(__WIN32__) || defined(__WINGDK__)
+#if defined(SDL_PLATFORM_WIN32) || defined(SDL_PLATFORM_WINGDK)
 /* Needed for checking for input remapping programs */
 #include "../core/windows/SDL_windows.h"
 
@@ -70,7 +70,7 @@ static SDL_JoystickDriver *SDL_joystick_drivers[] = {
 #ifdef SDL_JOYSTICK_IOKIT
     &SDL_DARWIN_JoystickDriver,
 #endif
-#if (defined(__MACOS__) || defined(__IOS__) || defined(__TVOS__)) && !defined(SDL_JOYSTICK_DISABLED)
+#if (defined(SDL_PLATFORM_MACOS) || defined(SDL_PLATFORM_IOS) || defined(SDL_PLATFORM_TVOS)) && !defined(SDL_JOYSTICK_DISABLED)
     &SDL_IOS_JoystickDriver,
 #endif
 #ifdef SDL_JOYSTICK_ANDROID
@@ -375,6 +375,7 @@ static Uint32 initial_wheel_devices[] = {
     MAKE_VIDPID(0x0eb7, 0x038e), /* Fanatec ClubSport Wheel Base V1 */
     MAKE_VIDPID(0x0eb7, 0x0e03), /* Fanatec CSL Elite Wheel Base */
     MAKE_VIDPID(0x11ff, 0x0511), /* DragonRise Inc. Wired Wheel (initial mode) (also known as PXN V900 (PS3), Superdrive SV-750, or a Genesis Seaborg 400) */
+    MAKE_VIDPID(0x1209, 0xffb0), /* Generic FFBoard OpenFFBoard universal forcefeedback wheel */
     MAKE_VIDPID(0x2433, 0xf300), /* Asetek SimSports Invicta Wheelbase */
     MAKE_VIDPID(0x2433, 0xf301), /* Asetek SimSports Forte Wheelbase */
     MAKE_VIDPID(0x2433, 0xf303), /* Asetek SimSports La Prima Wheelbase */
@@ -774,7 +775,7 @@ int SDL_GetJoystickInstancePlayerIndex(SDL_JoystickID instance_id)
  */
 static SDL_bool SDL_JoystickAxesCenteredAtZero(SDL_Joystick *joystick)
 {
-#ifdef __WINRT__
+#ifdef SDL_PLATFORM_WINRT
     return SDL_TRUE;
 #else
     /*printf("JOYSTICK '%s' VID/PID 0x%.4x/0x%.4x AXES: %d\n", joystick->name, vendor, product, joystick->naxes);*/
@@ -785,7 +786,7 @@ static SDL_bool SDL_JoystickAxesCenteredAtZero(SDL_Joystick *joystick)
     }
 
     return SDL_VIDPIDInList(SDL_GetJoystickVendor(joystick), SDL_GetJoystickProduct(joystick), &zero_centered_devices);
-#endif /* __WINRT__ */
+#endif /* SDL_PLATFORM_WINRT */
 }
 
 static SDL_bool IsROGAlly(SDL_Joystick *joystick)
@@ -1649,51 +1650,6 @@ int SDL_RumbleJoystickTriggers(SDL_Joystick *joystick, Uint16 left_rumble, Uint1
                 joystick->trigger_rumble_expiration = 0;
             }
         }
-    }
-    SDL_UnlockJoysticks();
-
-    return retval;
-}
-
-SDL_bool SDL_JoystickHasLED(SDL_Joystick *joystick)
-{
-    SDL_bool retval;
-
-    SDL_LockJoysticks();
-    {
-        CHECK_JOYSTICK_MAGIC(joystick, SDL_FALSE);
-
-        retval = (joystick->driver->GetCapabilities(joystick) & SDL_JOYCAP_LED) != 0;
-    }
-    SDL_UnlockJoysticks();
-
-    return retval;
-}
-
-SDL_bool SDL_JoystickHasRumble(SDL_Joystick *joystick)
-{
-    SDL_bool retval;
-
-    SDL_LockJoysticks();
-    {
-        CHECK_JOYSTICK_MAGIC(joystick, SDL_FALSE);
-
-        retval = (joystick->driver->GetCapabilities(joystick) & SDL_JOYCAP_RUMBLE) != 0;
-    }
-    SDL_UnlockJoysticks();
-
-    return retval;
-}
-
-SDL_bool SDL_JoystickHasRumbleTriggers(SDL_Joystick *joystick)
-{
-    SDL_bool retval;
-
-    SDL_LockJoysticks();
-    {
-        CHECK_JOYSTICK_MAGIC(joystick, SDL_FALSE);
-
-        retval = (joystick->driver->GetCapabilities(joystick) & SDL_JOYCAP_RUMBLE_TRIGGERS) != 0;
     }
     SDL_UnlockJoysticks();
 

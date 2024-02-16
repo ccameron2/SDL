@@ -255,7 +255,7 @@ int SDL_SendTouch(Uint64 timestamp, SDL_TouchID id, SDL_FingerID fingerid, SDL_W
     /* SDL_HINT_TOUCH_MOUSE_EVENTS: controlling whether touch events should generate synthetic mouse events */
     /* SDL_HINT_VITA_TOUCH_MOUSE_DEVICE: controlling which touchpad should generate synthetic mouse events, PSVita-only */
     {
-#ifdef __vita__
+#ifdef SDL_PLATFORM_VITA
         if (mouse->touch_mouse_events && ((mouse->vita_touch_mouse_device == id) || (mouse->vita_touch_mouse_device == 2))) {
 #else
         if (mouse->touch_mouse_events) {
@@ -328,8 +328,8 @@ int SDL_SendTouch(Uint64 timestamp, SDL_TouchID id, SDL_FingerID fingerid, SDL_W
             SDL_Event event;
             event.type = SDL_EVENT_FINGER_DOWN;
             event.common.timestamp = timestamp;
-            event.tfinger.touchId = id;
-            event.tfinger.fingerId = fingerid;
+            event.tfinger.touchID = id;
+            event.tfinger.fingerID = fingerid;
             event.tfinger.x = x;
             event.tfinger.y = y;
             event.tfinger.dx = 0;
@@ -349,8 +349,8 @@ int SDL_SendTouch(Uint64 timestamp, SDL_TouchID id, SDL_FingerID fingerid, SDL_W
             SDL_Event event;
             event.type = SDL_EVENT_FINGER_UP;
             event.common.timestamp = timestamp;
-            event.tfinger.touchId = id;
-            event.tfinger.fingerId = fingerid;
+            event.tfinger.touchID = id;
+            event.tfinger.fingerID = fingerid;
             /* I don't trust the coordinates passed on fingerUp */
             event.tfinger.x = finger->x;
             event.tfinger.y = finger->y;
@@ -446,8 +446,8 @@ int SDL_SendTouchMotion(Uint64 timestamp, SDL_TouchID id, SDL_FingerID fingerid,
         SDL_Event event;
         event.type = SDL_EVENT_FINGER_MOTION;
         event.common.timestamp = timestamp;
-        event.tfinger.touchId = id;
-        event.tfinger.fingerId = fingerid;
+        event.tfinger.touchID = id;
+        event.tfinger.fingerID = fingerid;
         event.tfinger.x = x;
         event.tfinger.y = y;
         event.tfinger.dx = xrel;

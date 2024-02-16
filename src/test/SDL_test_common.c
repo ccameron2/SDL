@@ -1361,7 +1361,7 @@ SDL_bool SDLTest_CommonInit(SDLTest_CommonState *state)
                 }
                 SDL_free((void *)modes);
 
-#if defined(SDL_VIDEO_DRIVER_WINDOWS) && !defined(__XBOXONE__) && !defined(__XBOXSERIES__)
+#if defined(SDL_VIDEO_DRIVER_WINDOWS) && !defined(SDL_PLATFORM_XBOXONE) && !defined(SDL_PLATFORM_XBOXSERIES)
                 /* Print the D3D9 adapter index */
                 adapterIndex = SDL_Direct3D9GetAdapterIndex(displayID);
                 SDL_Log("D3D9 Adapter Index: %d", adapterIndex);
@@ -1451,11 +1451,11 @@ SDL_bool SDLTest_CommonInit(SDLTest_CommonState *state)
                 SDL_strlcpy(title, state->window_title, SDL_arraysize(title));
             }
             props = SDL_CreateProperties();
-            SDL_SetStringProperty(props, SDL_PROPERTY_WINDOW_CREATE_TITLE_STRING, title);
-            SDL_SetNumberProperty(props, SDL_PROPERTY_WINDOW_CREATE_X_NUMBER, r.x);
-            SDL_SetNumberProperty(props, SDL_PROPERTY_WINDOW_CREATE_Y_NUMBER, r.y);
-            SDL_SetNumberProperty(props, SDL_PROPERTY_WINDOW_CREATE_WIDTH_NUMBER, r.w);
-            SDL_SetNumberProperty(props, SDL_PROPERTY_WINDOW_CREATE_HEIGHT_NUMBER, r.h);
+            SDL_SetStringProperty(props, SDL_PROP_WINDOW_CREATE_TITLE_STRING, title);
+            SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_X_NUMBER, r.x);
+            SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_Y_NUMBER, r.y);
+            SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, r.w);
+            SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, r.h);
             SDL_SetNumberProperty(props, "flags", state->window_flags);
             state->windows[i] = SDL_CreateWindowWithProperties(props);
             SDL_DestroyProperties(props);
@@ -1664,6 +1664,12 @@ static void SDLTest_PrintEvent(const SDL_Event *event)
             float scale = SDL_GetDisplayContentScale(event->display.displayID);
             SDL_Log("SDL EVENT: Display %" SDL_PRIu32 " changed content scale to %d%%",
                     event->display.displayID, (int)(scale * 100.0f));
+        }
+        break;
+    case SDL_EVENT_DISPLAY_HDR_STATE_CHANGED:
+        {
+            SDL_Log("SDL EVENT: Display %" SDL_PRIu32 " HDR %s",
+                    event->display.displayID, event->display.data1 ? "enabled" : "disabled");
         }
         break;
     case SDL_EVENT_DISPLAY_MOVED:
@@ -1884,8 +1890,8 @@ static void SDLTest_PrintEvent(const SDL_Event *event)
 
     case SDL_EVENT_FINGER_MOTION:
         SDL_Log("SDL EVENT: Finger: motion touch=%" SDL_PRIu64 ", finger=%" SDL_PRIu64 ", x=%f, y=%f, dx=%f, dy=%f, pressure=%f",
-                event->tfinger.touchId,
-                event->tfinger.fingerId,
+                event->tfinger.touchID,
+                event->tfinger.fingerID,
                 event->tfinger.x, event->tfinger.y,
                 event->tfinger.dx, event->tfinger.dy, event->tfinger.pressure);
         break;
@@ -1893,8 +1899,8 @@ static void SDLTest_PrintEvent(const SDL_Event *event)
     case SDL_EVENT_FINGER_UP:
         SDL_Log("SDL EVENT: Finger: %s touch=%" SDL_PRIu64 ", finger=%" SDL_PRIu64 ", x=%f, y=%f, dx=%f, dy=%f, pressure=%f",
                 (event->type == SDL_EVENT_FINGER_DOWN) ? "down" : "up",
-                event->tfinger.touchId,
-                event->tfinger.fingerId,
+                event->tfinger.touchID,
+                event->tfinger.fingerID,
                 event->tfinger.x, event->tfinger.y,
                 event->tfinger.dx, event->tfinger.dy, event->tfinger.pressure);
         break;
@@ -2016,7 +2022,6 @@ static const void *SDLTest_ScreenShotClipboardProvider(void *context, const char
 
 static void SDLTest_CopyScreenShot(SDL_Renderer *renderer)
 {
-    SDL_Rect viewport;
     SDL_Surface *surface;
     const char *image_formats[] = {
         "text/plain;charset=utf-8",
@@ -2028,28 +2033,18 @@ static void SDLTest_CopyScreenShot(SDL_Renderer *renderer)
         return;
     }
 
-    SDL_GetRenderViewport(renderer, &viewport);
-
-    surface = SDL_CreateSurface(viewport.w, viewport.h, SDL_PIXELFORMAT_BGR24);
-
+    surface = SDL_RenderReadPixels(renderer, NULL);
     if (!surface) {
-        SDL_Log("Couldn't create surface: %s\n", SDL_GetError());
-        return;
-    }
-
-    if (SDL_RenderReadPixels(renderer, NULL, surface->format->format,
-                             surface->pixels, surface->pitch) < 0) {
         SDL_Log("Couldn't read screen: %s\n", SDL_GetError());
-        SDL_free(surface);
         return;
     }
 
     if (SDL_SaveBMP(surface, SCREENSHOT_FILE) < 0) {
         SDL_Log("Couldn't save %s: %s\n", SCREENSHOT_FILE, SDL_GetError());
-        SDL_free(surface);
+        SDL_DestroySurface(surface);
         return;
     }
-    SDL_free(surface);
+    SDL_DestroySurface(surface);
 
     clipboard_data = (SDLTest_ClipboardData *)SDL_calloc(1, sizeof(*clipboard_data));
     if (!clipboard_data) {
