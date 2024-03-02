@@ -972,115 +972,14 @@ static void SDLTest_PrintRendererFlag(char *text, size_t maxlen, Uint32 flag)
 
 static void SDLTest_PrintPixelFormat(char *text, size_t maxlen, Uint32 format)
 {
-    switch (format) {
-    case SDL_PIXELFORMAT_UNKNOWN:
-        SDL_snprintfcat(text, maxlen, "Unknown");
-        break;
-    case SDL_PIXELFORMAT_INDEX1LSB:
-        SDL_snprintfcat(text, maxlen, "Index1LSB");
-        break;
-    case SDL_PIXELFORMAT_INDEX1MSB:
-        SDL_snprintfcat(text, maxlen, "Index1MSB");
-        break;
-    case SDL_PIXELFORMAT_INDEX2LSB:
-        SDL_snprintfcat(text, maxlen, "Index2LSB");
-        break;
-    case SDL_PIXELFORMAT_INDEX2MSB:
-        SDL_snprintfcat(text, maxlen, "Index2MSB");
-        break;
-    case SDL_PIXELFORMAT_INDEX4LSB:
-        SDL_snprintfcat(text, maxlen, "Index4LSB");
-        break;
-    case SDL_PIXELFORMAT_INDEX4MSB:
-        SDL_snprintfcat(text, maxlen, "Index4MSB");
-        break;
-    case SDL_PIXELFORMAT_INDEX8:
-        SDL_snprintfcat(text, maxlen, "Index8");
-        break;
-    case SDL_PIXELFORMAT_RGB332:
-        SDL_snprintfcat(text, maxlen, "RGB332");
-        break;
-    case SDL_PIXELFORMAT_RGB444:
-        SDL_snprintfcat(text, maxlen, "RGB444");
-        break;
-    case SDL_PIXELFORMAT_BGR444:
-        SDL_snprintfcat(text, maxlen, "BGR444");
-        break;
-    case SDL_PIXELFORMAT_RGB555:
-        SDL_snprintfcat(text, maxlen, "RGB555");
-        break;
-    case SDL_PIXELFORMAT_BGR555:
-        SDL_snprintfcat(text, maxlen, "BGR555");
-        break;
-    case SDL_PIXELFORMAT_ARGB4444:
-        SDL_snprintfcat(text, maxlen, "ARGB4444");
-        break;
-    case SDL_PIXELFORMAT_ABGR4444:
-        SDL_snprintfcat(text, maxlen, "ABGR4444");
-        break;
-    case SDL_PIXELFORMAT_ARGB1555:
-        SDL_snprintfcat(text, maxlen, "ARGB1555");
-        break;
-    case SDL_PIXELFORMAT_ABGR1555:
-        SDL_snprintfcat(text, maxlen, "ABGR1555");
-        break;
-    case SDL_PIXELFORMAT_RGB565:
-        SDL_snprintfcat(text, maxlen, "RGB565");
-        break;
-    case SDL_PIXELFORMAT_BGR565:
-        SDL_snprintfcat(text, maxlen, "BGR565");
-        break;
-    case SDL_PIXELFORMAT_RGB24:
-        SDL_snprintfcat(text, maxlen, "RGB24");
-        break;
-    case SDL_PIXELFORMAT_BGR24:
-        SDL_snprintfcat(text, maxlen, "BGR24");
-        break;
-    case SDL_PIXELFORMAT_XRGB8888:
-        SDL_snprintfcat(text, maxlen, "XRGB8888");
-        break;
-    case SDL_PIXELFORMAT_XBGR8888:
-        SDL_snprintfcat(text, maxlen, "XBGR8888");
-        break;
-    case SDL_PIXELFORMAT_ARGB8888:
-        SDL_snprintfcat(text, maxlen, "ARGB8888");
-        break;
-    case SDL_PIXELFORMAT_RGBA8888:
-        SDL_snprintfcat(text, maxlen, "RGBA8888");
-        break;
-    case SDL_PIXELFORMAT_ABGR8888:
-        SDL_snprintfcat(text, maxlen, "ABGR8888");
-        break;
-    case SDL_PIXELFORMAT_BGRA8888:
-        SDL_snprintfcat(text, maxlen, "BGRA8888");
-        break;
-    case SDL_PIXELFORMAT_ARGB2101010:
-        SDL_snprintfcat(text, maxlen, "ARGB2101010");
-        break;
-    case SDL_PIXELFORMAT_YV12:
-        SDL_snprintfcat(text, maxlen, "YV12");
-        break;
-    case SDL_PIXELFORMAT_IYUV:
-        SDL_snprintfcat(text, maxlen, "IYUV");
-        break;
-    case SDL_PIXELFORMAT_YUY2:
-        SDL_snprintfcat(text, maxlen, "YUY2");
-        break;
-    case SDL_PIXELFORMAT_UYVY:
-        SDL_snprintfcat(text, maxlen, "UYVY");
-        break;
-    case SDL_PIXELFORMAT_YVYU:
-        SDL_snprintfcat(text, maxlen, "YVYU");
-        break;
-    case SDL_PIXELFORMAT_NV12:
-        SDL_snprintfcat(text, maxlen, "NV12");
-        break;
-    case SDL_PIXELFORMAT_NV21:
-        SDL_snprintfcat(text, maxlen, "NV21");
-        break;
-    default:
+    const char *name = SDL_GetPixelFormatName(format);
+    if (name) {
+        if (SDL_strncmp(name, "SDL_PIXELFORMAT_", 16) == 0) {
+            name += 16;
+        }
+        SDL_snprintfcat(text, maxlen, name);
+    } else {
         SDL_snprintfcat(text, maxlen, "0x%8.8x", format);
-        break;
     }
 }
 
@@ -1497,8 +1396,6 @@ SDL_bool SDLTest_CommonInit(SDLTest_CommonState *state)
                 }
             }
 
-            SDL_ShowWindow(state->windows[i]);
-
             if (!SDL_RectEmpty(&state->confine)) {
                 SDL_SetWindowMouseRect(state->windows[i], &state->confine);
             }
@@ -1530,6 +1427,8 @@ SDL_bool SDLTest_CommonInit(SDLTest_CommonState *state)
                     SDLTest_PrintRenderer(&info);
                 }
             }
+
+            SDL_ShowWindow(state->windows[i]);
         }
     }
 
@@ -1565,6 +1464,10 @@ SDL_bool SDLTest_CommonInit(SDLTest_CommonState *state)
             SDL_Log("Couldn't open audio: %s\n", SDL_GetError());
             return SDL_FALSE;
         }
+    }
+
+    if (state->flags & SDL_INIT_CAMERA) {
+        SDL_InitSubSystem(SDL_INIT_CAMERA);
     }
 
     return SDL_TRUE;
@@ -2526,7 +2429,9 @@ int SDLTest_CommonEventMainCallbacks(SDLTest_CommonState *state, const SDL_Event
 
 void SDLTest_CommonEvent(SDLTest_CommonState *state, SDL_Event *event, int *done)
 {
-    *done = SDLTest_CommonEventMainCallbacks(state, event) ? 1 : 0;
+    if (SDLTest_CommonEventMainCallbacks(state, event)) {
+        *done = 1;
+    }
 }
 
 void SDLTest_CommonQuit(SDLTest_CommonState *state)
@@ -2561,6 +2466,9 @@ void SDLTest_CommonQuit(SDLTest_CommonState *state)
             SDL_DestroyWindow(state->windows[i]);
         }
         SDL_free(state->windows);
+    }
+    if (state->flags & SDL_INIT_CAMERA) {
+        SDL_QuitSubSystem(SDL_INIT_CAMERA);
     }
     if (state->flags & SDL_INIT_VIDEO) {
         SDL_QuitSubSystem(SDL_INIT_VIDEO);

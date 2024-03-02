@@ -249,7 +249,6 @@ SDL_Renderer *VITA_GXM_CreateRenderer(SDL_Window *window, SDL_PropertiesID creat
     renderer->SetRenderTarget = VITA_GXM_SetRenderTarget;
     renderer->QueueSetViewport = VITA_GXM_QueueNoOp;
     renderer->QueueSetDrawColor = VITA_GXM_QueueSetDrawColor;
-    renderer->QueueSetColorScale = VITA_GXM_QueueNoOp;
     renderer->QueueDrawPoints = VITA_GXM_QueueDrawPoints;
     renderer->QueueDrawLines = VITA_GXM_QueueDrawLines;
     renderer->QueueGeometry = VITA_GXM_QueueGeometry;
@@ -982,6 +981,7 @@ static int VITA_GXM_RunCommandQueue(SDL_Renderer *renderer, SDL_RenderCommand *c
             if (SDL_memcmp(viewport, &cmd->data.viewport.rect, sizeof(cmd->data.viewport.rect)) != 0) {
                 SDL_copyp(viewport, &cmd->data.viewport.rect);
                 data->drawstate.viewport_dirty = SDL_TRUE;
+                data->drawstate.cliprect_dirty = SDL_TRUE;
             }
             break;
         }
@@ -1002,11 +1002,6 @@ static int VITA_GXM_RunCommandQueue(SDL_Renderer *renderer, SDL_RenderCommand *c
         }
 
         case SDL_RENDERCMD_SETDRAWCOLOR:
-        {
-            break;
-        }
-
-        case SDL_RENDERCMD_SETCOLORSCALE:
         {
             break;
         }
