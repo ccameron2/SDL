@@ -86,14 +86,17 @@ typedef unsigned int uintptr_t;
 #define HAVE_DXGI_H 1
 #define HAVE_XINPUT_H 1
 #if defined(_WIN32_MAXVER) && _WIN32_MAXVER >= 0x0A00  /* Windows 10 SDK */
+#define HAVE_DXGI1_6_H 1
 #define HAVE_WINDOWS_GAMING_INPUT_H 1
 #endif
 #if defined(_WIN32_MAXVER) && _WIN32_MAXVER >= 0x0602  /* Windows 8 SDK */
 #define HAVE_D3D11_H 1
 #define HAVE_ROAPI_H 1
 #endif
-#if defined(WDK_NTDDI_VERSION) && WDK_NTDDI_VERSION > 0x0A000008 /* 10.0.19041.0 */
+#if defined(__has_include)
+#if __has_include(<d3d12.h>) && __has_include(<d3d12sdklayers.h>)
 #define HAVE_D3D12_H 1
+#endif
 #endif
 #if defined(_WIN32_MAXVER) && _WIN32_MAXVER >= 0x0603  /* Windows 8.1 SDK */
 #define HAVE_SHELLSCALINGAPI_H 1
@@ -118,7 +121,6 @@ typedef unsigned int uintptr_t;
 
 #if HAVE_LIBC
 /* Useful headers */
-#define HAVE_CTYPE_H 1
 #define HAVE_FLOAT_H 1
 #define HAVE_LIMITS_H 1
 #define HAVE_MATH_H 1
@@ -159,10 +161,6 @@ typedef unsigned int uintptr_t;
 #define HAVE_ATOF 1
 #define HAVE_STRCMP 1
 #define HAVE_STRNCMP 1
-#define HAVE__STRICMP 1
-#define HAVE__STRNICMP 1
-#define HAVE__WCSICMP 1
-#define HAVE__WCSNICMP 1
 #define HAVE__WCSDUP 1
 #define HAVE_SSCANF 1
 #define HAVE_VSSCANF 1
@@ -177,6 +175,10 @@ typedef unsigned int uintptr_t;
 #define HAVE_FABS   1
 #define HAVE_FLOOR  1
 #define HAVE_FMOD   1
+#define HAVE_ISINF  1
+#define HAVE_ISINF_FLOAT_MACRO 1
+#define HAVE_ISNAN  1
+#define HAVE_ISNAN_FLOAT_MACRO 1
 #define HAVE_LOG    1
 #define HAVE_LOG10  1
 #define HAVE_POW    1
@@ -263,11 +265,15 @@ typedef unsigned int uintptr_t;
 #define SDL_THREAD_GENERIC_RWLOCK_SUFFIX 1
 #define SDL_THREAD_WINDOWS  1
 
+/* Enable RTC system */
+#define SDL_TIME_WINDOWS   1
+
 /* Enable various timer systems */
 #define SDL_TIMER_WINDOWS   1
 
 /* Enable various video drivers */
-#define SDL_VIDEO_DRIVER_DUMMY  1
+#define SDL_VIDEO_DRIVER_DUMMY      1
+#define SDL_VIDEO_DRIVER_OFFSCREEN  1
 #define SDL_VIDEO_DRIVER_WINDOWS    1
 
 #ifndef SDL_VIDEO_RENDER_D3D
@@ -312,6 +318,7 @@ typedef unsigned int uintptr_t;
 
 /* Enable filesystem support */
 #define SDL_FILESYSTEM_WINDOWS  1
+#define SDL_FSOPS_WINDOWS 1
 
 /* Enable the camera driver */
 #define SDL_CAMERA_DRIVER_MEDIAFOUNDATION 1

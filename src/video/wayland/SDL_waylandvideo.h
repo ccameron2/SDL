@@ -67,6 +67,7 @@ struct SDL_VideoData
     } shell;
     struct zwp_relative_pointer_manager_v1 *relative_pointer_manager;
     struct zwp_pointer_constraints_v1 *pointer_constraints;
+    struct wp_cursor_shape_manager_v1 *cursor_shape_manager;
     struct wl_data_device_manager *data_device_manager;
     struct zwp_primary_selection_device_manager_v1 *primary_selection_device_manager;
     struct zxdg_decoration_manager_v1 *decoration_manager;
@@ -78,7 +79,11 @@ struct SDL_VideoData
     struct wp_viewporter *viewporter;
     struct wp_fractional_scale_manager_v1 *fractional_scale_manager;
     struct zwp_input_timestamps_manager_v1 *input_timestamps_manager;
+    struct zxdg_exporter_v2 *zxdg_exporter_v2;
+    struct xdg_wm_dialog_v1 *xdg_wm_dialog_v1;
+    struct wp_alpha_modifier_v1 *wp_alpha_modifier_v1;
     struct kde_output_order_v1 *kde_output_order;
+    struct frog_color_management_factory_v1 *frog_color_management_factory_v1;
 
     struct xkb_context *xkb_context;
     struct SDL_WaylandInput *input;
@@ -90,6 +95,8 @@ struct SDL_VideoData
 
     int relative_mouse_mode;
     SDL_bool display_externally_owned;
+
+    SDL_bool scale_to_display_enabled;
 };
 
 struct SDL_DisplayData

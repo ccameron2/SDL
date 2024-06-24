@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
     }
 
     /* Enable standard application logging */
-    SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
+    SDL_SetLogPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
 
     /* Parse commandline */
     if (!SDLTest_CommonDefaultArgs(state, argc, argv)) {
@@ -182,8 +182,8 @@ int main(int argc, char *argv[])
     {
         int status = 0;
         SDL_Event event;
-        intptr_t eventNumber = SDL_RegisterEvents(1);
-        SDL_Thread *thread = SDL_CreateThread(&button_messagebox, "MessageBox", (void *)eventNumber);
+        Uint32 eventNumber = SDL_RegisterEvents(1);
+        SDL_Thread *thread = SDL_CreateThread(&button_messagebox, "MessageBox", (void *)(uintptr_t)eventNumber);
 
         while (SDL_WaitEvent(&event)) {
             if (event.type == eventNumber) {
@@ -204,7 +204,7 @@ int main(int argc, char *argv[])
         /* On wayland, no window will actually show until something has
            actually been displayed.
         */
-        SDL_Renderer *renderer = SDL_CreateRenderer(window, NULL, 0);
+        SDL_Renderer *renderer = SDL_CreateRenderer(window, NULL);
         SDL_RenderPresent(renderer);
 
         success = SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,

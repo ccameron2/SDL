@@ -12,16 +12,16 @@
 
 /* Simple program:  draw a RGB triangle, with texture  */
 
-#include <SDL3/SDL_test_common.h>
-#include <SDL3/SDL_main.h>
+#include <stdlib.h>
+
 #include "testutils.h"
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_main.h>
+#include <SDL3/SDL_test_common.h>
 
 #ifdef SDL_PLATFORM_EMSCRIPTEN
 #include <emscripten/emscripten.h>
 #endif
-
-#include <stdlib.h>
-#include <time.h>
 
 static SDLTest_CommonState *state;
 static SDL_bool use_texture = SDL_FALSE;
@@ -95,13 +95,13 @@ static void loop(void)
                 }
             }
         } else if (event.type == SDL_EVENT_KEY_DOWN) {
-            if (event.key.keysym.sym == SDLK_LEFT) {
+            if (event.key.key == SDLK_LEFT) {
                 translate_cx -= 1;
-            } else if (event.key.keysym.sym == SDLK_RIGHT) {
+            } else if (event.key.key == SDLK_RIGHT) {
                 translate_cx += 1;
-            } else if (event.key.keysym.sym == SDLK_UP) {
+            } else if (event.key.key == SDLK_UP) {
                 translate_cy -= 1;
-            } else if (event.key.keysym.sym == SDLK_DOWN) {
+            } else if (event.key.key == SDLK_DOWN) {
                 translate_cy += 1;
             } else {
                 SDLTest_CommonEvent(state, &event, &done);
@@ -136,7 +136,7 @@ static void loop(void)
             cx += translate_cx;
             cy += translate_cy;
 
-            a = (angle * 3.1415f) / 180.0f;
+            a = (angle * SDL_PI_F) / 180.0f;
             verts[0].position.x = cx + d * SDL_cosf(a);
             verts[0].position.y = cy + d * SDL_sinf(a);
             verts[0].color.r = 1.0f;
@@ -144,7 +144,7 @@ static void loop(void)
             verts[0].color.b = 0;
             verts[0].color.a = 1.0f;
 
-            a = ((angle + 120) * 3.1415f) / 180.0f;
+            a = ((angle + 120) * SDL_PI_F) / 180.0f;
             verts[1].position.x = cx + d * SDL_cosf(a);
             verts[1].position.y = cy + d * SDL_sinf(a);
             verts[1].color.r = 0;
@@ -152,7 +152,7 @@ static void loop(void)
             verts[1].color.b = 0;
             verts[1].color.a = 1.0f;
 
-            a = ((angle + 240) * 3.1415f) / 180.0f;
+            a = ((angle + 240) * SDL_PI_F) / 180.0f;
             verts[2].position.x = cx + d * SDL_cosf(a);
             verts[2].position.y = cy + d * SDL_sinf(a);
             verts[2].color.r = 0;
@@ -195,7 +195,7 @@ int main(int argc, char *argv[])
     }
 
     /* Enable standard application logging */
-    SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
+    SDL_SetLogPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
 
     for (i = 1; i < argc;) {
         int consumed;
@@ -258,8 +258,6 @@ int main(int argc, char *argv[])
             quit(2);
         }
     }
-
-    srand((unsigned int)time(NULL));
 
     /* Main render loop */
     frames = 0;

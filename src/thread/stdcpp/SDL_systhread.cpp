@@ -41,7 +41,9 @@ static void RunThread(void *args)
 }
 
 extern "C" int
-SDL_SYS_CreateThread(SDL_Thread *thread)
+SDL_SYS_CreateThread(SDL_Thread *thread,
+                     SDL_FunctionPointer pfnBeginThread,
+                     SDL_FunctionPointer pfnEndThread)
 {
     try {
         // !!! FIXME: no way to set a thread stack size here.
@@ -119,8 +121,12 @@ SDL_SYS_WaitThread(SDL_Thread *thread)
 
     try {
         std::thread *cpp_thread = (std::thread *)thread->handle;
-        if (cpp_thread->joinable()) {
-            cpp_thread->join();
+        if (cpp_thread) {
+            if (cpp_thread->joinable()) {
+                cpp_thread->join();
+            }
+            delete cpp_thread;
+            thread->handle = nullptr;
         }
     } catch (std::system_error &) {
         // An error occurred when joining the thread.  SDL_WaitThread does not,
@@ -138,8 +144,12 @@ SDL_SYS_DetachThread(SDL_Thread *thread)
 
     try {
         std::thread *cpp_thread = (std::thread *)thread->handle;
-        if (cpp_thread->joinable()) {
-            cpp_thread->detach();
+        if (cpp_thread) {
+            if (cpp_thread->joinable()) {
+                cpp_thread->detach();
+            }
+            delete cpp_thread;
+            thread->handle = nullptr;
         }
     } catch (std::system_error &) {
         // An error occurred when detaching the thread.  SDL_DetachThread does not,

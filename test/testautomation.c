@@ -34,19 +34,22 @@ static SDLTest_TestSuiteReference *testSuites[] = {
     &mainTestSuite,
     &mathTestSuite,
     &mouseTestSuite,
+#if !defined(SDL_PLATFORM_IOS) && !defined(SDL_PLATFORM_TVOS)
     &penTestSuite,
+#endif
     &pixelsTestSuite,
     &platformTestSuite,
     &propertiesTestSuite,
     &rectTestSuite,
     &renderTestSuite,
-    &rwopsTestSuite,
+    &iostrmTestSuite,
     &sdltestTestSuite,
     &stdlibTestSuite,
     &surfaceTestSuite,
+    &timeTestSuite,
     &timerTestSuite,
     &videoTestSuite,
-    &subsystemsTestSuite, /* run last, not interfere with other test enviroment */
+    &subsystemsTestSuite, /* run last, not interfere with other test environment */
     NULL
 };
 

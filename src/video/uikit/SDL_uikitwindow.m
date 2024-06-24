@@ -306,18 +306,13 @@ void UIKit_SetWindowBordered(SDL_VideoDevice *_this, SDL_Window *window, SDL_boo
     }
 }
 
-int UIKit_SetWindowFullscreen(SDL_VideoDevice *_this, SDL_Window *window, SDL_VideoDisplay *display, SDL_bool fullscreen)
+int UIKit_SetWindowFullscreen(SDL_VideoDevice *_this, SDL_Window *window, SDL_VideoDisplay *display, SDL_FullscreenOp fullscreen)
 {
     @autoreleasepool {
         SDL_SendWindowEvent(window, fullscreen ? SDL_EVENT_WINDOW_ENTER_FULLSCREEN : SDL_EVENT_WINDOW_LEAVE_FULLSCREEN, 0, 0);
         UIKit_UpdateWindowBorder(_this, window);
     }
     return 0;
-}
-
-void UIKit_SetWindowMouseGrab(SDL_VideoDevice *_this, SDL_Window *window, SDL_bool grabbed)
-{
-    /* There really isn't a concept of window grab or cursor confinement on iOS */
 }
 
 void UIKit_UpdatePointerLock(SDL_VideoDevice *_this, SDL_Window *window)
@@ -381,8 +376,8 @@ void UIKit_GetWindowSizeInPixels(SDL_VideoDevice *_this, SDL_Window *window, int
 
         /* Integer truncation of fractional values matches SDL_uikitmetalview and
          * SDL_uikitopenglview. */
-        *w = size.width * scale;
-        *h = size.height * scale;
+        *w = (int)(size.width * scale);
+        *h = (int)(size.height * scale);
     }
 }
 
@@ -454,7 +449,7 @@ UIKit_GetSupportedOrientations(SDL_Window *window)
 }
 #endif /* !SDL_PLATFORM_TVOS */
 
-int SDL_iPhoneSetAnimationCallback(SDL_Window *window, int interval, void (*callback)(void *), void *callbackParam)
+int SDL_iOSSetAnimationCallback(SDL_Window *window, int interval, SDL_iOSAnimationCallback callback, void *callbackParam)
 {
     if (!window || !window->driverdata) {
         return SDL_SetError("Invalid window");

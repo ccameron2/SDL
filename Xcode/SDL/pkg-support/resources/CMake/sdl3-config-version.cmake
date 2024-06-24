@@ -3,8 +3,10 @@
 # SDL CMake version configuration file:
 # This file is meant to be placed in Resources/CMake of a SDL3 framework
 
+cmake_minimum_required(VERSION 3.12)
+
 if(NOT EXISTS "${CMAKE_CURRENT_LIST_DIR}/../../Headers/SDL_version.h")
-    message(AUTHOR_WARNING "Could not find SDL_version.h. This script is meant to be placed in the Resources/CMake directory of SDL3.framework")
+    message(AUTHOR_WARNING "Could not find SDL_version.h. This script is meant to be placed in the Resources/CMake directory of SDL2.framework")
     return()
 endif()
 
@@ -13,14 +15,21 @@ string(REGEX MATCH "#define[ \t]+SDL_MAJOR_VERSION[ \t]+([0-9]+)" _sdl_major_re 
 set(_sdl_major "${CMAKE_MATCH_1}")
 string(REGEX MATCH "#define[ \t]+SDL_MINOR_VERSION[ \t]+([0-9]+)" _sdl_minor_re "${_sdl_version_h}")
 set(_sdl_minor "${CMAKE_MATCH_1}")
-string(REGEX MATCH "#define[ \t]+SDL_PATCHLEVEL[ \t]+([0-9]+)" _sdl_patch_re "${_sdl_version_h}")
-set(_sdl_patch "${CMAKE_MATCH_1}")
-if(_sdl_major_re AND _sdl_minor_re AND _sdl_patch_re)
-    set(PACKAGE_VERSION "${_sdl_major}.${_sdl_minor}.${_sdl_patch}")
+string(REGEX MATCH "#define[ \t]+SDL_MICRO_VERSION[ \t]+([0-9]+)" _sdl_micro_re "${_sdl_version_h}")
+set(_sdl_micro "${CMAKE_MATCH_1}")
+if(_sdl_major_re AND _sdl_minor_re AND _sdl_micro_re)
+    set(PACKAGE_VERSION "${_sdl_major}.${_sdl_minor}.${_sdl_micro}")
 else()
     message(AUTHOR_WARNING "Could not extract version from SDL_version.h.")
     return()
 endif()
+
+unset(_sdl_major_re)
+unset(_sdl_major)
+unset(_sdl_minor_re)
+unset(_sdl_minor)
+unset(_sdl_micro_re)
+unset(_sdl_micro)
 
 if(PACKAGE_FIND_VERSION_RANGE)
     # Package version must be in the requested version range
@@ -42,7 +51,7 @@ else()
     endif()
 endif()
 
-# if the using project doesn't have CMAKE_SIZEOF_VOID_P set, fail.
-if("${CMAKE_SIZEOF_VOID_P}" STREQUAL "")
+# The SDL3.xcframework only contains 64-bit archives
+if(NOT "${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
     set(PACKAGE_VERSION_UNSUITABLE TRUE)
 endif()

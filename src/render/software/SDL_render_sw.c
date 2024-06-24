@@ -112,20 +112,17 @@ static int SW_CreateTexture(SDL_Renderer *renderer, SDL_Texture *texture, SDL_Pr
     g = (Uint8)SDL_roundf(SDL_clamp(texture->color.g, 0.0f, 1.0f) * 255.0f);
     b = (Uint8)SDL_roundf(SDL_clamp(texture->color.b, 0.0f, 1.0f) * 255.0f);
     a = (Uint8)SDL_roundf(SDL_clamp(texture->color.a, 0.0f, 1.0f) * 255.0f);
-    SDL_SetSurfaceColorMod(texture->driverdata, r, g, b);
-    SDL_SetSurfaceAlphaMod(texture->driverdata, a);
-    SDL_SetSurfaceBlendMode(texture->driverdata, texture->blendMode);
+    SDL_SetSurfaceColorMod(surface, r, g, b);
+    SDL_SetSurfaceAlphaMod(surface, a);
+    SDL_SetSurfaceBlendMode(surface, texture->blendMode);
 
     /* Only RLE encode textures without an alpha channel since the RLE coder
      * discards the color values of pixels with an alpha value of zero.
      */
     if (texture->access == SDL_TEXTUREACCESS_STATIC && !surface->format->Amask) {
-        SDL_SetSurfaceRLE(texture->driverdata, 1);
+        SDL_SetSurfaceRLE(surface, 1);
     }
 
-    if (!texture->driverdata) {
-        return -1;
-    }
     return 0;
 }
 
@@ -486,7 +483,7 @@ static int SW_RenderCopyEx(SDL_Renderer *renderer, SDL_Surface *surface, SDL_Tex
                          * to be created. This makes all source pixels opaque and the colors get copied correctly.
                          */
                         SDL_Surface *src_rotated_rgb;
-                        int f = SDL_GetPixelFormatEnumForMasks(src_rotated->format->bits_per_pixel,
+                        SDL_PixelFormatEnum f = SDL_GetPixelFormatEnumForMasks(src_rotated->format->bits_per_pixel,
                                                            src_rotated->format->Rmask,
                                                            src_rotated->format->Gmask,
                                                            src_rotated->format->Bmask,
@@ -1021,64 +1018,65 @@ static void SW_DestroyRenderer(SDL_Renderer *renderer)
         SDL_DestroyWindowSurface(window);
     }
     SDL_free(data);
-    SDL_free(renderer);
 }
 
-static void SW_SelectBestFormats(SDL_Renderer *renderer, Uint32 format)
+static void SW_SelectBestFormats(SDL_Renderer *renderer, SDL_PixelFormatEnum format)
 {
     /* Prefer the format used by the framebuffer by default. */
-    renderer->info.texture_formats[renderer->info.num_texture_formats++] = format;
+    SDL_AddSupportedTextureFormat(renderer, format);
 
     switch (format) {
     case SDL_PIXELFORMAT_XRGB4444:
-        renderer->info.texture_formats[renderer->info.num_texture_formats++] = SDL_PIXELFORMAT_ARGB4444;
+        SDL_AddSupportedTextureFormat(renderer, SDL_PIXELFORMAT_ARGB4444);
         break;
     case SDL_PIXELFORMAT_XBGR4444:
-        renderer->info.texture_formats[renderer->info.num_texture_formats++] = SDL_PIXELFORMAT_ABGR4444;
+        SDL_AddSupportedTextureFormat(renderer, SDL_PIXELFORMAT_ABGR4444);
         break;
     case SDL_PIXELFORMAT_ARGB4444:
-        renderer->info.texture_formats[renderer->info.num_texture_formats++] = SDL_PIXELFORMAT_XRGB4444;
+        SDL_AddSupportedTextureFormat(renderer, SDL_PIXELFORMAT_XRGB4444);
         break;
     case SDL_PIXELFORMAT_ABGR4444:
-        renderer->info.texture_formats[renderer->info.num_texture_formats++] = SDL_PIXELFORMAT_XBGR4444;
+        SDL_AddSupportedTextureFormat(renderer, SDL_PIXELFORMAT_XBGR4444);
         break;
 
     case SDL_PIXELFORMAT_XRGB1555:
-        renderer->info.texture_formats[renderer->info.num_texture_formats++] = SDL_PIXELFORMAT_ARGB1555;
+        SDL_AddSupportedTextureFormat(renderer, SDL_PIXELFORMAT_ARGB1555);
         break;
     case SDL_PIXELFORMAT_XBGR1555:
-        renderer->info.texture_formats[renderer->info.num_texture_formats++] = SDL_PIXELFORMAT_ABGR1555;
+        SDL_AddSupportedTextureFormat(renderer, SDL_PIXELFORMAT_ABGR1555);
         break;
     case SDL_PIXELFORMAT_ARGB1555:
-        renderer->info.texture_formats[renderer->info.num_texture_formats++] = SDL_PIXELFORMAT_XRGB1555;
+        SDL_AddSupportedTextureFormat(renderer, SDL_PIXELFORMAT_XRGB1555);
         break;
     case SDL_PIXELFORMAT_ABGR1555:
-        renderer->info.texture_formats[renderer->info.num_texture_formats++] = SDL_PIXELFORMAT_XBGR1555;
+        SDL_AddSupportedTextureFormat(renderer, SDL_PIXELFORMAT_XBGR1555);
         break;
 
     case SDL_PIXELFORMAT_XRGB8888:
-        renderer->info.texture_formats[renderer->info.num_texture_formats++] = SDL_PIXELFORMAT_ARGB8888;
+        SDL_AddSupportedTextureFormat(renderer, SDL_PIXELFORMAT_ARGB8888);
         break;
     case SDL_PIXELFORMAT_RGBX8888:
-        renderer->info.texture_formats[renderer->info.num_texture_formats++] = SDL_PIXELFORMAT_RGBA8888;
+        SDL_AddSupportedTextureFormat(renderer, SDL_PIXELFORMAT_RGBA8888);
         break;
     case SDL_PIXELFORMAT_XBGR8888:
-        renderer->info.texture_formats[renderer->info.num_texture_formats++] = SDL_PIXELFORMAT_ABGR8888;
+        SDL_AddSupportedTextureFormat(renderer, SDL_PIXELFORMAT_ABGR8888);
         break;
     case SDL_PIXELFORMAT_BGRX8888:
-        renderer->info.texture_formats[renderer->info.num_texture_formats++] = SDL_PIXELFORMAT_BGRA8888;
+        SDL_AddSupportedTextureFormat(renderer, SDL_PIXELFORMAT_BGRA8888);
         break;
     case SDL_PIXELFORMAT_ARGB8888:
-        renderer->info.texture_formats[renderer->info.num_texture_formats++] = SDL_PIXELFORMAT_XRGB8888;
+        SDL_AddSupportedTextureFormat(renderer, SDL_PIXELFORMAT_XRGB8888);
         break;
     case SDL_PIXELFORMAT_RGBA8888:
-        renderer->info.texture_formats[renderer->info.num_texture_formats++] = SDL_PIXELFORMAT_RGBX8888;
+        SDL_AddSupportedTextureFormat(renderer, SDL_PIXELFORMAT_RGBX8888);
         break;
     case SDL_PIXELFORMAT_ABGR8888:
-        renderer->info.texture_formats[renderer->info.num_texture_formats++] = SDL_PIXELFORMAT_XBGR8888;
+        SDL_AddSupportedTextureFormat(renderer, SDL_PIXELFORMAT_XBGR8888);
         break;
     case SDL_PIXELFORMAT_BGRA8888:
-        renderer->info.texture_formats[renderer->info.num_texture_formats++] = SDL_PIXELFORMAT_BGRX8888;
+        SDL_AddSupportedTextureFormat(renderer, SDL_PIXELFORMAT_BGRX8888);
+        break;
+    default:
         break;
     }
 
@@ -1090,53 +1088,47 @@ static void SW_SelectBestFormats(SDL_Renderer *renderer, Uint32 format)
             switch (SDL_PIXELORDER(format)) {
             case SDL_PACKEDORDER_BGRX:
             case SDL_PACKEDORDER_BGRA:
-                renderer->info.texture_formats[renderer->info.num_texture_formats++] = SDL_PIXELFORMAT_BGRX8888;
-                renderer->info.texture_formats[renderer->info.num_texture_formats++] = SDL_PIXELFORMAT_BGRA8888;
+                SDL_AddSupportedTextureFormat(renderer, SDL_PIXELFORMAT_BGRX8888);
+                SDL_AddSupportedTextureFormat(renderer, SDL_PIXELFORMAT_BGRA8888);
                 break;
             case SDL_PACKEDORDER_RGBX:
             case SDL_PACKEDORDER_RGBA:
-                renderer->info.texture_formats[renderer->info.num_texture_formats++] = SDL_PIXELFORMAT_RGBX8888;
-                renderer->info.texture_formats[renderer->info.num_texture_formats++] = SDL_PIXELFORMAT_RGBA8888;
+                SDL_AddSupportedTextureFormat(renderer, SDL_PIXELFORMAT_RGBX8888);
+                SDL_AddSupportedTextureFormat(renderer, SDL_PIXELFORMAT_RGBA8888);
                 break;
             case SDL_PACKEDORDER_XBGR:
             case SDL_PACKEDORDER_ABGR:
-                renderer->info.texture_formats[renderer->info.num_texture_formats++] = SDL_PIXELFORMAT_XBGR8888;
-                renderer->info.texture_formats[renderer->info.num_texture_formats++] = SDL_PIXELFORMAT_ABGR8888;
+                SDL_AddSupportedTextureFormat(renderer, SDL_PIXELFORMAT_XBGR8888);
+                SDL_AddSupportedTextureFormat(renderer, SDL_PIXELFORMAT_ABGR8888);
                 break;
             case SDL_PACKEDORDER_XRGB:
             case SDL_PACKEDORDER_ARGB:
             default:
-                renderer->info.texture_formats[renderer->info.num_texture_formats++] = SDL_PIXELFORMAT_XRGB8888;
-                renderer->info.texture_formats[renderer->info.num_texture_formats++] = SDL_PIXELFORMAT_ARGB8888;
+                SDL_AddSupportedTextureFormat(renderer, SDL_PIXELFORMAT_XRGB8888);
+                SDL_AddSupportedTextureFormat(renderer, SDL_PIXELFORMAT_ARGB8888);
                 break;
             }
         }
     } else {
-        renderer->info.texture_formats[renderer->info.num_texture_formats++] = SDL_PIXELFORMAT_XRGB8888;
-        renderer->info.texture_formats[renderer->info.num_texture_formats++] = SDL_PIXELFORMAT_ARGB8888;
+        SDL_AddSupportedTextureFormat(renderer, SDL_PIXELFORMAT_XRGB8888);
+        SDL_AddSupportedTextureFormat(renderer, SDL_PIXELFORMAT_ARGB8888);
     }
 }
 
-SDL_Renderer *SW_CreateRendererForSurface(SDL_Surface *surface)
+int SW_CreateRendererForSurface(SDL_Renderer *renderer, SDL_Surface *surface, SDL_PropertiesID create_props)
 {
-    SDL_Renderer *renderer;
     SW_RenderData *data;
 
     if (!surface) {
-        SDL_InvalidParamError("surface");
-        return NULL;
+        return SDL_InvalidParamError("surface");
     }
 
-    renderer = (SDL_Renderer *)SDL_calloc(1, sizeof(*renderer));
-    if (!renderer) {
-        return NULL;
-    }
-    renderer->magic = &SDL_renderer_magic;
+    renderer->software = SDL_TRUE;
 
     data = (SW_RenderData *)SDL_calloc(1, sizeof(*data));
     if (!data) {
         SW_DestroyRenderer(renderer);
-        return NULL;
+        return -1;
     }
     data->surface = surface;
     data->window = surface;
@@ -1163,39 +1155,38 @@ SDL_Renderer *SW_CreateRendererForSurface(SDL_Surface *surface)
     renderer->RenderPresent = SW_RenderPresent;
     renderer->DestroyTexture = SW_DestroyTexture;
     renderer->DestroyRenderer = SW_DestroyRenderer;
-    renderer->info = SW_RenderDriver.info;
     renderer->driverdata = data;
     SW_InvalidateCachedState(renderer);
 
+    renderer->name = SW_RenderDriver.name;
+
     SW_SelectBestFormats(renderer, surface->format->format);
 
-    return renderer;
-}
+    SDL_SetupRendererColorspace(renderer, create_props);
 
-static SDL_Renderer *SW_CreateRenderer(SDL_Window *window, SDL_PropertiesID create_props)
-{
-    SDL_Renderer *renderer;
-    const char *hint;
-    SDL_Surface *surface;
-    SDL_bool no_hint_set;
-
-    /* Set the vsync hint based on our flags, if it's not already set */
-    hint = SDL_GetHint(SDL_HINT_RENDER_VSYNC);
-    if (!hint || !*hint) {
-        no_hint_set = SDL_TRUE;
-    } else {
-        no_hint_set = SDL_FALSE;
+    if (renderer->output_colorspace != SDL_COLORSPACE_SRGB) {
+        SW_DestroyRenderer(renderer);
+        return SDL_SetError("Unsupported output colorspace");
     }
 
+    return 0;
+}
+
+static int SW_CreateRenderer(SDL_Renderer *renderer, SDL_Window *window, SDL_PropertiesID create_props)
+{
+    /* Set the vsync hint based on our flags, if it's not already set */
+    const char *hint = SDL_GetHint(SDL_HINT_RENDER_VSYNC);
+    const SDL_bool no_hint_set = (!hint || !*hint);
+
     if (no_hint_set) {
-        if (SDL_GetBooleanProperty(create_props, SDL_PROP_RENDERER_CREATE_PRESENT_VSYNC_BOOLEAN, SDL_FALSE)) {
+        if (SDL_GetBooleanProperty(create_props, SDL_PROP_RENDERER_CREATE_PRESENT_VSYNC_NUMBER, 0)) {
             SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1");
         } else {
             SDL_SetHint(SDL_HINT_RENDER_VSYNC, "0");
         }
     }
 
-    surface = SDL_GetWindowSurface(window);
+    SDL_Surface *surface = SDL_GetWindowSurface(window);
 
     /* Reset the vsync hint if we set it above */
     if (no_hint_set) {
@@ -1203,34 +1194,14 @@ static SDL_Renderer *SW_CreateRenderer(SDL_Window *window, SDL_PropertiesID crea
     }
 
     if (!surface) {
-        return NULL;
+        return -1;
     }
 
-    renderer = SW_CreateRendererForSurface(surface);
-    if (!renderer) {
-        return NULL;
-    }
-
-    SDL_SetupRendererColorspace(renderer, create_props);
-
-    if (renderer->output_colorspace != SDL_COLORSPACE_SRGB) {
-        SDL_SetError("Unsupported output colorspace");
-        SW_DestroyRenderer(renderer);
-        return NULL;
-    }
-
-    return renderer;
+    return SW_CreateRendererForSurface(renderer, surface, create_props);
 }
 
 SDL_RenderDriver SW_RenderDriver = {
-    SW_CreateRenderer,
-    { "software",
-      (SDL_RENDERER_SOFTWARE | SDL_RENDERER_PRESENTVSYNC),
-      0,
-      { /* formats filled in later */
-        SDL_PIXELFORMAT_UNKNOWN },
-      0,
-      0 }
+    SW_CreateRenderer, SDL_SOFTWARE_RENDERER
 };
 
 #endif /* SDL_VIDEO_RENDER_SW */

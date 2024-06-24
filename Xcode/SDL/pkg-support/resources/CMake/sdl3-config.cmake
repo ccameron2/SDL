@@ -1,4 +1,4 @@
-# SDL CMake configuration file:
+# SDL3 CMake configuration file:
 # This file is meant to be placed in Resources/CMake of a SDL3 framework
 
 # INTERFACE_LINK_OPTIONS needs CMake 3.12
@@ -32,14 +32,15 @@ endmacro()
 set(SDL3_FOUND TRUE)
 
 # Compute the installation prefix relative to this file.
-get_filename_component(_sdl3_framework_path "${CMAKE_CURRENT_LIST_FILE}" PATH)      # /SDL3.framework/Resources/CMake/
-get_filename_component(_sdl3_framework_path "${_IMPORT_PREFIX}" PATH)               # /SDL3.framework/Resources/
-get_filename_component(_sdl3_framework_path "${_IMPORT_PREFIX}" PATH)               # /SDL3.framework/
-get_filename_component(_sdl3_framework_parent_path "${_sdl3_framework_path}" PATH)  # /
+set(_sdl3_framework_path "${CMAKE_CURRENT_LIST_DIR}")                               # > /SDL3.framework/Resources/CMake/
+get_filename_component(_sdl3_framework_path "${_sdl3_framework_path}" REALPATH)     # > /SDL3.framework/Versions/Current/Resources/CMake
+get_filename_component(_sdl3_framework_path "${_sdl3_framework_path}" REALPATH)     # > /SDL3.framework/Versions/A/Resources/CMake/
+get_filename_component(_sdl3_framework_path "${_sdl3_framework_path}" PATH)         # > /SDL3.framework/Versions/A/Resources/
+get_filename_component(_sdl3_framework_path "${_sdl3_framework_path}" PATH)         # > /SDL3.framework/Versions/A/
+get_filename_component(_sdl3_framework_path "${_sdl3_framework_path}" PATH)         # > /SDL3.framework/Versions/
+get_filename_component(_sdl3_framework_path "${_sdl3_framework_path}" PATH)         # > /SDL3.framework/
+get_filename_component(_sdl3_framework_parent_path "${_sdl3_framework_path}" PATH)  # > /
 
-set_and_check(_sdl3_include_dirs "${_sdl3_framework_path}/Headers")
-
-set(SDL3_LIBRARIES "SDL3::SDL3")
 
 # All targets are created, even when some might not be requested though COMPONENTS.
 # This is done for compatibility with CMake generated SDL3-target.cmake files.
@@ -49,20 +50,17 @@ if(NOT TARGET SDL3::Headers)
     set_target_properties(SDL3::Headers
         PROPERTIES
             INTERFACE_COMPILE_OPTIONS "SHELL:-F \"${_sdl3_framework_parent_path}\""
-            INTERFACE_INCLUDE_DIRECTORIES "${_sdl3_include_dirs}"
     )
 endif()
 set(SDL3_Headers_FOUND TRUE)
-unset(_sdl3_include_dirs)
 
 if(NOT TARGET SDL3::SDL3-shared)
     add_library(SDL3::SDL3-shared SHARED IMPORTED)
     set_target_properties(SDL3::SDL3-shared
         PROPERTIES
             FRAMEWORK "TRUE"
-            INTERFACE_LINK_LIBRARIES "SDL3::Headers"
             IMPORTED_LOCATION "${_sdl3_framework_path}/SDL3"
-            IMPORTED_SONAME "${_sdl3_framework_path}/SDL3"
+            INTERFACE_LINK_LIBRARIES "SDL3::Headers"
             COMPATIBLE_INTERFACE_BOOL "SDL3_SHARED"
             INTERFACE_SDL3_SHARED "ON"
             COMPATIBLE_INTERFACE_STRING "SDL_VERSION"
@@ -78,7 +76,7 @@ set(SDL3_SDL3_test FALSE)
 unset(_sdl3_framework_parent_path)
 unset(_sdl3_framework_path)
 
-if(SDL3_SDL3-shared_FOUND OR SDL3_SDL3-static_FOUND)
+if(SDL3_SDL3-shared_FOUND)
     set(SDL3_SDL3_FOUND TRUE)
 endif()
 
@@ -96,9 +94,13 @@ endfunction()
 if(NOT TARGET SDL3::SDL3)
     if(TARGET SDL3::SDL3-shared)
         _sdl_create_target_alias_compat(SDL3::SDL3 SDL3::SDL3-shared)
-    else()
-        _sdl_create_target_alias_compat(SDL3::SDL3 SDL3::SDL3-static)
     endif()
 endif()
 
 check_required_components(SDL3)
+
+set(SDL3_LIBRARIES SDL3::SDL3)
+set(SDL3_STATIC_LIBRARIES SDL3::SDL3-static)
+set(SDL3_STATIC_PRIVATE_LIBS)
+
+set(SDL3TEST_LIBRARY SDL3::SDL3_test)
