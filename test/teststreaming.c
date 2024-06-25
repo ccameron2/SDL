@@ -107,12 +107,14 @@ static void loop(void)
     while (SDL_PollEvent(&event)) {
         switch (event.type) {
         case SDL_EVENT_KEY_DOWN:
-            if (event.key.keysym.sym == SDLK_ESCAPE) {
+            if (event.key.key == SDLK_ESCAPE) {
                 done = SDL_TRUE;
             }
             break;
         case SDL_EVENT_QUIT:
             done = SDL_TRUE;
+            break;
+        default:
             break;
         }
     }
@@ -134,7 +136,7 @@ static void loop(void)
 int main(int argc, char **argv)
 {
     SDL_Window *window;
-    SDL_RWops *handle;
+    SDL_IOStream *handle;
     char *filename = NULL;
 
     /* Initialize test framework */
@@ -144,7 +146,7 @@ int main(int argc, char **argv)
     }
 
     /* Enable standard application logging */
-    SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
+    SDL_SetLogPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
 
     if (!SDLTest_CommonDefaultArgs(state, argc, argv)) {
         SDLTest_CommonDestroyState(state);
@@ -162,14 +164,14 @@ int main(int argc, char **argv)
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Out of memory\n");
         return -1;
     }
-    handle = SDL_RWFromFile(filename, "rb");
+    handle = SDL_IOFromFile(filename, "rb");
     SDL_free(filename);
     if (!handle) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Can't find the file moose.dat !\n");
         quit(2);
     }
-    SDL_RWread(handle, MooseFrames, MOOSEFRAME_SIZE * MOOSEFRAMES_COUNT);
-    SDL_RWclose(handle);
+    SDL_ReadIO(handle, MooseFrames, MOOSEFRAME_SIZE * MOOSEFRAMES_COUNT);
+    SDL_CloseIO(handle);
 
     /* Create the window and renderer */
     window = SDL_CreateWindow("Happy Moose", MOOSEPIC_W * 4, MOOSEPIC_H * 4, SDL_WINDOW_RESIZABLE);
@@ -178,7 +180,7 @@ int main(int argc, char **argv)
         quit(3);
     }
 
-    renderer = SDL_CreateRenderer(window, NULL, 0);
+    renderer = SDL_CreateRenderer(window, NULL);
     if (!renderer) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't set create renderer: %s\n", SDL_GetError());
         quit(4);

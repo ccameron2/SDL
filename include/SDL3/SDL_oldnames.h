@@ -19,10 +19,8 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-/**
- *  \file SDL_oldnames.h
- *
- *  Definitions to ease transition from SDL2 code
+/*
+ * Definitions to ease transition from SDL2 code
  */
 
 #ifndef SDL_oldnames_h_
@@ -69,7 +67,20 @@
 #define SDL_AudioStreamPut SDL_PutAudioStreamData
 #define SDL_FreeAudioStream SDL_DestroyAudioStream
 #define SDL_FreeWAV SDL_free
+#define SDL_LoadWAV_RW SDL_LoadWAV_IO
+#define SDL_MixAudioFormat SDL_MixAudio
 #define SDL_NewAudioStream SDL_CreateAudioStream
+
+/* ##SDL_cpuinfo.h */
+#define SDL_SIMDGetAlignment SDL_GetSIMDAlignment
+
+/* ##SDL_endian.h */
+#define SDL_SwapBE16 SDL_Swap16BE
+#define SDL_SwapBE32 SDL_Swap32BE
+#define SDL_SwapBE64 SDL_Swap64BE
+#define SDL_SwapLE16 SDL_Swap16LE
+#define SDL_SwapLE32 SDL_Swap32LE
+#define SDL_SwapLE64 SDL_Swap64LE
 
 /* ##SDL_events.h */
 #define SDL_APP_DIDENTERBACKGROUND SDL_EVENT_DID_ENTER_BACKGROUND
@@ -115,6 +126,7 @@
 #define SDL_JOYBUTTONUP SDL_EVENT_JOYSTICK_BUTTON_UP
 #define SDL_JOYDEVICEADDED SDL_EVENT_JOYSTICK_ADDED
 #define SDL_JOYDEVICEREMOVED SDL_EVENT_JOYSTICK_REMOVED
+#define SDL_JOYBALLMOTION SDL_EVENT_JOYSTICK_BALL_MOTION
 #define SDL_JOYHATMOTION SDL_EVENT_JOYSTICK_HAT_MOTION
 #define SDL_KEYDOWN SDL_EVENT_KEY_DOWN
 #define SDL_KEYMAPCHANGED SDL_EVENT_KEYMAP_CHANGED
@@ -152,6 +164,7 @@
 #define SDL_WINDOWEVENT_SHOWN SDL_EVENT_WINDOW_SHOWN
 #define SDL_WINDOWEVENT_SIZE_CHANGED SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED
 #define SDL_WINDOWEVENT_TAKE_FOCUS SDL_EVENT_WINDOW_TAKE_FOCUS
+#define SDL_eventaction SDL_EventAction
 
 /* ##SDL_gamecontroller.h */
 #define SDL_CONTROLLER_AXIS_INVALID SDL_GAMEPAD_AXIS_INVALID
@@ -203,7 +216,7 @@
 #define SDL_GameController SDL_Gamepad
 #define SDL_GameControllerAddMapping SDL_AddGamepadMapping
 #define SDL_GameControllerAddMappingsFromFile SDL_AddGamepadMappingsFromFile
-#define SDL_GameControllerAddMappingsFromRW SDL_AddGamepadMappingsFromRW
+#define SDL_GameControllerAddMappingsFromRW SDL_AddGamepadMappingsFromIO
 #define SDL_GameControllerAxis SDL_GamepadAxis
 #define SDL_GameControllerBindType SDL_GamepadBindingType
 #define SDL_GameControllerButton SDL_GamepadButton
@@ -288,20 +301,18 @@
 #define SDL_HINT_LINUX_HAT_DEADZONES SDL_HINT_JOYSTICK_LINUX_HAT_DEADZONES
 #define SDL_HINT_LINUX_JOYSTICK_CLASSIC SDL_HINT_JOYSTICK_LINUX_CLASSIC
 #define SDL_HINT_LINUX_JOYSTICK_DEADZONES SDL_HINT_JOYSTICK_LINUX_DEADZONES
-#define SDL_HINT_PS2_DYNAMIC_VSYNC SDL_HINT_RENDER_PS2_DYNAMIC_VSYNC
 
 /* ##SDL_joystick.h */
 #define SDL_JOYSTICK_TYPE_GAMECONTROLLER SDL_JOYSTICK_TYPE_GAMEPAD
-#define SDL_JoystickAttachVirtual SDL_AttachVirtualJoystick
-#define SDL_JoystickAttachVirtualEx SDL_AttachVirtualJoystickEx
+#define SDL_JoystickAttachVirtualEx SDL_AttachVirtualJoystick
 #define SDL_JoystickClose SDL_CloseJoystick
-#define SDL_JoystickCurrentPowerLevel SDL_GetJoystickPowerLevel
 #define SDL_JoystickDetachVirtual SDL_DetachVirtualJoystick
 #define SDL_JoystickFromInstanceID SDL_GetJoystickFromInstanceID
 #define SDL_JoystickFromPlayerIndex SDL_GetJoystickFromPlayerIndex
 #define SDL_JoystickGetAttached SDL_JoystickConnected
 #define SDL_JoystickGetAxis SDL_GetJoystickAxis
 #define SDL_JoystickGetAxisInitialState SDL_GetJoystickAxisInitialState
+#define SDL_JoystickGetBall SDL_GetJoystickBall
 #define SDL_JoystickGetButton SDL_GetJoystickButton
 #define SDL_JoystickGetFirmwareVersion SDL_GetJoystickFirmwareVersion
 #define SDL_JoystickGetGUID SDL_GetJoystickGUID
@@ -318,6 +329,7 @@
 #define SDL_JoystickIsVirtual SDL_IsJoystickVirtual
 #define SDL_JoystickName SDL_GetJoystickName
 #define SDL_JoystickNumAxes SDL_GetNumJoystickAxes
+#define SDL_JoystickNumBalls SDL_GetNumJoystickBalls
 #define SDL_JoystickNumButtons SDL_GetNumJoystickButtons
 #define SDL_JoystickNumHats SDL_GetNumJoystickHats
 #define SDL_JoystickOpen SDL_OpenJoystick
@@ -335,7 +347,6 @@
 /* ##SDL_keyboard.h */
 #define SDL_IsScreenKeyboardShown SDL_ScreenKeyboardShown
 #define SDL_IsTextInputActive SDL_TextInputActive
-#define SDL_IsTextInputShown SDL_TextInputShown
 
 /* ##SDL_keycode.h */
 #define KMOD_ALT SDL_KMOD_ALT
@@ -351,14 +362,51 @@
 #define KMOD_NUM SDL_KMOD_NUM
 #define KMOD_RALT SDL_KMOD_RALT
 #define KMOD_RCTRL SDL_KMOD_RCTRL
-#define KMOD_RESERVED SDL_KMOD_RESERVED
 #define KMOD_RGUI SDL_KMOD_RGUI
 #define KMOD_RSHIFT SDL_KMOD_RSHIFT
 #define KMOD_SCROLL SDL_KMOD_SCROLL
 #define KMOD_SHIFT SDL_KMOD_SHIFT
+#define SDLK_AUDIOFASTFORWARD SDLK_MEDIA_FAST_FORWARD
+#define SDLK_AUDIOMUTE SDLK_MUTE
+#define SDLK_AUDIONEXT SDLK_MEDIA_NEXT_TRACK
+#define SDLK_AUDIOPLAY SDLK_MEDIA_PLAY
+#define SDLK_AUDIOPREV SDLK_MEDIA_PREVIOUS_TRACK
+#define SDLK_AUDIOREWIND SDLK_MEDIA_REWIND
+#define SDLK_AUDIOSTOP SDLK_MEDIA_STOP
+#define SDLK_BACKQUOTE SDLK_GRAVE
+#define SDLK_EJECT SDLK_MEDIA_EJECT
+#define SDLK_MEDIASELECT SDLK_MEDIA_SELECT
+#define SDLK_QUOTE SDLK_APOSTROPHE
+#define SDLK_QUOTEDBL SDLK_DBLAPOSTROPHE
+
+/* ##SDL_log.h */
+#define SDL_LogGetOutputFunction SDL_GetLogOutputFunction
+#define SDL_LogGetPriority SDL_GetLogPriority
+#define SDL_LogResetPriorities SDL_ResetLogPriorities
+#define SDL_LogSetAllPriority SDL_SetLogPriorities
+#define SDL_LogSetOutputFunction SDL_SetLogOutputFunction
+#define SDL_LogSetPriority SDL_SetLogPriority
 
 /* ##SDL_mouse.h */
 #define SDL_FreeCursor SDL_DestroyCursor
+#define SDL_SYSTEM_CURSOR_ARROW SDL_SYSTEM_CURSOR_DEFAULT
+#define SDL_SYSTEM_CURSOR_HAND SDL_SYSTEM_CURSOR_POINTER
+#define SDL_SYSTEM_CURSOR_IBEAM SDL_SYSTEM_CURSOR_TEXT
+#define SDL_SYSTEM_CURSOR_NO SDL_SYSTEM_CURSOR_NOT_ALLOWED
+#define SDL_SYSTEM_CURSOR_SIZEALL SDL_SYSTEM_CURSOR_MOVE
+#define SDL_SYSTEM_CURSOR_SIZENESW SDL_SYSTEM_CURSOR_NESW_RESIZE
+#define SDL_SYSTEM_CURSOR_SIZENS SDL_SYSTEM_CURSOR_NS_RESIZE
+#define SDL_SYSTEM_CURSOR_SIZENWSE SDL_SYSTEM_CURSOR_NWSE_RESIZE
+#define SDL_SYSTEM_CURSOR_SIZEWE SDL_SYSTEM_CURSOR_EW_RESIZE
+#define SDL_SYSTEM_CURSOR_WAITARROW SDL_SYSTEM_CURSOR_PROGRESS
+#define SDL_SYSTEM_CURSOR_WINDOW_BOTTOM SDL_SYSTEM_CURSOR_S_RESIZE
+#define SDL_SYSTEM_CURSOR_WINDOW_BOTTOMLEFT SDL_SYSTEM_CURSOR_SW_RESIZE
+#define SDL_SYSTEM_CURSOR_WINDOW_BOTTOMRIGHT SDL_SYSTEM_CURSOR_SE_RESIZE
+#define SDL_SYSTEM_CURSOR_WINDOW_LEFT SDL_SYSTEM_CURSOR_W_RESIZE
+#define SDL_SYSTEM_CURSOR_WINDOW_RIGHT SDL_SYSTEM_CURSOR_E_RESIZE
+#define SDL_SYSTEM_CURSOR_WINDOW_TOP SDL_SYSTEM_CURSOR_N_RESIZE
+#define SDL_SYSTEM_CURSOR_WINDOW_TOPLEFT SDL_SYSTEM_CURSOR_NW_RESIZE
+#define SDL_SYSTEM_CURSOR_WINDOW_TOPRIGHT SDL_SYSTEM_CURSOR_NE_RESIZE
 
 /* ##SDL_mutex.h */
 #define SDL_CondBroadcast SDL_BroadcastCondition
@@ -381,10 +429,15 @@
 /* ##SDL_pixels.h */
 #define SDL_AllocFormat SDL_CreatePixelFormat
 #define SDL_AllocPalette SDL_CreatePalette
+#define SDL_Colour SDL_Color
 #define SDL_FreeFormat SDL_DestroyPixelFormat
 #define SDL_FreePalette SDL_DestroyPalette
 #define SDL_MasksToPixelFormatEnum SDL_GetPixelFormatEnumForMasks
+#define SDL_PIXELFORMAT_BGR444 SDL_PIXELFORMAT_XBGR4444
+#define SDL_PIXELFORMAT_BGR555 SDL_PIXELFORMAT_XBGR1555
 #define SDL_PIXELFORMAT_BGR888 SDL_PIXELFORMAT_XBGR8888
+#define SDL_PIXELFORMAT_RGB444 SDL_PIXELFORMAT_XRGB4444
+#define SDL_PIXELFORMAT_RGB555 SDL_PIXELFORMAT_XRGB1555
 #define SDL_PIXELFORMAT_RGB888 SDL_PIXELFORMAT_XRGB8888
 #define SDL_PixelFormatEnumToMasks SDL_GetMasksForPixelFormatEnum
 
@@ -425,6 +478,7 @@
 #define SDL_RenderDrawRectsF SDL_RenderRects
 #define SDL_RenderFillRectF SDL_RenderFillRect
 #define SDL_RenderFillRectsF SDL_RenderFillRects
+#define SDL_RendererFlip SDL_FlipMode
 #define SDL_RenderFlush SDL_FlushRenderer
 #define SDL_RenderGetClipRect SDL_GetRenderClipRect
 #define SDL_RenderGetLogicalSize SDL_GetRenderLogicalPresentation
@@ -446,11 +500,19 @@
 #define SDL_ScaleModeNearest SDL_SCALEMODE_NEAREST
 
 /* ##SDL_rwops.h */
-#define RW_SEEK_CUR SDL_RW_SEEK_CUR
-#define RW_SEEK_END SDL_RW_SEEK_END
-#define RW_SEEK_SET SDL_RW_SEEK_SET
-#define SDL_AllocRW SDL_CreateRW
-#define SDL_FreeRW SDL_DestroyRW
+#define RW_SEEK_CUR SDL_IO_SEEK_CUR
+#define RW_SEEK_END SDL_IO_SEEK_END
+#define RW_SEEK_SET SDL_IO_SEEK_SET
+#define SDL_RWFromConstMem SDL_IOFromConstMem
+#define SDL_RWFromFile SDL_IOFromFile
+#define SDL_RWFromMem SDL_IOFromMem
+#define SDL_RWclose SDL_CloseIO
+#define SDL_RWops SDL_IOStream
+#define SDL_RWread SDL_ReadIO
+#define SDL_RWseek SDL_SeekIO
+#define SDL_RWsize SDL_GetIOSize
+#define SDL_RWtell SDL_TellIO
+#define SDL_RWwrite SDL_WriteIO
 #define SDL_ReadBE16 SDL_ReadU16BE
 #define SDL_ReadBE32 SDL_ReadU32BE
 #define SDL_ReadBE64 SDL_ReadU64BE
@@ -464,6 +526,17 @@
 #define SDL_WriteLE32 SDL_WriteU32LE
 #define SDL_WriteLE64 SDL_WriteU64LE
 
+/* ##SDL_scancode.h */
+#define SDL_SCANCODE_AUDIOFASTFORWARD SDL_SCANCODE_MEDIA_FAST_FORWARD
+#define SDL_SCANCODE_AUDIOMUTE SDL_SCANCODE_MUTE
+#define SDL_SCANCODE_AUDIONEXT SDL_SCANCODE_MEDIA_NEXT_TRACK
+#define SDL_SCANCODE_AUDIOPLAY SDL_SCANCODE_MEDIA_PLAY
+#define SDL_SCANCODE_AUDIOPREV SDL_SCANCODE_MEDIA_PREVIOUS_TRACK
+#define SDL_SCANCODE_AUDIOREWIND SDL_SCANCODE_MEDIA_REWIND
+#define SDL_SCANCODE_AUDIOSTOP SDL_SCANCODE_MEDIA_STOP
+#define SDL_SCANCODE_EJECT SDL_SCANCODE_MEDIA_EJECT
+#define SDL_SCANCODE_MEDIASELECT SDL_SCANCODE_MEDIA_SELECT
+
 /* ##SDL_sensor.h */
 #define SDL_SensorClose SDL_CloseSensor
 #define SDL_SensorFromInstanceID SDL_GetSensorFromInstanceID
@@ -476,9 +549,11 @@
 #define SDL_SensorUpdate SDL_UpdateSensors
 
 /* ##SDL_stdinc.h */
+#define SDL_TABLESIZE SDL_arraysize
 #define SDL_strtokr SDL_strtok_r
 
 /* ##SDL_surface.h */
+#define SDL_BlitScaled SDL_BlitSurfaceScaled
 #define SDL_FillRect SDL_FillSurfaceRect
 #define SDL_FillRects SDL_FillSurfaceRects
 #define SDL_FreeSurface SDL_DestroySurface
@@ -486,12 +561,19 @@
 #define SDL_GetColorKey SDL_GetSurfaceColorKey
 #define SDL_HasColorKey SDL_SurfaceHasColorKey
 #define SDL_HasSurfaceRLE SDL_SurfaceHasRLE
+#define SDL_LoadBMP_RW SDL_LoadBMP_IO
 #define SDL_LowerBlit SDL_BlitSurfaceUnchecked
 #define SDL_LowerBlitScaled SDL_BlitSurfaceUncheckedScaled
+#define SDL_SaveBMP_RW SDL_SaveBMP_IO
 #define SDL_SetClipRect SDL_SetSurfaceClipRect
 #define SDL_SetColorKey SDL_SetSurfaceColorKey
 #define SDL_UpperBlit SDL_BlitSurface
 #define SDL_UpperBlitScaled SDL_BlitSurfaceScaled
+
+/* ##SDL_system.h */
+#define SDL_WinRTGetFSPathUTF8 SDL_WinRTGetFSPath
+#define SDL_iPhoneSetAnimationCallback SDL_iOSSetAnimationCallback
+#define SDL_iPhoneSetEventPump SDL_iOSSetEventPump
 
 /* ##SDL_thread.h */
 #define SDL_TLSCleanup SDL_CleanupTLS
@@ -504,7 +586,8 @@
 #define SDL_GetTicks64 SDL_GetTicks
 
 /* ##SDL_version.h */
-#define SDL_version SDL_Version
+#define SDL_COMPILEDVERSION SDL_VERSION
+#define SDL_PATCHLEVEL SDL_MICRO_VERSION
 
 /* ##SDL_video.h */
 #define SDL_GetClosestDisplayMode SDL_GetClosestFullscreenDisplayMode
@@ -528,6 +611,7 @@
 #define SDL_AtomicLock SDL_AtomicLock_renamed_SDL_LockSpinlock
 #define SDL_AtomicTryLock SDL_AtomicTryLock_renamed_SDL_TryLockSpinlock
 #define SDL_AtomicUnlock SDL_AtomicUnlock_renamed_SDL_UnlockSpinlock
+#define SDL_atomic_t SDL_atomic_t_renamed_SDL_AtomicInt
 
 /* ##SDL_audio.h */
 #define AUDIO_F32 AUDIO_F32_renamed_SDL_AUDIO_F32LE
@@ -551,7 +635,20 @@
 #define SDL_AudioStreamPut SDL_AudioStreamPut_renamed_SDL_PutAudioStreamData
 #define SDL_FreeAudioStream SDL_FreeAudioStream_renamed_SDL_DestroyAudioStream
 #define SDL_FreeWAV SDL_FreeWAV_renamed_SDL_free
+#define SDL_LoadWAV_RW SDL_LoadWAV_RW_renamed_SDL_LoadWAV_IO
+#define SDL_MixAudioFormat SDL_MixAudioFormat_renamed_SDL_MixAudio
 #define SDL_NewAudioStream SDL_NewAudioStream_renamed_SDL_CreateAudioStream
+
+/* ##SDL_cpuinfo.h */
+#define SDL_SIMDGetAlignment SDL_SIMDGetAlignment_renamed_SDL_GetSIMDAlignment
+
+/* ##SDL_endian.h */
+#define SDL_SwapBE16 SDL_SwapBE16_renamed_SDL_Swap16BE
+#define SDL_SwapBE32 SDL_SwapBE32_renamed_SDL_Swap32BE
+#define SDL_SwapBE64 SDL_SwapBE64_renamed_SDL_Swap64BE
+#define SDL_SwapLE16 SDL_SwapLE16_renamed_SDL_Swap16LE
+#define SDL_SwapLE32 SDL_SwapLE32_renamed_SDL_Swap32LE
+#define SDL_SwapLE64 SDL_SwapLE64_renamed_SDL_Swap64LE
 
 /* ##SDL_events.h */
 #define SDL_APP_DIDENTERBACKGROUND SDL_APP_DIDENTERBACKGROUND_renamed_SDL_EVENT_DID_ENTER_BACKGROUND
@@ -597,6 +694,7 @@
 #define SDL_JOYBUTTONUP SDL_JOYBUTTONUP_renamed_SDL_EVENT_JOYSTICK_BUTTON_UP
 #define SDL_JOYDEVICEADDED SDL_JOYDEVICEADDED_renamed_SDL_EVENT_JOYSTICK_ADDED
 #define SDL_JOYDEVICEREMOVED SDL_JOYDEVICEREMOVED_renamed_SDL_EVENT_JOYSTICK_REMOVED
+#define SDL_JOYBALLMOTION SDL_JOYBALLMOTION_renamed_SDL_EVENT_JOYSTICK_BALL_MOTION
 #define SDL_JOYHATMOTION SDL_JOYHATMOTION_renamed_SDL_EVENT_JOYSTICK_HAT_MOTION
 #define SDL_KEYDOWN SDL_KEYDOWN_renamed_SDL_EVENT_KEY_DOWN
 #define SDL_KEYMAPCHANGED SDL_KEYMAPCHANGED_renamed_SDL_EVENT_KEYMAP_CHANGED
@@ -634,6 +732,7 @@
 #define SDL_WINDOWEVENT_SHOWN SDL_WINDOWEVENT_SHOWN_renamed_SDL_EVENT_WINDOW_SHOWN
 #define SDL_WINDOWEVENT_SIZE_CHANGED SDL_WINDOWEVENT_SIZE_CHANGED_renamed_SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED
 #define SDL_WINDOWEVENT_TAKE_FOCUS SDL_WINDOWEVENT_TAKE_FOCUS_renamed_SDL_EVENT_WINDOW_TAKE_FOCUS
+#define SDL_eventaction SDL_eventaction_renamed_SDL_EventAction
 
 /* ##SDL_gamecontroller.h */
 #define SDL_CONTROLLER_AXIS_INVALID SDL_CONTROLLER_AXIS_INVALID_renamed_SDL_GAMEPAD_AXIS_INVALID
@@ -685,7 +784,7 @@
 #define SDL_GameController SDL_GameController_renamed_SDL_Gamepad
 #define SDL_GameControllerAddMapping SDL_GameControllerAddMapping_renamed_SDL_AddGamepadMapping
 #define SDL_GameControllerAddMappingsFromFile SDL_GameControllerAddMappingsFromFile_renamed_SDL_AddGamepadMappingsFromFile
-#define SDL_GameControllerAddMappingsFromRW SDL_GameControllerAddMappingsFromRW_renamed_SDL_AddGamepadMappingsFromRW
+#define SDL_GameControllerAddMappingsFromRW SDL_GameControllerAddMappingsFromRW_renamed_SDL_AddGamepadMappingsFromIO
 #define SDL_GameControllerAxis SDL_GameControllerAxis_renamed_SDL_GamepadAxis
 #define SDL_GameControllerBindType SDL_GameControllerBindType_renamed_SDL_GamepadBindingType
 #define SDL_GameControllerButton SDL_GameControllerButton_renamed_SDL_GamepadButton
@@ -771,20 +870,18 @@
 #define SDL_HINT_LINUX_HAT_DEADZONES SDL_HINT_LINUX_HAT_DEADZONES_renamed_SDL_HINT_JOYSTICK_LINUX_HAT_DEADZONES
 #define SDL_HINT_LINUX_JOYSTICK_CLASSIC SDL_HINT_LINUX_JOYSTICK_CLASSIC_renamed_SDL_HINT_JOYSTICK_LINUX_CLASSIC
 #define SDL_HINT_LINUX_JOYSTICK_DEADZONES SDL_HINT_LINUX_JOYSTICK_DEADZONES_renamed_SDL_HINT_JOYSTICK_LINUX_DEADZONES
-#define SDL_HINT_PS2_DYNAMIC_VSYNC SDL_HINT_PS2_DYNAMIC_VSYNC_renamed_SDL_HINT_RENDER_PS2_DYNAMIC_VSYNC
 
 /* ##SDL_joystick.h */
 #define SDL_JOYSTICK_TYPE_GAMECONTROLLER SDL_JOYSTICK_TYPE_GAMECONTROLLER_renamed_SDL_JOYSTICK_TYPE_GAMEPAD
-#define SDL_JoystickAttachVirtual SDL_JoystickAttachVirtual_renamed_SDL_AttachVirtualJoystick
-#define SDL_JoystickAttachVirtualEx SDL_JoystickAttachVirtualEx_renamed_SDL_AttachVirtualJoystickEx
+#define SDL_JoystickAttachVirtualEx SDL_JoystickAttachVirtualEx_renamed_SDL_AttachVirtualJoystick
 #define SDL_JoystickClose SDL_JoystickClose_renamed_SDL_CloseJoystick
-#define SDL_JoystickCurrentPowerLevel SDL_JoystickCurrentPowerLevel_renamed_SDL_GetJoystickPowerLevel
 #define SDL_JoystickDetachVirtual SDL_JoystickDetachVirtual_renamed_SDL_DetachVirtualJoystick
 #define SDL_JoystickFromInstanceID SDL_JoystickFromInstanceID_renamed_SDL_GetJoystickFromInstanceID
 #define SDL_JoystickFromPlayerIndex SDL_JoystickFromPlayerIndex_renamed_SDL_GetJoystickFromPlayerIndex
 #define SDL_JoystickGetAttached SDL_JoystickGetAttached_renamed_SDL_JoystickConnected
 #define SDL_JoystickGetAxis SDL_JoystickGetAxis_renamed_SDL_GetJoystickAxis
 #define SDL_JoystickGetAxisInitialState SDL_JoystickGetAxisInitialState_renamed_SDL_GetJoystickAxisInitialState
+#define SDL_JoystickGetBall SDL_JoystickGetBall_renamed_SDL_GetJoystickBall
 #define SDL_JoystickGetButton SDL_JoystickGetButton_renamed_SDL_GetJoystickButton
 #define SDL_JoystickGetFirmwareVersion SDL_JoystickGetFirmwareVersion_renamed_SDL_GetJoystickFirmwareVersion
 #define SDL_JoystickGetGUID SDL_JoystickGetGUID_renamed_SDL_GetJoystickGUID
@@ -801,6 +898,7 @@
 #define SDL_JoystickIsVirtual SDL_JoystickIsVirtual_renamed_SDL_IsJoystickVirtual
 #define SDL_JoystickName SDL_JoystickName_renamed_SDL_GetJoystickName
 #define SDL_JoystickNumAxes SDL_JoystickNumAxes_renamed_SDL_GetNumJoystickAxes
+#define SDL_JoystickNumBalls SDL_JoystickNumBalls_renamed_SDL_GetNumJoystickBalls
 #define SDL_JoystickNumButtons SDL_JoystickNumButtons_renamed_SDL_GetNumJoystickButtons
 #define SDL_JoystickNumHats SDL_JoystickNumHats_renamed_SDL_GetNumJoystickHats
 #define SDL_JoystickOpen SDL_JoystickOpen_renamed_SDL_OpenJoystick
@@ -818,7 +916,6 @@
 /* ##SDL_keyboard.h */
 #define SDL_IsScreenKeyboardShown SDL_IsScreenKeyboardShown_renamed_SDL_ScreenKeyboardShown
 #define SDL_IsTextInputActive SDL_IsTextInputActive_renamed_SDL_TextInputActive
-#define SDL_IsTextInputShown SDL_IsTextInputShown_renamed_SDL_TextInputShown
 
 /* ##SDL_keycode.h */
 #define KMOD_ALT KMOD_ALT_renamed_SDL_KMOD_ALT
@@ -834,14 +931,51 @@
 #define KMOD_NUM KMOD_NUM_renamed_SDL_KMOD_NUM
 #define KMOD_RALT KMOD_RALT_renamed_SDL_KMOD_RALT
 #define KMOD_RCTRL KMOD_RCTRL_renamed_SDL_KMOD_RCTRL
-#define KMOD_RESERVED KMOD_RESERVED_renamed_SDL_KMOD_RESERVED
 #define KMOD_RGUI KMOD_RGUI_renamed_SDL_KMOD_RGUI
 #define KMOD_RSHIFT KMOD_RSHIFT_renamed_SDL_KMOD_RSHIFT
 #define KMOD_SCROLL KMOD_SCROLL_renamed_SDL_KMOD_SCROLL
 #define KMOD_SHIFT KMOD_SHIFT_renamed_SDL_KMOD_SHIFT
+#define SDLK_AUDIOFASTFORWARD SDLK_AUDIOFASTFORWARD_renamed_SDLK_MEDIA_FAST_FORWARD
+#define SDLK_AUDIOMUTE SDLK_AUDIOMUTE_renamed_SDLK_MUTE
+#define SDLK_AUDIONEXT SDLK_AUDIONEXT_renamed_SDLK_MEDIA_NEXT_TRACK
+#define SDLK_AUDIOPLAY SDLK_AUDIOPLAY_renamed_SDLK_MEDIA_PLAY
+#define SDLK_AUDIOPREV SDLK_AUDIOPREV_renamed_SDLK_MEDIA_PREVIOUS_TRACK
+#define SDLK_AUDIOREWIND SDLK_AUDIOREWIND_renamed_SDLK_MEDIA_REWIND
+#define SDLK_AUDIOSTOP SDLK_AUDIOSTOP_renamed_SDLK_MEDIA_STOP
+#define SDLK_BACKQUOTE SDLK_BACKQUOTE_renamed_SDLK_GRAVE
+#define SDLK_EJECT SDLK_EJECT_renamed_SDLK_MEDIA_EJECT
+#define SDLK_MEDIASELECT SDLK_MEDIASELECT_renamed_SDLK_MEDIA_SELECT
+#define SDLK_QUOTE SDLK_QUOTE_renamed_SDLK_APOSTROPHE
+#define SDLK_QUOTEDBL SDLK_QUOTEDBL_renamed_SDLK_DBLAPOSTROPHE
+
+/* ##SDL_log.h */
+#define SDL_LogGetOutputFunction SDL_LogGetOutputFunction_renamed_SDL_GetLogOutputFunction
+#define SDL_LogGetPriority SDL_LogGetPriority_renamed_SDL_GetLogPriority
+#define SDL_LogResetPriorities SDL_LogResetPriorities_renamed_SDL_ResetLogPriorities
+#define SDL_LogSetAllPriority SDL_LogSetAllPriority_renamed_SDL_SetLogPriorities
+#define SDL_LogSetOutputFunction SDL_LogSetOutputFunction_renamed_SDL_SetLogOutputFunction
+#define SDL_LogSetPriority SDL_LogSetPriority_renamed_SDL_SetLogPriority
 
 /* ##SDL_mouse.h */
 #define SDL_FreeCursor SDL_FreeCursor_renamed_SDL_DestroyCursor
+#define SDL_SYSTEM_CURSOR_ARROW SDL_SYSTEM_CURSOR_ARROW_renamed_SDL_SYSTEM_CURSOR_DEFAULT
+#define SDL_SYSTEM_CURSOR_HAND SDL_SYSTEM_CURSOR_HAND_renamed_SDL_SYSTEM_CURSOR_POINTER
+#define SDL_SYSTEM_CURSOR_IBEAM SDL_SYSTEM_CURSOR_IBEAM_renamed_SDL_SYSTEM_CURSOR_TEXT
+#define SDL_SYSTEM_CURSOR_NO SDL_SYSTEM_CURSOR_NO_renamed_SDL_SYSTEM_CURSOR_NOT_ALLOWED
+#define SDL_SYSTEM_CURSOR_SIZEALL SDL_SYSTEM_CURSOR_SIZEALL_renamed_SDL_SYSTEM_CURSOR_MOVE
+#define SDL_SYSTEM_CURSOR_SIZENESW SDL_SYSTEM_CURSOR_SIZENESW_renamed_SDL_SYSTEM_CURSOR_NESW_RESIZE
+#define SDL_SYSTEM_CURSOR_SIZENS SDL_SYSTEM_CURSOR_SIZENS_renamed_SDL_SYSTEM_CURSOR_NS_RESIZE
+#define SDL_SYSTEM_CURSOR_SIZENWSE SDL_SYSTEM_CURSOR_SIZENWSE_renamed_SDL_SYSTEM_CURSOR_NWSE_RESIZE
+#define SDL_SYSTEM_CURSOR_SIZEWE SDL_SYSTEM_CURSOR_SIZEWE_renamed_SDL_SYSTEM_CURSOR_EW_RESIZE
+#define SDL_SYSTEM_CURSOR_WAITARROW SDL_SYSTEM_CURSOR_WAITARROW_renamed_SDL_SYSTEM_CURSOR_PROGRESS
+#define SDL_SYSTEM_CURSOR_WINDOW_BOTTOM SDL_SYSTEM_CURSOR_WINDOW_BOTTOM_renamed_SDL_SYSTEM_CURSOR_S_RESIZE
+#define SDL_SYSTEM_CURSOR_WINDOW_BOTTOMLEFT SDL_SYSTEM_CURSOR_WINDOW_BOTTOMLEFT_renamed_SDL_SYSTEM_CURSOR_SW_RESIZE
+#define SDL_SYSTEM_CURSOR_WINDOW_BOTTOMRIGHT SDL_SYSTEM_CURSOR_WINDOW_BOTTOMRIGHT_renamed_SDL_SYSTEM_CURSOR_SE_RESIZE
+#define SDL_SYSTEM_CURSOR_WINDOW_LEFT SDL_SYSTEM_CURSOR_WINDOW_LEFT_renamed_SDL_SYSTEM_CURSOR_W_RESIZE
+#define SDL_SYSTEM_CURSOR_WINDOW_RIGHT SDL_SYSTEM_CURSOR_WINDOW_RIGHT_renamed_SDL_SYSTEM_CURSOR_E_RESIZE
+#define SDL_SYSTEM_CURSOR_WINDOW_TOP SDL_SYSTEM_CURSOR_WINDOW_TOP_renamed_SDL_SYSTEM_CURSOR_N_RESIZE
+#define SDL_SYSTEM_CURSOR_WINDOW_TOPLEFT SDL_SYSTEM_CURSOR_WINDOW_TOPLEFT_renamed_SDL_SYSTEM_CURSOR_NW_RESIZE
+#define SDL_SYSTEM_CURSOR_WINDOW_TOPRIGHT SDL_SYSTEM_CURSOR_WINDOW_TOPRIGHT_renamed_SDL_SYSTEM_CURSOR_NE_RESIZE
 
 /* ##SDL_mutex.h */
 #define SDL_CondBroadcast SDL_CondBroadcast_renamed_SDL_BroadcastCondition
@@ -864,10 +998,15 @@
 /* ##SDL_pixels.h */
 #define SDL_AllocFormat SDL_AllocFormat_renamed_SDL_CreatePixelFormat
 #define SDL_AllocPalette SDL_AllocPalette_renamed_SDL_CreatePalette
+#define SDL_Colour SDL_Colour_renamed_SDL_Color
 #define SDL_FreeFormat SDL_FreeFormat_renamed_SDL_DestroyPixelFormat
 #define SDL_FreePalette SDL_FreePalette_renamed_SDL_DestroyPalette
 #define SDL_MasksToPixelFormatEnum SDL_MasksToPixelFormatEnum_renamed_SDL_GetPixelFormatEnumForMasks
+#define SDL_PIXELFORMAT_BGR444 SDL_PIXELFORMAT_BGR444_renamed_SDL_PIXELFORMAT_XBGR4444
+#define SDL_PIXELFORMAT_BGR555 SDL_PIXELFORMAT_BGR555_renamed_SDL_PIXELFORMAT_XBGR1555
 #define SDL_PIXELFORMAT_BGR888 SDL_PIXELFORMAT_BGR888_renamed_SDL_PIXELFORMAT_XBGR8888
+#define SDL_PIXELFORMAT_RGB444 SDL_PIXELFORMAT_RGB444_renamed_SDL_PIXELFORMAT_XRGB4444
+#define SDL_PIXELFORMAT_RGB555 SDL_PIXELFORMAT_RGB555_renamed_SDL_PIXELFORMAT_XRGB1555
 #define SDL_PIXELFORMAT_RGB888 SDL_PIXELFORMAT_RGB888_renamed_SDL_PIXELFORMAT_XRGB8888
 #define SDL_PixelFormatEnumToMasks SDL_PixelFormatEnumToMasks_renamed_SDL_GetMasksForPixelFormatEnum
 
@@ -908,6 +1047,7 @@
 #define SDL_RenderDrawRectsF SDL_RenderDrawRectsF_renamed_SDL_RenderRects
 #define SDL_RenderFillRectF SDL_RenderFillRectF_renamed_SDL_RenderFillRect
 #define SDL_RenderFillRectsF SDL_RenderFillRectsF_renamed_SDL_RenderFillRects
+#define SDL_RendererFlip SDL_RendererFlip_renamed_SDL_FlipMode
 #define SDL_RenderFlush SDL_RenderFlush_renamed_SDL_FlushRenderer
 #define SDL_RenderGetClipRect SDL_RenderGetClipRect_renamed_SDL_GetRenderClipRect
 #define SDL_RenderGetLogicalSize SDL_RenderGetLogicalSize_renamed_SDL_GetRenderLogicalPresentation
@@ -929,11 +1069,19 @@
 #define SDL_ScaleModeNearest SDL_ScaleModeNearest_renamed_SDL_SCALEMODE_NEAREST
 
 /* ##SDL_rwops.h */
-#define RW_SEEK_CUR RW_SEEK_CUR_renamed_SDL_RW_SEEK_CUR
-#define RW_SEEK_END RW_SEEK_END_renamed_SDL_RW_SEEK_END
-#define RW_SEEK_SET RW_SEEK_SET_renamed_SDL_RW_SEEK_SET
-#define SDL_AllocRW SDL_AllocRW_renamed_SDL_CreateRW
-#define SDL_FreeRW SDL_FreeRW_renamed_SDL_DestroyRW
+#define RW_SEEK_CUR RW_SEEK_CUR_renamed_SDL_IO_SEEK_CUR
+#define RW_SEEK_END RW_SEEK_END_renamed_SDL_IO_SEEK_END
+#define RW_SEEK_SET RW_SEEK_SET_renamed_SDL_IO_SEEK_SET
+#define SDL_RWFromConstMem SDL_RWFromConstMem_renamed_SDL_IOFromConstMem
+#define SDL_RWFromFile SDL_RWFromFile_renamed_SDL_IOFromFile
+#define SDL_RWFromMem SDL_RWFromMem_renamed_SDL_IOFromMem
+#define SDL_RWclose SDL_RWclose_renamed_SDL_CloseIO
+#define SDL_RWops SDL_RWops_renamed_SDL_IOStream
+#define SDL_RWread SDL_RWread_renamed_SDL_ReadIO
+#define SDL_RWseek SDL_RWseek_renamed_SDL_SeekIO
+#define SDL_RWsize SDL_RWsize_renamed_SDL_GetIOSize
+#define SDL_RWtell SDL_RWtell_renamed_SDL_TellIO
+#define SDL_RWwrite SDL_RWwrite_renamed_SDL_WriteIO
 #define SDL_ReadBE16 SDL_ReadBE16_renamed_SDL_ReadU16BE
 #define SDL_ReadBE32 SDL_ReadBE32_renamed_SDL_ReadU32BE
 #define SDL_ReadBE64 SDL_ReadBE64_renamed_SDL_ReadU64BE
@@ -947,6 +1095,17 @@
 #define SDL_WriteLE32 SDL_WriteLE32_renamed_SDL_WriteU32LE
 #define SDL_WriteLE64 SDL_WriteLE64_renamed_SDL_WriteU64LE
 
+/* ##SDL_scancode.h */
+#define SDL_SCANCODE_AUDIOFASTFORWARD SDL_SCANCODE_AUDIOFASTFORWARD_renamed_SDL_SCANCODE_MEDIA_FAST_FORWARD
+#define SDL_SCANCODE_AUDIOMUTE SDL_SCANCODE_AUDIOMUTE_renamed_SDL_SCANCODE_MUTE
+#define SDL_SCANCODE_AUDIONEXT SDL_SCANCODE_AUDIONEXT_renamed_SDL_SCANCODE_MEDIA_NEXT_TRACK
+#define SDL_SCANCODE_AUDIOPLAY SDL_SCANCODE_AUDIOPLAY_renamed_SDL_SCANCODE_MEDIA_PLAY
+#define SDL_SCANCODE_AUDIOPREV SDL_SCANCODE_AUDIOPREV_renamed_SDL_SCANCODE_MEDIA_PREVIOUS_TRACK
+#define SDL_SCANCODE_AUDIOREWIND SDL_SCANCODE_AUDIOREWIND_renamed_SDL_SCANCODE_MEDIA_REWIND
+#define SDL_SCANCODE_AUDIOSTOP SDL_SCANCODE_AUDIOSTOP_renamed_SDL_SCANCODE_MEDIA_STOP
+#define SDL_SCANCODE_EJECT SDL_SCANCODE_EJECT_renamed_SDL_SCANCODE_MEDIA_EJECT
+#define SDL_SCANCODE_MEDIASELECT SDL_SCANCODE_MEDIASELECT_renamed_SDL_SCANCODE_MEDIA_SELECT
+
 /* ##SDL_sensor.h */
 #define SDL_SensorClose SDL_SensorClose_renamed_SDL_CloseSensor
 #define SDL_SensorFromInstanceID SDL_SensorFromInstanceID_renamed_SDL_GetSensorFromInstanceID
@@ -959,9 +1118,11 @@
 #define SDL_SensorUpdate SDL_SensorUpdate_renamed_SDL_UpdateSensors
 
 /* ##SDL_stdinc.h */
+#define SDL_TABLESIZE SDL_TABLESIZE_renamed_SDL_arraysize
 #define SDL_strtokr SDL_strtokr_renamed_SDL_strtok_r
 
 /* ##SDL_surface.h */
+#define SDL_BlitScaled SDL_BlitScaled_renamed_SDL_BlitSurfaceScaled
 #define SDL_FillRect SDL_FillRect_renamed_SDL_FillSurfaceRect
 #define SDL_FillRects SDL_FillRects_renamed_SDL_FillSurfaceRects
 #define SDL_FreeSurface SDL_FreeSurface_renamed_SDL_DestroySurface
@@ -969,12 +1130,19 @@
 #define SDL_GetColorKey SDL_GetColorKey_renamed_SDL_GetSurfaceColorKey
 #define SDL_HasColorKey SDL_HasColorKey_renamed_SDL_SurfaceHasColorKey
 #define SDL_HasSurfaceRLE SDL_HasSurfaceRLE_renamed_SDL_SurfaceHasRLE
+#define SDL_LoadBMP_RW SDL_LoadBMP_RW_renamed_SDL_LoadBMP_IO
 #define SDL_LowerBlit SDL_LowerBlit_renamed_SDL_BlitSurfaceUnchecked
 #define SDL_LowerBlitScaled SDL_LowerBlitScaled_renamed_SDL_BlitSurfaceUncheckedScaled
+#define SDL_SaveBMP_RW SDL_SaveBMP_RW_renamed_SDL_SaveBMP_IO
 #define SDL_SetClipRect SDL_SetClipRect_renamed_SDL_SetSurfaceClipRect
 #define SDL_SetColorKey SDL_SetColorKey_renamed_SDL_SetSurfaceColorKey
 #define SDL_UpperBlit SDL_UpperBlit_renamed_SDL_BlitSurface
 #define SDL_UpperBlitScaled SDL_UpperBlitScaled_renamed_SDL_BlitSurfaceScaled
+
+/* ##SDL_system.h */
+#define SDL_WinRTGetFSPathUTF8 SDL_WinRTGetFSPathUTF8_renamed_SDL_WinRTGetFSPath
+#define SDL_iPhoneSetAnimationCallback SDL_iPhoneSetAnimationCallback_renamed_SDL_iOSSetAnimationCallback
+#define SDL_iPhoneSetEventPump SDL_iPhoneSetEventPump_renamed_SDL_iOSSetEventPump
 
 /* ##SDL_thread.h */
 #define SDL_TLSCleanup SDL_TLSCleanup_renamed_SDL_CleanupTLS
@@ -987,7 +1155,8 @@
 #define SDL_GetTicks64 SDL_GetTicks64_renamed_SDL_GetTicks
 
 /* ##SDL_version.h */
-#define SDL_version SDL_version_renamed_SDL_Version
+#define SDL_COMPILEDVERSION SDL_COMPILEDVERSION_renamed_SDL_VERSION
+#define SDL_PATCHLEVEL SDL_PATCHLEVEL_renamed_SDL_MICRO_VERSION
 
 /* ##SDL_video.h */
 #define SDL_GetClosestDisplayMode SDL_GetClosestDisplayMode_renamed_SDL_GetClosestFullscreenDisplayMode

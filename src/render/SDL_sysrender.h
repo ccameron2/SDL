@@ -44,8 +44,6 @@ typedef struct SDL_DRect
 /* The SDL 2D rendering system */
 
 typedef struct SDL_RenderDriver SDL_RenderDriver;
-extern char SDL_renderer_magic;
-extern char SDL_texture_magic;
 
 /* Rendering view state */
 typedef struct SDL_RenderViewState
@@ -53,7 +51,9 @@ typedef struct SDL_RenderViewState
     int pixel_w;
     int pixel_h;
     SDL_Rect viewport;
+    SDL_Rect pixel_viewport;
     SDL_Rect clip_rect;
+    SDL_Rect pixel_clip_rect;
     SDL_bool clipping_enabled;
     SDL_FPoint scale;
 
@@ -62,11 +62,10 @@ typedef struct SDL_RenderViewState
 /* Define the SDL texture structure */
 struct SDL_Texture
 {
-    const void *magic;
     SDL_Colorspace colorspace;  /**< The colorspace of the texture */
     float SDR_white_point;      /**< The SDR white point for this content */
     float HDR_headroom;         /**< The HDR headroom needed by this content */
-    Uint32 format;              /**< The pixel format of the texture */
+    SDL_PixelFormatEnum format; /**< The pixel format of the texture */
     int access;                 /**< SDL_TextureAccess */
     int w;                      /**< The width of the texture */
     int h;                      /**< The height of the texture */
@@ -160,8 +159,6 @@ typedef enum
 /* Define the SDL renderer structure */
 struct SDL_Renderer
 {
-    const void *magic;
-
     void (*WindowEvent)(SDL_Renderer *renderer, const SDL_WindowEvent *event);
     int (*GetOutputSize)(SDL_Renderer *renderer, int *w, int *h);
     SDL_bool (*SupportsBlendMode)(SDL_Renderer *renderer, SDL_BlendMode blendMode);
@@ -216,8 +213,13 @@ struct SDL_Renderer
     void *(*GetMetalLayer)(SDL_Renderer *renderer);
     void *(*GetMetalCommandEncoder)(SDL_Renderer *renderer);
 
+    int (*AddVulkanRenderSemaphores)(SDL_Renderer *renderer, Uint32 wait_stage_mask, Sint64 wait_semaphore, Sint64 signal_semaphore);
+
     /* The current renderer info */
-    SDL_RendererInfo info;
+    const char *name;
+    SDL_PixelFormatEnum *texture_formats;
+    int num_texture_formats;
+    SDL_bool software;
 
     /* The window associated with the renderer */
     SDL_Window *window;
@@ -286,16 +288,19 @@ struct SDL_Renderer
 
     SDL_PropertiesID props;
 
+    SDL_bool destroyed;   // already destroyed by SDL_DestroyWindow; just free this struct in SDL_DestroyRenderer.
+
     void *driverdata;
+
+    SDL_Renderer *next;
 };
 
 /* Define the SDL render driver structure */
 struct SDL_RenderDriver
 {
-    SDL_Renderer *(*CreateRenderer)(SDL_Window *window, SDL_PropertiesID props);
+    int (*CreateRenderer)(SDL_Renderer *renderer, SDL_Window *window, SDL_PropertiesID props);
 
-    /* Info about the renderer capabilities */
-    SDL_RendererInfo info;
+    const char *name;
 };
 
 /* Not all of these are available in a given build. Use #ifdefs, etc. */
@@ -310,6 +315,12 @@ extern SDL_RenderDriver PS2_RenderDriver;
 extern SDL_RenderDriver PSP_RenderDriver;
 extern SDL_RenderDriver SW_RenderDriver;
 extern SDL_RenderDriver VITA_GXM_RenderDriver;
+
+/* Clean up any renderers at shutdown */
+extern void SDL_QuitRender(void);
+
+/* Add a supported texture format to a renderer */
+extern int SDL_AddSupportedTextureFormat(SDL_Renderer *renderer, SDL_PixelFormatEnum format);
 
 /* Setup colorspace conversion */
 extern void SDL_SetupRendererColorspace(SDL_Renderer *renderer, SDL_PropertiesID props);
@@ -331,6 +342,9 @@ extern SDL_BlendOperation SDL_GetBlendModeAlphaOperation(SDL_BlendMode blendMode
    for a vertex buffer during RunCommandQueue(). Pointers returned here are only valid until
    the next call, because it might be in an array that gets realloc()'d. */
 extern void *SDL_AllocateRenderVertices(SDL_Renderer *renderer, const size_t numbytes, const size_t alignment, size_t *offset);
+
+// Let the video subsystem destroy a renderer without making its pointer invalid.
+extern void SDL_DestroyRendererWithoutFreeing(SDL_Renderer *renderer);
 
 /* Ends C function definitions when using C++ */
 #ifdef __cplusplus

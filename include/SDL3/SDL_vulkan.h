@@ -20,14 +20,15 @@
 */
 
 /**
- *  \file SDL_vulkan.h
+ * # CategoryVulkan
  *
- *  Header file for functions to creating Vulkan surfaces on SDL windows.
+ * Functions for creating Vulkan surfaces on SDL windows.
  */
 
 #ifndef SDL_vulkan_h_
 #define SDL_vulkan_h_
 
+#include <SDL3/SDL_error.h>
 #include <SDL3/SDL_video.h>
 
 #include <SDL3/SDL_begin_code.h>
@@ -54,9 +55,6 @@ VK_DEFINE_NON_DISPATCHABLE_HANDLE(VkSurfaceKHR)
 struct VkAllocationCallbacks;
 
 #endif /* !NO_SDL_VULKAN_TYPEDEFS */
-
-typedef VkInstance SDL_vulkanInstance;
-typedef VkSurfaceKHR SDL_vulkanSurface; /* for compatibility with Tizen */
 
 /**
  *  \name Vulkan support functions
@@ -95,16 +93,16 @@ typedef VkSurfaceKHR SDL_vulkanSurface; /* for compatibility with Tizen */
  * supported. Either do not link to the Vulkan loader or link to a dynamic
  * library version.
  *
- * \param path The platform dependent Vulkan loader library name or NULL
+ * \param path the platform dependent Vulkan loader library name or NULL.
  * \returns 0 on success or a negative error code on failure; call
  *          SDL_GetError() for more information.
  *
  * \since This function is available since SDL 3.0.0.
  *
- * \sa SDL_Vulkan_GetVkInstanceProcAddr
+ * \sa SDL_Vulkan_GetVkGetInstanceProcAddr
  * \sa SDL_Vulkan_UnloadLibrary
  */
-extern DECLSPEC int SDLCALL SDL_Vulkan_LoadLibrary(const char *path);
+extern SDL_DECLSPEC int SDLCALL SDL_Vulkan_LoadLibrary(const char *path);
 
 /**
  * Get the address of the `vkGetInstanceProcAddr` function.
@@ -124,16 +122,16 @@ extern DECLSPEC int SDLCALL SDL_Vulkan_LoadLibrary(const char *path);
  *
  * \since This function is available since SDL 3.0.0.
  */
-extern DECLSPEC SDL_FunctionPointer SDLCALL SDL_Vulkan_GetVkGetInstanceProcAddr(void);
+extern SDL_DECLSPEC SDL_FunctionPointer SDLCALL SDL_Vulkan_GetVkGetInstanceProcAddr(void);
 
 /**
- * Unload the Vulkan library previously loaded by SDL_Vulkan_LoadLibrary()
+ * Unload the Vulkan library previously loaded by SDL_Vulkan_LoadLibrary().
  *
  * \since This function is available since SDL 3.0.0.
  *
  * \sa SDL_Vulkan_LoadLibrary
  */
-extern DECLSPEC void SDLCALL SDL_Vulkan_UnloadLibrary(void);
+extern SDL_DECLSPEC void SDLCALL SDL_Vulkan_UnloadLibrary(void);
 
 /**
  * Get the Vulkan instance extensions needed for vkCreateInstance.
@@ -141,7 +139,7 @@ extern DECLSPEC void SDLCALL SDL_Vulkan_UnloadLibrary(void);
  * This should be called after either calling SDL_Vulkan_LoadLibrary() or
  * creating an SDL_Window with the `SDL_WINDOW_VULKAN` flag.
  *
- * On return, the variable pointed to by `pCount` will be set to the number of
+ * On return, the variable pointed to by `count` will be set to the number of
  * elements returned, suitable for using with
  * VkInstanceCreateInfo::enabledExtensionCount, and the returned array can be
  * used with VkInstanceCreateInfo::ppEnabledExtensionNames, for calling
@@ -149,15 +147,14 @@ extern DECLSPEC void SDLCALL SDL_Vulkan_UnloadLibrary(void);
  *
  * You should not free the returned array; it is owned by SDL.
  *
- * \param pCount A pointer to Uint32 that will be filled with the number of
- *               extensions returned.
- * \returns An array of extension name strings on success, NULL on error.
+ * \param count a pointer filled in with the number of extensions returned.
+ * \returns an array of extension name strings on success, NULL on error.
  *
  * \since This function is available since SDL 3.0.0.
  *
  * \sa SDL_Vulkan_CreateSurface
  */
-extern DECLSPEC char const* const* SDLCALL SDL_Vulkan_GetInstanceExtensions(Uint32 *pCount);
+extern SDL_DECLSPEC char const* const* SDLCALL SDL_Vulkan_GetInstanceExtensions(Uint32 *count);
 
 /**
  * Create a Vulkan rendering surface for a window.
@@ -169,22 +166,50 @@ extern DECLSPEC char const* const* SDLCALL SDL_Vulkan_GetInstanceExtensions(Uint
  * If `allocator` is NULL, Vulkan will use the system default allocator. This
  * argument is passed directly to Vulkan and isn't used by SDL itself.
  *
- * \param window The window to which to attach the Vulkan surface
- * \param instance The Vulkan instance handle
- * \param allocator A VkAllocationCallbacks struct, which lets the app set the
+ * \param window the window to which to attach the Vulkan surface.
+ * \param instance the Vulkan instance handle.
+ * \param allocator a VkAllocationCallbacks struct, which lets the app set the
  *                  allocator that creates the surface. Can be NULL.
- * \param surface A pointer to a VkSurfaceKHR handle to output the newly
- *                created surface
+ * \param surface a pointer to a VkSurfaceKHR handle to output the newly
+ *                created surface.
  * \returns SDL_TRUE on success, SDL_FALSE on error.
  *
  * \since This function is available since SDL 3.0.0.
  *
  * \sa SDL_Vulkan_GetInstanceExtensions
+ * \sa SDL_Vulkan_DestroySurface
  */
-extern DECLSPEC SDL_bool SDLCALL SDL_Vulkan_CreateSurface(SDL_Window *window,
+extern SDL_DECLSPEC SDL_bool SDLCALL SDL_Vulkan_CreateSurface(SDL_Window *window,
                                                           VkInstance instance,
                                                           const struct VkAllocationCallbacks *allocator,
                                                           VkSurfaceKHR* surface);
+
+/**
+ * Destroy the Vulkan rendering surface of a window.
+ *
+ * This should be called before SDL_DestroyWindow, if SDL_Vulkan_CreateSurface
+ * was called after SDL_CreateWindow.
+ *
+ * The `instance` must have been created with extensions returned by
+ * SDL_Vulkan_GetInstanceExtensions() enabled and `surface` must have been
+ * created successfully by an SDL_Vulkan_CreateSurface() call.
+ *
+ * If `allocator` is NULL, Vulkan will use the system default allocator. This
+ * argument is passed directly to Vulkan and isn't used by SDL itself.
+ *
+ * \param instance the Vulkan instance handle.
+ * \param surface vkSurfaceKHR handle to destroy.
+ * \param allocator a VkAllocationCallbacks struct, which lets the app set the
+ *                  allocator that destroys the surface. Can be NULL.
+ *
+ * \since This function is available since SDL 3.0.0.
+ *
+ * \sa SDL_Vulkan_GetInstanceExtensions
+ * \sa SDL_Vulkan_CreateSurface
+ */
+extern SDL_DECLSPEC void SDLCALL SDL_Vulkan_DestroySurface(VkInstance instance,
+                                                       VkSurfaceKHR surface,
+                                                       const struct VkAllocationCallbacks *allocator);
 
 /* @} *//* Vulkan support functions */
 

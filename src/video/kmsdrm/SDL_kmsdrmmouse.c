@@ -351,7 +351,7 @@ static int KMSDRM_WarpMouseGlobal(float x, float y)
         SDL_DisplayData *dispdata = SDL_GetDisplayDriverDataForWindow(window);
 
         /* Update internal mouse position. */
-        SDL_SendMouseMotion(0, mouse->focus, mouse->mouseID, 0, x, y);
+        SDL_SendMouseMotion(0, mouse->focus, SDL_GLOBAL_MOUSE_ID, SDL_FALSE, x, y);
 
         /* And now update the cursor graphic position on screen. */
         if (dispdata->cursor_bo) {
@@ -422,7 +422,7 @@ static int KMSDRM_MoveCursor(SDL_Cursor *cursor)
             return SDL_SetError("Cursor not initialized properly.");
         }
 
-        ret = KMSDRM_drmModeMoveCursor(dispdata->cursor_bo_drm_fd, dispdata->crtc->crtc_id, mouse->x, mouse->y);
+        ret = KMSDRM_drmModeMoveCursor(dispdata->cursor_bo_drm_fd, dispdata->crtc->crtc_id, (int)mouse->x, (int)mouse->y);
 
         if (ret) {
             return SDL_SetError("drmModeMoveCursor() failed.");

@@ -33,6 +33,9 @@
 #include "SDL_cocoamessagebox.h"
 #include "SDL_cocoashape.h"
 
+#include "../../events/SDL_keyboard_c.h"
+#include "../../events/SDL_mouse_c.h"
+
 @implementation SDL_CocoaVideoData
 
 @end
@@ -119,6 +122,7 @@ static SDL_VideoDevice *Cocoa_CreateDevice(void)
         device->UpdateWindowShape = Cocoa_UpdateWindowShape;
         device->FlashWindow = Cocoa_FlashWindow;
         device->SetWindowFocusable = Cocoa_SetWindowFocusable;
+        device->SetWindowModalFor = Cocoa_SetWindowModalFor;
         device->SyncWindow = Cocoa_SyncWindow;
 
 #ifdef SDL_VIDEO_OPENGL_CGL
@@ -157,6 +161,7 @@ static SDL_VideoDevice *Cocoa_CreateDevice(void)
         device->Vulkan_UnloadLibrary = Cocoa_Vulkan_UnloadLibrary;
         device->Vulkan_GetInstanceExtensions = Cocoa_Vulkan_GetInstanceExtensions;
         device->Vulkan_CreateSurface = Cocoa_Vulkan_CreateSurface;
+        device->Vulkan_DestroySurface = Cocoa_Vulkan_DestroySurface;
 #endif
 
 #ifdef SDL_VIDEO_METAL
@@ -167,7 +172,7 @@ static SDL_VideoDevice *Cocoa_CreateDevice(void)
 
         device->StartTextInput = Cocoa_StartTextInput;
         device->StopTextInput = Cocoa_StopTextInput;
-        device->SetTextInputRect = Cocoa_SetTextInputRect;
+        device->UpdateTextInputRect = Cocoa_UpdateTextInputRect;
 
         device->SetClipboardData = Cocoa_SetClipboardData;
         device->GetClipboardData = Cocoa_GetClipboardData;
@@ -197,6 +202,11 @@ int Cocoa_VideoInit(SDL_VideoDevice *_this)
         if (Cocoa_InitMouse(_this) < 0) {
             return -1;
         }
+
+        // Assume we have a mouse and keyboard
+        // We could use GCMouse and GCKeyboard if we needed to, as is done in SDL_uikitevents.m
+        SDL_AddKeyboard(SDL_DEFAULT_KEYBOARD_ID, NULL, SDL_FALSE);
+        SDL_AddMouse(SDL_DEFAULT_MOUSE_ID, NULL, SDL_FALSE);
 
         data.allow_spaces = SDL_GetHintBoolean(SDL_HINT_VIDEO_MAC_FULLSCREEN_SPACES, SDL_TRUE);
         data.trackpad_is_touch_only = SDL_GetHintBoolean(SDL_HINT_TRACKPAD_IS_TOUCH_ONLY, SDL_FALSE);

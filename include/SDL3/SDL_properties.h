@@ -20,13 +20,17 @@
 */
 
 /**
- *  \file SDL_properties.h
+ * # CategoryProperties
  *
- *  Header file for SDL properties.
+ * SDL properties.
  */
+
 
 #ifndef SDL_properties_h_
 #define SDL_properties_h_
+
+#include <SDL3/SDL_stdinc.h>
+#include <SDL3/SDL_error.h>
 
 #include <SDL3/SDL_begin_code.h>
 /* Set up for C function definitions, even when using C++ */
@@ -36,24 +40,28 @@ extern "C" {
 
 /**
  * SDL properties ID
+ *
+ * \since This datatype is available since SDL 3.0.0.
  */
 typedef Uint32 SDL_PropertiesID;
 
 /**
  * SDL property type
+ *
+ * \since This enum is available since SDL 3.0.0.
  */
-typedef enum
+typedef enum SDL_PropertyType
 {
     SDL_PROPERTY_TYPE_INVALID,
     SDL_PROPERTY_TYPE_POINTER,
     SDL_PROPERTY_TYPE_STRING,
     SDL_PROPERTY_TYPE_NUMBER,
     SDL_PROPERTY_TYPE_FLOAT,
-    SDL_PROPERTY_TYPE_BOOLEAN,
+    SDL_PROPERTY_TYPE_BOOLEAN
 } SDL_PropertyType;
 
 /**
- * Get the global SDL properties
+ * Get the global SDL properties.
  *
  * \returns a valid property ID on success or 0 on failure; call
  *          SDL_GetError() for more information.
@@ -63,10 +71,10 @@ typedef enum
  * \sa SDL_GetProperty
  * \sa SDL_SetProperty
  */
-extern DECLSPEC SDL_PropertiesID SDLCALL SDL_GetGlobalProperties(void);
+extern SDL_DECLSPEC SDL_PropertiesID SDLCALL SDL_GetGlobalProperties(void);
 
 /**
- * Create a set of properties
+ * Create a set of properties.
  *
  * All properties are automatically destroyed when SDL_Quit() is called.
  *
@@ -79,18 +87,18 @@ extern DECLSPEC SDL_PropertiesID SDLCALL SDL_GetGlobalProperties(void);
  *
  * \sa SDL_DestroyProperties
  */
-extern DECLSPEC SDL_PropertiesID SDLCALL SDL_CreateProperties(void);
+extern SDL_DECLSPEC SDL_PropertiesID SDLCALL SDL_CreateProperties(void);
 
 /**
- * Copy a set of properties
+ * Copy a set of properties.
  *
  * Copy all the properties from one set of properties to another, with the
  * exception of properties requiring cleanup (set using
  * SDL_SetPropertyWithCleanup()), which will not be copied. Any property that
  * already exists on `dst` will be overwritten.
  *
- * \param src the properties to copy
- * \param dst the destination properties
+ * \param src the properties to copy.
+ * \param dst the destination properties.
  * \returns 0 on success or a negative error code on failure; call
  *          SDL_GetError() for more information.
  *
@@ -98,10 +106,10 @@ extern DECLSPEC SDL_PropertiesID SDLCALL SDL_CreateProperties(void);
  *
  * \since This function is available since SDL 3.0.0.
  */
-extern DECLSPEC int SDLCALL SDL_CopyProperties(SDL_PropertiesID src, SDL_PropertiesID dst);
+extern SDL_DECLSPEC int SDLCALL SDL_CopyProperties(SDL_PropertiesID src, SDL_PropertiesID dst);
 
 /**
- * Lock a set of properties
+ * Lock a set of properties.
  *
  * Obtain a multi-threaded lock for these properties. Other threads will wait
  * while trying to lock these properties until they are unlocked. Properties
@@ -112,7 +120,7 @@ extern DECLSPEC int SDLCALL SDL_CopyProperties(SDL_PropertiesID src, SDL_Propert
  * or want to guarantee that properties being queried aren't freed in another
  * thread.
  *
- * \param props the properties to lock
+ * \param props the properties to lock.
  * \returns 0 on success or a negative error code on failure; call
  *          SDL_GetError() for more information.
  *
@@ -122,12 +130,12 @@ extern DECLSPEC int SDLCALL SDL_CopyProperties(SDL_PropertiesID src, SDL_Propert
  *
  * \sa SDL_UnlockProperties
  */
-extern DECLSPEC int SDLCALL SDL_LockProperties(SDL_PropertiesID props);
+extern SDL_DECLSPEC int SDLCALL SDL_LockProperties(SDL_PropertiesID props);
 
 /**
- * Unlock a set of properties
+ * Unlock a set of properties.
  *
- * \param props the properties to unlock
+ * \param props the properties to unlock.
  *
  * \threadsafety It is safe to call this function from any thread.
  *
@@ -135,21 +143,50 @@ extern DECLSPEC int SDLCALL SDL_LockProperties(SDL_PropertiesID props);
  *
  * \sa SDL_LockProperties
  */
-extern DECLSPEC void SDLCALL SDL_UnlockProperties(SDL_PropertiesID props);
+extern SDL_DECLSPEC void SDLCALL SDL_UnlockProperties(SDL_PropertiesID props);
+
+/**
+ * A callback used to free resources when a property is deleted.
+ *
+ * This should release any resources associated with `value` that are no
+ * longer needed.
+ *
+ * This callback is set per-property. Different properties in the same set can
+ * have different cleanup callbacks.
+ *
+ * This callback will be called _during_ SDL_SetPropertyWithCleanup if the
+ * function fails for any reason.
+ *
+ * \param userdata an app-defined pointer passed to the callback.
+ * \param value the pointer assigned to the property to clean up.
+ *
+ * \threadsafety This callback may fire without any locks held; if this is a
+ *               concern, the app should provide its own locking.
+ *
+ * \since This datatype is available since SDL 3.0.0.
+ *
+ * \sa SDL_SetPropertyWithCleanup
+ */
+typedef void (SDLCALL *SDL_CleanupPropertyCallback)(void *userdata, void *value);
 
 /**
  * Set a property on a set of properties with a cleanup function that is
- * called when the property is deleted
+ * called when the property is deleted.
  *
  * The cleanup function is also called if setting the property fails for any
  * reason.
  *
- * \param props the properties to modify
- * \param name the name of the property to modify
- * \param value the new value of the property, or NULL to delete the property
+ * For simply setting basic data types, like numbers, bools, or strings, use
+ * SDL_SetNumberProperty, SDL_SetBooleanProperty, or SDL_SetStringProperty
+ * instead, as those functions will handle cleanup on your behalf. This
+ * function is only for more complex, custom data.
+ *
+ * \param props the properties to modify.
+ * \param name the name of the property to modify.
+ * \param value the new value of the property, or NULL to delete the property.
  * \param cleanup the function to call when this property is deleted, or NULL
- *                if no cleanup is necessary
- * \param userdata a pointer that is passed to the cleanup function
+ *                if no cleanup is necessary.
+ * \param userdata a pointer that is passed to the cleanup function.
  * \returns 0 on success or a negative error code on failure; call
  *          SDL_GetError() for more information.
  *
@@ -159,15 +196,16 @@ extern DECLSPEC void SDLCALL SDL_UnlockProperties(SDL_PropertiesID props);
  *
  * \sa SDL_GetProperty
  * \sa SDL_SetProperty
+ * \sa SDL_CleanupPropertyCallback
  */
-extern DECLSPEC int SDLCALL SDL_SetPropertyWithCleanup(SDL_PropertiesID props, const char *name, void *value, void (SDLCALL *cleanup)(void *userdata, void *value), void *userdata);
+extern SDL_DECLSPEC int SDLCALL SDL_SetPropertyWithCleanup(SDL_PropertiesID props, const char *name, void *value, SDL_CleanupPropertyCallback cleanup, void *userdata);
 
 /**
- * Set a property on a set of properties
+ * Set a property on a set of properties.
  *
- * \param props the properties to modify
- * \param name the name of the property to modify
- * \param value the new value of the property, or NULL to delete the property
+ * \param props the properties to modify.
+ * \param name the name of the property to modify.
+ * \param value the new value of the property, or NULL to delete the property.
  * \returns 0 on success or a negative error code on failure; call
  *          SDL_GetError() for more information.
  *
@@ -176,19 +214,24 @@ extern DECLSPEC int SDLCALL SDL_SetPropertyWithCleanup(SDL_PropertiesID props, c
  * \since This function is available since SDL 3.0.0.
  *
  * \sa SDL_GetProperty
+ * \sa SDL_HasProperty
+ * \sa SDL_SetBooleanProperty
+ * \sa SDL_SetFloatProperty
+ * \sa SDL_SetNumberProperty
  * \sa SDL_SetPropertyWithCleanup
+ * \sa SDL_SetStringProperty
  */
-extern DECLSPEC int SDLCALL SDL_SetProperty(SDL_PropertiesID props, const char *name, void *value);
+extern SDL_DECLSPEC int SDLCALL SDL_SetProperty(SDL_PropertiesID props, const char *name, void *value);
 
 /**
- * Set a string property on a set of properties
+ * Set a string property on a set of properties.
  *
  * This function makes a copy of the string; the caller does not have to
  * preserve the data after this call completes.
  *
- * \param props the properties to modify
- * \param name the name of the property to modify
- * \param value the new value of the property, or NULL to delete the property
+ * \param props the properties to modify.
+ * \param name the name of the property to modify.
+ * \param value the new value of the property, or NULL to delete the property.
  * \returns 0 on success or a negative error code on failure; call
  *          SDL_GetError() for more information.
  *
@@ -198,14 +241,14 @@ extern DECLSPEC int SDLCALL SDL_SetProperty(SDL_PropertiesID props, const char *
  *
  * \sa SDL_GetStringProperty
  */
-extern DECLSPEC int SDLCALL SDL_SetStringProperty(SDL_PropertiesID props, const char *name, const char *value);
+extern SDL_DECLSPEC int SDLCALL SDL_SetStringProperty(SDL_PropertiesID props, const char *name, const char *value);
 
 /**
- * Set an integer property on a set of properties
+ * Set an integer property on a set of properties.
  *
- * \param props the properties to modify
- * \param name the name of the property to modify
- * \param value the new value of the property
+ * \param props the properties to modify.
+ * \param name the name of the property to modify.
+ * \param value the new value of the property.
  * \returns 0 on success or a negative error code on failure; call
  *          SDL_GetError() for more information.
  *
@@ -215,14 +258,14 @@ extern DECLSPEC int SDLCALL SDL_SetStringProperty(SDL_PropertiesID props, const 
  *
  * \sa SDL_GetNumberProperty
  */
-extern DECLSPEC int SDLCALL SDL_SetNumberProperty(SDL_PropertiesID props, const char *name, Sint64 value);
+extern SDL_DECLSPEC int SDLCALL SDL_SetNumberProperty(SDL_PropertiesID props, const char *name, Sint64 value);
 
 /**
- * Set a floating point property on a set of properties
+ * Set a floating point property on a set of properties.
  *
- * \param props the properties to modify
- * \param name the name of the property to modify
- * \param value the new value of the property
+ * \param props the properties to modify.
+ * \param name the name of the property to modify.
+ * \param value the new value of the property.
  * \returns 0 on success or a negative error code on failure; call
  *          SDL_GetError() for more information.
  *
@@ -232,14 +275,14 @@ extern DECLSPEC int SDLCALL SDL_SetNumberProperty(SDL_PropertiesID props, const 
  *
  * \sa SDL_GetFloatProperty
  */
-extern DECLSPEC int SDLCALL SDL_SetFloatProperty(SDL_PropertiesID props, const char *name, float value);
+extern SDL_DECLSPEC int SDLCALL SDL_SetFloatProperty(SDL_PropertiesID props, const char *name, float value);
 
 /**
- * Set a boolean property on a set of properties
+ * Set a boolean property on a set of properties.
  *
- * \param props the properties to modify
- * \param name the name of the property to modify
- * \param value the new value of the property
+ * \param props the properties to modify.
+ * \param name the name of the property to modify.
+ * \param value the new value of the property.
  * \returns 0 on success or a negative error code on failure; call
  *          SDL_GetError() for more information.
  *
@@ -249,13 +292,13 @@ extern DECLSPEC int SDLCALL SDL_SetFloatProperty(SDL_PropertiesID props, const c
  *
  * \sa SDL_GetBooleanProperty
  */
-extern DECLSPEC int SDLCALL SDL_SetBooleanProperty(SDL_PropertiesID props, const char *name, SDL_bool value);
+extern SDL_DECLSPEC int SDLCALL SDL_SetBooleanProperty(SDL_PropertiesID props, const char *name, SDL_bool value);
 
 /**
  * Return whether a property exists in a set of properties.
  *
- * \param props the properties to query
- * \param name the name of the property to query
+ * \param props the properties to query.
+ * \param name the name of the property to query.
  * \returns SDL_TRUE if the property exists, or SDL_FALSE if it doesn't.
  *
  * \threadsafety It is safe to call this function from any thread.
@@ -264,13 +307,13 @@ extern DECLSPEC int SDLCALL SDL_SetBooleanProperty(SDL_PropertiesID props, const
  *
  * \sa SDL_GetPropertyType
  */
-extern DECLSPEC SDL_bool SDLCALL SDL_HasProperty(SDL_PropertiesID props, const char *name);
+extern SDL_DECLSPEC SDL_bool SDLCALL SDL_HasProperty(SDL_PropertiesID props, const char *name);
 
 /**
- * Get the type of a property on a set of properties
+ * Get the type of a property on a set of properties.
  *
- * \param props the properties to query
- * \param name the name of the property to query
+ * \param props the properties to query.
+ * \param name the name of the property to query.
  * \returns the type of the property, or SDL_PROPERTY_TYPE_INVALID if it is
  *          not set.
  *
@@ -280,19 +323,19 @@ extern DECLSPEC SDL_bool SDLCALL SDL_HasProperty(SDL_PropertiesID props, const c
  *
  * \sa SDL_HasProperty
  */
-extern DECLSPEC SDL_PropertyType SDLCALL SDL_GetPropertyType(SDL_PropertiesID props, const char *name);
+extern SDL_DECLSPEC SDL_PropertyType SDLCALL SDL_GetPropertyType(SDL_PropertiesID props, const char *name);
 
 /**
- * Get a property on a set of properties
+ * Get a property on a set of properties.
  *
  * By convention, the names of properties that SDL exposes on objects will
  * start with "SDL.", and properties that SDL uses internally will start with
  * "SDL.internal.". These should be considered read-only and should not be
  * modified by applications.
  *
- * \param props the properties to query
- * \param name the name of the property to query
- * \param default_value the default value of the property
+ * \param props the properties to query.
+ * \param name the name of the property to query.
+ * \param default_value the default value of the property.
  * \returns the value of the property, or `default_value` if it is not set or
  *          not a pointer property.
  *
@@ -304,18 +347,24 @@ extern DECLSPEC SDL_PropertyType SDLCALL SDL_GetPropertyType(SDL_PropertiesID pr
  *
  * \since This function is available since SDL 3.0.0.
  *
+ * \sa SDL_GetBooleanProperty
+ * \sa SDL_GetFloatProperty
+ * \sa SDL_GetNumberProperty
  * \sa SDL_GetPropertyType
+ * \sa SDL_GetStringProperty
  * \sa SDL_HasProperty
  * \sa SDL_SetProperty
  */
-extern DECLSPEC void *SDLCALL SDL_GetProperty(SDL_PropertiesID props, const char *name, void *default_value);
+extern SDL_DECLSPEC void *SDLCALL SDL_GetProperty(SDL_PropertiesID props, const char *name, void *default_value);
 
 /**
- * Get a string property on a set of properties
+ * Get a string property on a set of properties.
  *
- * \param props the properties to query
- * \param name the name of the property to query
- * \param default_value the default value of the property
+ * The returned string follows the SDL_GetStringRule.
+ *
+ * \param props the properties to query.
+ * \param name the name of the property to query.
+ * \param default_value the default value of the property.
  * \returns the value of the property, or `default_value` if it is not set or
  *          not a string property.
  *
@@ -327,17 +376,17 @@ extern DECLSPEC void *SDLCALL SDL_GetProperty(SDL_PropertiesID props, const char
  * \sa SDL_HasProperty
  * \sa SDL_SetStringProperty
  */
-extern DECLSPEC const char *SDLCALL SDL_GetStringProperty(SDL_PropertiesID props, const char *name, const char *default_value);
+extern SDL_DECLSPEC const char *SDLCALL SDL_GetStringProperty(SDL_PropertiesID props, const char *name, const char *default_value);
 
 /**
- * Get a number property on a set of properties
+ * Get a number property on a set of properties.
  *
  * You can use SDL_GetPropertyType() to query whether the property exists and
  * is a number property.
  *
- * \param props the properties to query
- * \param name the name of the property to query
- * \param default_value the default value of the property
+ * \param props the properties to query.
+ * \param name the name of the property to query.
+ * \param default_value the default value of the property.
  * \returns the value of the property, or `default_value` if it is not set or
  *          not a number property.
  *
@@ -349,17 +398,17 @@ extern DECLSPEC const char *SDLCALL SDL_GetStringProperty(SDL_PropertiesID props
  * \sa SDL_HasProperty
  * \sa SDL_SetNumberProperty
  */
-extern DECLSPEC Sint64 SDLCALL SDL_GetNumberProperty(SDL_PropertiesID props, const char *name, Sint64 default_value);
+extern SDL_DECLSPEC Sint64 SDLCALL SDL_GetNumberProperty(SDL_PropertiesID props, const char *name, Sint64 default_value);
 
 /**
- * Get a floating point property on a set of properties
+ * Get a floating point property on a set of properties.
  *
  * You can use SDL_GetPropertyType() to query whether the property exists and
  * is a floating point property.
  *
- * \param props the properties to query
- * \param name the name of the property to query
- * \param default_value the default value of the property
+ * \param props the properties to query.
+ * \param name the name of the property to query.
+ * \param default_value the default value of the property.
  * \returns the value of the property, or `default_value` if it is not set or
  *          not a float property.
  *
@@ -371,17 +420,17 @@ extern DECLSPEC Sint64 SDLCALL SDL_GetNumberProperty(SDL_PropertiesID props, con
  * \sa SDL_HasProperty
  * \sa SDL_SetFloatProperty
  */
-extern DECLSPEC float SDLCALL SDL_GetFloatProperty(SDL_PropertiesID props, const char *name, float default_value);
+extern SDL_DECLSPEC float SDLCALL SDL_GetFloatProperty(SDL_PropertiesID props, const char *name, float default_value);
 
 /**
- * Get a boolean property on a set of properties
+ * Get a boolean property on a set of properties.
  *
  * You can use SDL_GetPropertyType() to query whether the property exists and
  * is a boolean property.
  *
- * \param props the properties to query
- * \param name the name of the property to query
- * \param default_value the default value of the property
+ * \param props the properties to query.
+ * \param name the name of the property to query.
+ * \param default_value the default value of the property.
  * \returns the value of the property, or `default_value` if it is not set or
  *          not a float property.
  *
@@ -393,13 +442,13 @@ extern DECLSPEC float SDLCALL SDL_GetFloatProperty(SDL_PropertiesID props, const
  * \sa SDL_HasProperty
  * \sa SDL_SetBooleanProperty
  */
-extern DECLSPEC SDL_bool SDLCALL SDL_GetBooleanProperty(SDL_PropertiesID props, const char *name, SDL_bool default_value);
+extern SDL_DECLSPEC SDL_bool SDLCALL SDL_GetBooleanProperty(SDL_PropertiesID props, const char *name, SDL_bool default_value);
 
 /**
- * Clear a property on a set of properties
+ * Clear a property on a set of properties.
  *
- * \param props the properties to modify
- * \param name the name of the property to clear
+ * \param props the properties to modify.
+ * \param name the name of the property to clear.
  * \returns 0 on success or a negative error code on failure; call
  *          SDL_GetError() for more information.
  *
@@ -407,19 +456,36 @@ extern DECLSPEC SDL_bool SDLCALL SDL_GetBooleanProperty(SDL_PropertiesID props, 
  *
  * \since This function is available since SDL 3.0.0.
  */
-extern DECLSPEC int SDLCALL SDL_ClearProperty(SDL_PropertiesID props, const char *name);
+extern SDL_DECLSPEC int SDLCALL SDL_ClearProperty(SDL_PropertiesID props, const char *name);
 
+/**
+ * A callback used to enumerate all properties set in an SDL_PropertiesID.
+ *
+ * This callback is called from SDL_EnumerateProperties(), and is called once
+ * per property in the set.
+ *
+ * \param userdata an app-defined pointer passed to the callback.
+ * \param props the SDL_PropertiesID that is being enumerated.
+ * \param name the next property name in the enumeration.
+ *
+ * \threadsafety SDL_EnumerateProperties holds a lock on `props` during this
+ *               callback.
+ *
+ * \since This datatype is available since SDL 3.0.0.
+ *
+ * \sa SDL_EnumerateProperties
+ */
 typedef void (SDLCALL *SDL_EnumeratePropertiesCallback)(void *userdata, SDL_PropertiesID props, const char *name);
 
 /**
- * Enumerate the properties on a set of properties
+ * Enumerate the properties on a set of properties.
  *
  * The callback function is called for each property on the set of properties.
  * The properties are locked during enumeration.
  *
- * \param props the properties to query
- * \param callback the function to call for each property
- * \param userdata a pointer that is passed to `callback`
+ * \param props the properties to query.
+ * \param callback the function to call for each property.
+ * \param userdata a pointer that is passed to `callback`.
  * \returns 0 on success or a negative error code on failure; call
  *          SDL_GetError() for more information.
  *
@@ -427,15 +493,15 @@ typedef void (SDLCALL *SDL_EnumeratePropertiesCallback)(void *userdata, SDL_Prop
  *
  * \since This function is available since SDL 3.0.0.
  */
-extern DECLSPEC int SDLCALL SDL_EnumerateProperties(SDL_PropertiesID props, SDL_EnumeratePropertiesCallback callback, void *userdata);
+extern SDL_DECLSPEC int SDLCALL SDL_EnumerateProperties(SDL_PropertiesID props, SDL_EnumeratePropertiesCallback callback, void *userdata);
 
 /**
- * Destroy a set of properties
+ * Destroy a set of properties.
  *
  * All properties are deleted and their cleanup functions will be called, if
  * any.
  *
- * \param props the properties to destroy
+ * \param props the properties to destroy.
  *
  * \threadsafety This function should not be called while these properties are
  *               locked or other threads might be setting or getting values
@@ -445,7 +511,7 @@ extern DECLSPEC int SDLCALL SDL_EnumerateProperties(SDL_PropertiesID props, SDL_
  *
  * \sa SDL_CreateProperties
  */
-extern DECLSPEC void SDLCALL SDL_DestroyProperties(SDL_PropertiesID props);
+extern SDL_DECLSPEC void SDLCALL SDL_DestroyProperties(SDL_PropertiesID props);
 
 /* Ends C function definitions when using C++ */
 #ifdef __cplusplus

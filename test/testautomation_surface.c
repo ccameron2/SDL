@@ -56,7 +56,7 @@ static void surfaceSetUp(void *arg)
         SDLTest_AssertCheck(result == 0, "Validate result from SDL_SetSurfaceBlendMode, expected: 0, got: %i", result);
         result = SDL_GetSurfaceBlendMode(testSurface, &currentBlendMode);
         SDLTest_AssertCheck(result == 0, "Validate result from SDL_GetSurfaceBlendMode, expected: 0, got: %i", result);
-        SDLTest_AssertCheck(currentBlendMode == blendMode, "Validate blendMode, expected: %i, got: %i", blendMode, currentBlendMode);
+        SDLTest_AssertCheck(currentBlendMode == blendMode, "Validate blendMode, expected: %" SDL_PRIu32 ", got: %" SDL_PRIu32, blendMode, currentBlendMode);
     }
 }
 
@@ -312,10 +312,10 @@ static int surface_testCompleteSurfaceConversion(void *arg)
     Uint32 pixel_formats[] = {
         SDL_PIXELFORMAT_INDEX8,
         SDL_PIXELFORMAT_RGB332,
-        SDL_PIXELFORMAT_RGB444,
-        SDL_PIXELFORMAT_BGR444,
-        SDL_PIXELFORMAT_RGB555,
-        SDL_PIXELFORMAT_BGR555,
+        SDL_PIXELFORMAT_XRGB4444,
+        SDL_PIXELFORMAT_XBGR4444,
+        SDL_PIXELFORMAT_XRGB1555,
+        SDL_PIXELFORMAT_XBGR1555,
         SDL_PIXELFORMAT_ARGB4444,
         SDL_PIXELFORMAT_RGBA4444,
         SDL_PIXELFORMAT_ABGR4444,
@@ -364,16 +364,21 @@ static int surface_testCompleteSurfaceConversion(void *arg)
     for (i = 0; i < SDL_arraysize(pixel_formats); ++i) {
         for (j = 0; j < SDL_arraysize(pixel_formats); ++j) {
             fmt1 = SDL_CreatePixelFormat(pixel_formats[i]);
-            SDL_assert(fmt1 != NULL);
+            SDLTest_AssertCheck(fmt1 != NULL, "SDL_CreatePixelFormat(%s[0x%08" SDL_PRIx32 "]) should return a non-null pixel format",
+                                SDL_GetPixelFormatName(pixel_formats[i]), pixel_formats[i]);
             cvt1 = SDL_ConvertSurface(face, fmt1);
-            SDL_assert(cvt1 != NULL);
+            SDLTest_AssertCheck(cvt1 != NULL, "SDL_ConvertSurface(..., %s[0x%08" SDL_PRIx32 "]) should return a non-null surface",
+                                SDL_GetPixelFormatName(pixel_formats[i]), pixel_formats[i]);
 
             fmt2 = SDL_CreatePixelFormat(pixel_formats[j]);
-            SDL_assert(fmt1 != NULL);
+            SDLTest_AssertCheck(fmt2 != NULL, "SDL_CreatePixelFormat(%s[0x%08" SDL_PRIx32 "]) should return a non-null pixel format",
+                                SDL_GetPixelFormatName(pixel_formats[i]), pixel_formats[i]);
             cvt2 = SDL_ConvertSurface(cvt1, fmt2);
-            SDL_assert(cvt2 != NULL);
+            SDLTest_AssertCheck(cvt2 != NULL, "SDL_ConvertSurface(..., %s[0x%08" SDL_PRIx32 "]) should return a non-null surface",
+                                SDL_GetPixelFormatName(pixel_formats[i]), pixel_formats[i]);
 
-            if (fmt1->bytes_per_pixel == face->format->bytes_per_pixel &&
+            if (fmt1 && fmt2 &&
+                fmt1->bytes_per_pixel == face->format->bytes_per_pixel &&
                 fmt2->bytes_per_pixel == face->format->bytes_per_pixel &&
                 (fmt1->Amask != 0) == (face->format->Amask != 0) &&
                 (fmt2->Amask != 0) == (face->format->Amask != 0)) {
@@ -749,16 +754,16 @@ static int surface_testOverflow(void *arg)
     /* Everything else requires more than 1 byte per pixel, and rounds up
      * each pixel to an integer number of bytes (e.g. RGB555 is really
      * XRGB1555, with 1 bit per pixel wasted). */
-    surface = SDL_CreateSurfaceFrom(buf, 3, 1, 6, SDL_PIXELFORMAT_RGB555);
+    surface = SDL_CreateSurfaceFrom(buf, 3, 1, 6, SDL_PIXELFORMAT_XRGB1555);
     SDLTest_AssertCheck(surface != NULL, "3px * 15 (really 16) bits per px fits in 6 bytes: %s",
                         surface != NULL ? "(success)" : SDL_GetError());
     SDL_DestroySurface(surface);
-    surface = SDL_CreateSurfaceFrom(buf, 3, 1, 6, SDL_PIXELFORMAT_RGB555);
+    surface = SDL_CreateSurfaceFrom(buf, 3, 1, 6, SDL_PIXELFORMAT_XRGB1555);
     SDLTest_AssertCheck(surface != NULL, "5px * 15 (really 16) bits per px fits in 6 bytes: %s",
                         surface != NULL ? "(success)" : SDL_GetError());
     SDL_DestroySurface(surface);
 
-    surface = SDL_CreateSurfaceFrom(buf, 4, 1, 6, SDL_PIXELFORMAT_RGB555);
+    surface = SDL_CreateSurfaceFrom(buf, 4, 1, 6, SDL_PIXELFORMAT_XRGB1555);
     SDLTest_AssertCheck(surface == NULL, "4px * 15 (really 16) bits per px doesn't fit in 6 bytes");
     SDLTest_AssertCheck(SDL_strcmp(SDL_GetError(), expectedError) == 0,
                         "Expected \"%s\", got \"%s\"", expectedError, SDL_GetError());

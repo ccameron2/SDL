@@ -165,7 +165,7 @@ Loading assets
 
 Any files you put in the "app/src/main/assets" directory of your project
 directory will get bundled into the application package and you can load
-them using the standard functions in SDL_rwops.h.
+them using the standard functions in SDL_iostream.h.
 
 There are also a few Android specific functions that allow you to get other
 useful paths for saving and loading data:
@@ -377,9 +377,9 @@ Memory debugging
 The best (and slowest) way to debug memory issues on Android is valgrind.
 Valgrind has support for Android out of the box, just grab code using:
 
-    svn co svn://svn.valgrind.org/valgrind/trunk valgrind
+    git clone https://sourceware.org/git/valgrind.git
 
-... and follow the instructions in the file README.android to build it.
+... and follow the instructions in the file `README.android` to build it.
 
 One thing I needed to do on macOS was change the path to the toolchain,
 and add ranlib to the environment variables:

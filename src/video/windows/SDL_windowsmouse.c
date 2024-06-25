@@ -24,6 +24,7 @@
 
 #include "SDL_windowsvideo.h"
 #include "SDL_windowsevents.h"
+#include "SDL_windowsrawinput.h"
 
 #include "../SDL_video_c.h"
 #include "../../events/SDL_mouse_c.h"
@@ -33,152 +34,9 @@ DWORD SDL_last_warp_time = 0;
 HCURSOR SDL_cursor = NULL;
 static SDL_Cursor *SDL_blank_cursor = NULL;
 
-static int rawInputEnableCount = 0;
-
-typedef struct
-{
-    HANDLE ready_event;
-    HANDLE done_event;
-    HANDLE thread;
-} RawMouseThreadData;
-
-static RawMouseThreadData thread_data = {
-    INVALID_HANDLE_VALUE,
-    INVALID_HANDLE_VALUE,
-    INVALID_HANDLE_VALUE
-};
-
-static DWORD WINAPI WIN_RawMouseThread(LPVOID param)
-{
-    RAWINPUTDEVICE rawMouse;
-    HWND window;
-
-    window = CreateWindowEx(0, TEXT("Message"), NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, NULL, NULL);
-    if (!window) {
-        return 0;
-    }
-
-    rawMouse.usUsagePage = USB_USAGEPAGE_GENERIC_DESKTOP;
-    rawMouse.usUsage = USB_USAGE_GENERIC_MOUSE;
-    rawMouse.dwFlags = 0;
-    rawMouse.hwndTarget = window;
-
-    if (!RegisterRawInputDevices(&rawMouse, 1, sizeof(rawMouse))) {
-        DestroyWindow(window);
-        return 0;
-    }
-
-    /* Make sure we get mouse events as soon as possible */
-    SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL);
-
-    /* Tell the parent we're ready to go! */
-    SetEvent(thread_data.ready_event);
-
-    for ( ; ; ) {
-        if (MsgWaitForMultipleObjects(1, &thread_data.done_event, 0, INFINITE, QS_RAWINPUT) != WAIT_OBJECT_0 + 1) {
-            break;
-        }
-
-        /* Clear the queue status so MsgWaitForMultipleObjects() will wait again */
-        (void)GetQueueStatus(QS_RAWINPUT);
-
-        WIN_PollRawMouseInput();
-    }
-
-    rawMouse.dwFlags |= RIDEV_REMOVE;
-    RegisterRawInputDevices(&rawMouse, 1, sizeof(rawMouse));
-
-    DestroyWindow(window);
-
-    return 0;
-}
-
-static void CleanupRawMouseThreadData(void)
-{
-    if (thread_data.thread != INVALID_HANDLE_VALUE) {
-        SetEvent(thread_data.done_event);
-        WaitForSingleObject(thread_data.thread, 500);
-        CloseHandle(thread_data.thread);
-        thread_data.thread = INVALID_HANDLE_VALUE;
-    }
-
-    if (thread_data.ready_event != INVALID_HANDLE_VALUE) {
-        CloseHandle(thread_data.ready_event);
-        thread_data.ready_event = INVALID_HANDLE_VALUE;
-    }
-
-    if (thread_data.done_event != INVALID_HANDLE_VALUE) {
-        CloseHandle(thread_data.done_event);
-        thread_data.done_event = INVALID_HANDLE_VALUE;
-    }
-}
-
-static int ToggleRawInput(SDL_bool enabled)
-{
-    int result = -1;
-
-    if (enabled) {
-        rawInputEnableCount++;
-        if (rawInputEnableCount > 1) {
-            return 0; /* already done. */
-        }
-    } else {
-        if (rawInputEnableCount == 0) {
-            return 0; /* already done. */
-        }
-        rawInputEnableCount--;
-        if (rawInputEnableCount > 0) {
-            return 0; /* not time to disable yet */
-        }
-    }
-
-    if (enabled) {
-        HANDLE handles[2];
-
-        thread_data.ready_event = CreateEvent(NULL, FALSE, FALSE, NULL);
-        if (thread_data.ready_event == INVALID_HANDLE_VALUE) {
-            WIN_SetError("CreateEvent");
-            goto done;
-        }
-
-        thread_data.done_event = CreateEvent(NULL, FALSE, FALSE, NULL);
-        if (thread_data.done_event == INVALID_HANDLE_VALUE) {
-            WIN_SetError("CreateEvent");
-            goto done;
-        }
-
-        thread_data.thread = CreateThread(NULL, 0, WIN_RawMouseThread, &thread_data, 0, NULL);
-        if (thread_data.thread == INVALID_HANDLE_VALUE) {
-            WIN_SetError("CreateThread");
-            goto done;
-        }
-
-        /* Wait for the thread to signal ready or exit */
-        handles[0] = thread_data.ready_event;
-        handles[1] = thread_data.thread;
-        if (WaitForMultipleObjects(2, handles, FALSE, INFINITE) != WAIT_OBJECT_0) {
-            SDL_SetError("Couldn't set up raw input handling");
-            goto done;
-        }
-        result = 0;
-    } else {
-        CleanupRawMouseThreadData();
-        result = 0;
-    }
-
-done:
-    if (enabled && result < 0) {
-        CleanupRawMouseThreadData();
-
-        /* Reset rawInputEnableCount so we can try again */
-        rawInputEnableCount = 0;
-    }
-    return result;
-}
-
 static SDL_Cursor *WIN_CreateDefaultCursor()
 {
-    SDL_Cursor *cursor = SDL_calloc(1, sizeof(*cursor));
+    SDL_Cursor *cursor = (SDL_Cursor *)SDL_calloc(1, sizeof(*cursor));
     if (cursor) {
         cursor->driverdata = LoadCursor(NULL, IDC_ARROW);
     }
@@ -263,7 +121,7 @@ static HBITMAP CreateMaskBitmap(SDL_Surface *surface, SDL_bool is_monochrome)
         return NULL;
     }
 
-    dst = pixels;
+    dst = (Uint8 *)pixels;
 
     /* Make the mask completely transparent. */
     SDL_memset(dst, 0xff, size);
@@ -327,7 +185,7 @@ static SDL_Cursor *WIN_CreateCursor(SDL_Surface *surface, int hot_x, int hot_y)
         return NULL;
     }
 
-    cursor = SDL_calloc(1, sizeof(*cursor));
+    cursor = (SDL_Cursor *)SDL_calloc(1, sizeof(*cursor));
     if (cursor) {
         cursor->driverdata = hcursor;
     } else {
@@ -357,10 +215,10 @@ static SDL_Cursor *WIN_CreateSystemCursor(SDL_SystemCursor id)
     default:
         SDL_assert(0);
         return NULL;
-    case SDL_SYSTEM_CURSOR_ARROW:
+    case SDL_SYSTEM_CURSOR_DEFAULT:
         name = IDC_ARROW;
         break;
-    case SDL_SYSTEM_CURSOR_IBEAM:
+    case SDL_SYSTEM_CURSOR_TEXT:
         name = IDC_IBEAM;
         break;
     case SDL_SYSTEM_CURSOR_WAIT:
@@ -369,57 +227,57 @@ static SDL_Cursor *WIN_CreateSystemCursor(SDL_SystemCursor id)
     case SDL_SYSTEM_CURSOR_CROSSHAIR:
         name = IDC_CROSS;
         break;
-    case SDL_SYSTEM_CURSOR_WAITARROW:
+    case SDL_SYSTEM_CURSOR_PROGRESS:
         name = IDC_WAIT;
         break;
-    case SDL_SYSTEM_CURSOR_SIZENWSE:
+    case SDL_SYSTEM_CURSOR_NWSE_RESIZE:
         name = IDC_SIZENWSE;
         break;
-    case SDL_SYSTEM_CURSOR_SIZENESW:
+    case SDL_SYSTEM_CURSOR_NESW_RESIZE:
         name = IDC_SIZENESW;
         break;
-    case SDL_SYSTEM_CURSOR_SIZEWE:
+    case SDL_SYSTEM_CURSOR_EW_RESIZE:
         name = IDC_SIZEWE;
         break;
-    case SDL_SYSTEM_CURSOR_SIZENS:
+    case SDL_SYSTEM_CURSOR_NS_RESIZE:
         name = IDC_SIZENS;
         break;
-    case SDL_SYSTEM_CURSOR_SIZEALL:
+    case SDL_SYSTEM_CURSOR_MOVE:
         name = IDC_SIZEALL;
         break;
-    case SDL_SYSTEM_CURSOR_NO:
+    case SDL_SYSTEM_CURSOR_NOT_ALLOWED:
         name = IDC_NO;
         break;
-    case SDL_SYSTEM_CURSOR_HAND:
+    case SDL_SYSTEM_CURSOR_POINTER:
         name = IDC_HAND;
         break;
-    case SDL_SYSTEM_CURSOR_WINDOW_TOPLEFT:
+    case SDL_SYSTEM_CURSOR_NW_RESIZE:
         name = IDC_SIZENWSE;
         break;
-    case SDL_SYSTEM_CURSOR_WINDOW_TOP:
+    case SDL_SYSTEM_CURSOR_N_RESIZE:
         name = IDC_SIZENS;
         break;
-    case SDL_SYSTEM_CURSOR_WINDOW_TOPRIGHT:
+    case SDL_SYSTEM_CURSOR_NE_RESIZE:
         name = IDC_SIZENESW;
         break;
-    case SDL_SYSTEM_CURSOR_WINDOW_RIGHT:
+    case SDL_SYSTEM_CURSOR_E_RESIZE:
         name = IDC_SIZEWE;
         break;
-    case SDL_SYSTEM_CURSOR_WINDOW_BOTTOMRIGHT:
+    case SDL_SYSTEM_CURSOR_SE_RESIZE:
         name = IDC_SIZENWSE;
         break;
-    case SDL_SYSTEM_CURSOR_WINDOW_BOTTOM:
+    case SDL_SYSTEM_CURSOR_S_RESIZE:
         name = IDC_SIZENS;
         break;
-    case SDL_SYSTEM_CURSOR_WINDOW_BOTTOMLEFT:
+    case SDL_SYSTEM_CURSOR_SW_RESIZE:
         name = IDC_SIZENESW;
         break;
-    case SDL_SYSTEM_CURSOR_WINDOW_LEFT:
+    case SDL_SYSTEM_CURSOR_W_RESIZE:
         name = IDC_SIZEWE;
         break;
     }
 
-    cursor = SDL_calloc(1, sizeof(*cursor));
+    cursor = (SDL_Cursor *)SDL_calloc(1, sizeof(*cursor));
     if (cursor) {
         HCURSOR hcursor;
 
@@ -493,7 +351,7 @@ static int WIN_WarpMouse(SDL_Window *window, float x, float y)
     WIN_SetCursorPos(pt.x, pt.y);
 
     /* Send the exact mouse motion associated with this warp */
-    SDL_SendMouseMotion(0, window, SDL_GetMouse()->mouseID, 0, x, y);
+    SDL_SendMouseMotion(0, window, SDL_GLOBAL_MOUSE_ID, SDL_FALSE, x, y);
     return 0;
 }
 
@@ -509,7 +367,7 @@ static int WIN_WarpMouseGlobal(float x, float y)
 
 static int WIN_SetRelativeMouseMode(SDL_bool enabled)
 {
-    return ToggleRawInput(enabled);
+    return WIN_SetRawMouseEnabled(SDL_GetVideoDevice(), enabled);
 }
 
 static int WIN_CaptureMouse(SDL_Window *window)
@@ -532,9 +390,9 @@ static int WIN_CaptureMouse(SDL_Window *window)
     return 0;
 }
 
-static Uint32 WIN_GetGlobalMouseState(float *x, float *y)
+static SDL_MouseButtonFlags WIN_GetGlobalMouseState(float *x, float *y)
 {
-    Uint32 retval = 0;
+    SDL_MouseButtonFlags retval = 0;
     POINT pt = { 0, 0 };
     SDL_bool swapButtons = GetSystemMetrics(SM_SWAPBUTTON) != 0;
 
@@ -574,11 +432,6 @@ void WIN_InitMouse(SDL_VideoDevice *_this)
 
 void WIN_QuitMouse(SDL_VideoDevice *_this)
 {
-    if (rawInputEnableCount) { /* force RAWINPUT off here. */
-        rawInputEnableCount = 1;
-        ToggleRawInput(SDL_FALSE);
-    }
-
     if (SDL_blank_cursor) {
         WIN_FreeCursor(SDL_blank_cursor);
         SDL_blank_cursor = NULL;

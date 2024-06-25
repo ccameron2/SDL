@@ -228,17 +228,7 @@ static DBusHandlerResult IBus_MessageHandler(DBusConnection *conn, DBusMessage *
         dbus->message_iter_init(msg, &iter);
         text = IBus_GetVariantText(conn, &iter, dbus);
 
-        if (text && *text) {
-            char buf[SDL_TEXTINPUTEVENT_TEXT_SIZE];
-            size_t text_bytes = SDL_strlen(text), i = 0;
-
-            while (i < text_bytes) {
-                size_t sz = SDL_utf8strlcpy(buf, text + i, sizeof(buf));
-                SDL_SendKeyboardText(buf);
-
-                i += sz;
-            }
-        }
+        SDL_SendKeyboardText(text);
 
         return DBUS_HANDLER_RESULT_HANDLED;
     }
@@ -271,7 +261,7 @@ static DBusHandlerResult IBus_MessageHandler(DBusConnection *conn, DBusMessage *
             }
         }
 
-        SDL_IBus_UpdateTextRect(NULL);
+        SDL_IBus_UpdateTextRect(SDL_GetKeyboardFocus());
 
         return DBUS_HANDLER_RESULT_HANDLED;
     }
@@ -490,9 +480,13 @@ static SDL_bool IBus_SetupConnection(SDL_DBusContext *dbus, const char *addr)
         dbus->connection_flush(ibus_conn);
     }
 
-    SDL_IBus_SetFocus(SDL_GetKeyboardFocus() != NULL);
-    SDL_IBus_UpdateTextRect(NULL);
-
+    SDL_Window *window = SDL_GetKeyboardFocus();
+    if (SDL_TextInputActive(window)) {
+        SDL_IBus_SetFocus(SDL_TRUE);
+        SDL_IBus_UpdateTextRect(window);
+    } else {
+        SDL_IBus_SetFocus(SDL_FALSE);
+    }
     return result;
 }
 
@@ -680,31 +674,27 @@ SDL_bool SDL_IBus_ProcessKeyEvent(Uint32 keysym, Uint32 keycode, Uint8 state)
         }
     }
 
-    SDL_IBus_UpdateTextRect(NULL);
+    SDL_IBus_UpdateTextRect(SDL_GetKeyboardFocus());
 
     return (result != 0);
 }
 
-void SDL_IBus_UpdateTextRect(const SDL_Rect *rect)
+void SDL_IBus_UpdateTextRect(SDL_Window *window)
 {
-    SDL_Window *focused_win;
     int x = 0, y = 0;
     SDL_DBusContext *dbus;
 
-    if (rect) {
-        SDL_memcpy(&ibus_cursor_rect, rect, sizeof(ibus_cursor_rect));
-    }
-
-    focused_win = SDL_GetKeyboardFocus();
-    if (!focused_win) {
+    if (!window) {
         return;
     }
 
-    SDL_GetWindowPosition(focused_win, &x, &y);
+    SDL_copyp(&ibus_cursor_rect, &window->text_input_rect);
+
+    SDL_GetWindowPosition(window, &x, &y);
 
 #ifdef SDL_VIDEO_DRIVER_X11
     {
-        SDL_PropertiesID props = SDL_GetWindowProperties(focused_win);
+        SDL_PropertiesID props = SDL_GetWindowProperties(window);
         Display *x_disp = (Display *)SDL_GetProperty(props, SDL_PROP_WINDOW_X11_DISPLAY_POINTER, NULL);
         int x_screen = SDL_GetNumberProperty(props, SDL_PROP_WINDOW_X11_SCREEN_NUMBER, 0);
         Window x_win = SDL_GetNumberProperty(props, SDL_PROP_WINDOW_X11_WINDOW_NUMBER, 0);

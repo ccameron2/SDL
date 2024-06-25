@@ -59,8 +59,8 @@ static void UpdateHDRState(void)
     SDL_PropertiesID props;
     SDL_bool HDR_enabled;
 
-    props = SDL_GetDisplayProperties(SDL_GetDisplayForWindow(window));
-    HDR_enabled = SDL_GetBooleanProperty(props, SDL_PROP_DISPLAY_HDR_ENABLED_BOOLEAN, SDL_FALSE);
+    props = SDL_GetWindowProperties(window);
+    HDR_enabled = SDL_GetBooleanProperty(props, SDL_PROP_WINDOW_HDR_ENABLED_BOOLEAN, SDL_FALSE);
 
     SDL_Log("HDR %s\n", HDR_enabled ? "enabled" : "disabled");
 
@@ -76,7 +76,6 @@ static void UpdateHDRState(void)
 static void CreateRenderer(void)
 {
     SDL_PropertiesID props;
-    SDL_RendererInfo info;
 
     props = SDL_CreateProperties();
     SDL_SetProperty(props, SDL_PROP_RENDERER_CREATE_WINDOW_POINTER, window);
@@ -89,9 +88,8 @@ static void CreateRenderer(void)
         return;
     }
 
-    SDL_GetRendererInfo(renderer, &info);
-    SDL_Log("Created renderer %s\n", info.name);
-    renderer_name = info.name;
+    renderer_name = SDL_GetRendererName(renderer);
+    SDL_Log("Created renderer %s\n", renderer_name);
 
     UpdateHDRState();
 }
@@ -157,9 +155,6 @@ static SDL_bool ReadPixel(int x, int y, SDL_Color *c)
 
     surface = SDL_RenderReadPixels(renderer, &r);
     if (surface) {
-        /* We don't want to do any HDR -> SDR tone mapping */
-        SDL_SetFloatProperty(SDL_GetSurfaceProperties(surface), SDL_PROP_SURFACE_HDR_HEADROOM_FLOAT, 0.0f);
-
         if (SDL_ReadSurfacePixel(surface, 0, 0, &c->r, &c->g, &c->b, &c->a) == 0) {
             result = SDL_TRUE;
         } else {
@@ -508,9 +503,10 @@ static void loop(void)
     /* Check for events */
     while (SDL_PollEvent(&event)) {
         if (event.type == SDL_EVENT_KEY_DOWN) {
-            switch (event.key.keysym.sym) {
+            switch (event.key.key) {
             case SDLK_ESCAPE:
                 done = 1;
+                break;
             case SDLK_SPACE:
             case SDLK_RIGHT:
                 NextStage();
@@ -527,7 +523,7 @@ static void loop(void)
             default:
                 break;
             }
-        } else if (event.type == SDL_EVENT_DISPLAY_HDR_STATE_CHANGED) {
+        } else if (event.type == SDL_EVENT_WINDOW_HDR_STATE_CHANGED) {
             UpdateHDRState();
         } else if (event.type == SDL_EVENT_QUIT) {
             done = 1;
