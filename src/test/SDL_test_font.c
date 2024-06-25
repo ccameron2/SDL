@@ -35,8 +35,6 @@
 ;
 */
 
-#define NUM_FONT_GLYPHS 257
-
 static unsigned char SDLTest_FontData[] = {
 
     /*
@@ -3112,26 +3110,14 @@ static unsigned char SDLTest_FontData[] = {
     0x30, /* 00001100 */
     0x1f, /* 11111000 */
 
-    /*
-     * 256 0x100 - missing character
-     */
-    0x55, /* 01010101 */
-    0xAA, /* 10101010 */
-    0x55, /* 01010101 */
-    0xAA, /* 10101010 */
-    0x55, /* 01010101 */
-    0xAA, /* 10101010 */
-    0x55, /* 01010101 */
-    0xAA, /* 10101010 */
 };
-SDL_COMPILE_TIME_ASSERT(SDLTest_FontDataSize, SDL_arraysize(SDLTest_FontData) == NUM_FONT_GLYPHS * 8);
 
 /* ---- Character */
 
 struct SDLTest_CharTextureCache
 {
     SDL_Renderer *renderer;
-    SDL_Texture *charTextureCache[NUM_FONT_GLYPHS];
+    SDL_Texture *charTextureCache[256];
     struct SDLTest_CharTextureCache *next;
 };
 
@@ -3177,9 +3163,6 @@ int SDLTest_DrawCharacter(SDL_Renderer *renderer, float x, float y, Uint32 c)
 
     /* Character index in cache */
     ci = c;
-    if (ci >= NUM_FONT_GLYPHS) {
-        ci = (NUM_FONT_GLYPHS - 1);
-    }
 
     /* Search for this renderer's cache */
     for (cache = SDLTest_CharTextureCacheList; cache; cache = cache->next) {
@@ -3359,7 +3342,9 @@ int SDLTest_DrawString(SDL_Renderer *renderer, float x, float y, const char *s)
     while (len > 0 && !result) {
         int advance = 0;
         Uint32 ch = UTF8_getch(s, len, &advance);
-        result |= SDLTest_DrawCharacter(renderer, curx, cury, ch);
+        if (ch < 256) {
+            result |= SDLTest_DrawCharacter(renderer, curx, cury, ch);
+        }
         curx += charWidth;
         s += advance;
         len -= advance;

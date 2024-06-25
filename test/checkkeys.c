@@ -28,38 +28,21 @@
 
 #define CURSOR_BLINK_INTERVAL_MS    500
 
-typedef struct
-{
-    SDLTest_TextWindow *textwindow;
-    char *edit_text;
-    int edit_cursor;
-    int edit_length;
-} TextWindowState;
-
 static SDLTest_CommonState *state;
-static TextWindowState *windowstates;
+static SDLTest_TextWindow **textwindows;
 static SDL_bool escape_pressed;
 static SDL_bool cursor_visible;
 static Uint64 last_cursor_change;
 static int done;
 
-static TextWindowState *GetTextWindowStateForWindowID(SDL_WindowID id)
+static SDLTest_TextWindow *GetTextWindowForWindowID(SDL_WindowID id)
 {
     int i;
 
     for (i = 0; i < state->num_windows; ++i) {
         if (id == SDL_GetWindowID(state->windows[i])) {
-            return &windowstates[i];
+            return textwindows[i];
         }
-    }
-    return NULL;
-}
-
-static SDLTest_TextWindow *GetTextWindowForWindowID(SDL_WindowID id)
-{
-    TextWindowState *windowstate = GetTextWindowStateForWindowID(id);
-    if (windowstate) {
-        return windowstate->textwindow;
     }
     return NULL;
 }
@@ -70,11 +53,10 @@ static void UpdateTextWindowInputRect(SDL_WindowID id)
 
     for (i = 0; i < state->num_windows; ++i) {
         if (id == SDL_GetWindowID(state->windows[i])) {
-            SDLTest_TextWindow *textwindow = windowstates[i].textwindow;
             int w, h;
             SDL_Rect rect;
-            int current = textwindow->current;
-            const char *current_line = textwindow->lines[current];
+            int current = textwindows[i]->current;
+            const char *current_line = textwindows[i]->lines[current];
 
             SDL_GetWindowSize(state->windows[i], &w, &h);
 
@@ -289,17 +271,12 @@ static void CountKeysDown(void)
 static void DrawCursor(int i)
 {
     SDL_FRect rect;
-    TextWindowState *windowstate = &windowstates[i];
-    SDLTest_TextWindow *textwindow = windowstate->textwindow;
-    int current = textwindow->current;
-    const char *current_line = textwindow->lines[current];
+    int current = textwindows[i]->current;
+    const char *current_line = textwindows[i]->lines[current];
 
     rect.x = TEXT_WINDOW_OFFSET_X;
     if (current_line) {
         rect.x += SDL_utf8strlen(current_line) * FONT_CHARACTER_SIZE;
-    }
-    if (windowstate->edit_cursor > 0) {
-        rect.x += (float)windowstate->edit_cursor * FONT_CHARACTER_SIZE;
     }
     rect.y = TEXT_WINDOW_OFFSET_Y + current * FONT_LINE_HEIGHT;
     rect.w = FONT_CHARACTER_SIZE * 0.75f;
@@ -309,51 +286,11 @@ static void DrawCursor(int i)
     SDL_RenderFillRect(state->renderers[i], &rect);
 }
 
-static void DrawEditText(int i)
-{
-    SDL_FRect rect;
-    TextWindowState *windowstate = &windowstates[i];
-    SDLTest_TextWindow *textwindow = windowstate->textwindow;
-    int current = textwindow->current;
-    const char *current_line = textwindow->lines[current];
-
-    if (windowstate->edit_text == NULL) {
-        return;
-    }
-
-    /* Draw the highlight under the selected text */
-    if (windowstate->edit_length > 0) {
-        rect.x = TEXT_WINDOW_OFFSET_X;
-        if (current_line) {
-            rect.x += SDL_utf8strlen(current_line) * FONT_CHARACTER_SIZE;
-        }
-        if (windowstate->edit_cursor > 0) {
-            rect.x += (float)windowstate->edit_cursor * FONT_CHARACTER_SIZE;
-        }
-        rect.y = TEXT_WINDOW_OFFSET_Y + current * FONT_LINE_HEIGHT;
-        rect.w = (float)windowstate->edit_length * FONT_CHARACTER_SIZE;
-        rect.h = (float)FONT_CHARACTER_SIZE;
-
-        SDL_SetRenderDrawColor(state->renderers[i], 0xAA, 0xAA, 0xAA, 255);
-        SDL_RenderFillRect(state->renderers[i], &rect);
-    }
-
-    /* Draw the edit text */
-    rect.x = TEXT_WINDOW_OFFSET_X;
-    if (current_line) {
-        rect.x += SDL_utf8strlen(current_line) * FONT_CHARACTER_SIZE;
-    }
-    rect.y = TEXT_WINDOW_OFFSET_Y + current * FONT_LINE_HEIGHT;
-    SDL_SetRenderDrawColor(state->renderers[i], 255, 255, 0, 255);
-    SDLTest_DrawString(state->renderers[i], rect.x, rect.y, windowstate->edit_text);
-}
-
 static void loop(void)
 {
     SDL_Event event;
     Uint64 now;
     int i;
-    char line[1024];
 
     while (SDL_PollEvent(&event)) {
         switch (event.type) {
@@ -387,22 +324,8 @@ static void loop(void)
             CountKeysDown();
             break;
         case SDL_EVENT_TEXT_EDITING:
-        {
-            TextWindowState *windowstate = GetTextWindowStateForWindowID(event.edit.windowID);
-            if (windowstate->edit_text) {
-                SDL_free(windowstate->edit_text);
-                windowstate->edit_text = NULL;
-            }
-            if (event.edit.text && *event.edit.text) {
-                windowstate->edit_text = SDL_strdup(event.edit.text);
-            }
-            windowstate->edit_cursor = event.edit.start;
-            windowstate->edit_length = event.edit.length;
-
-            SDL_snprintf(line, sizeof(line), "EDIT %" SDL_PRIs32 ":%" SDL_PRIs32, event.edit.start, event.edit.length);
-            PrintText(line, event.edit.text);
+            PrintText("EDIT", event.edit.text);
             break;
-        }
         case SDL_EVENT_TEXT_INPUT:
             PrintText("INPUT", event.text.text);
             SDLTest_TextWindowAddText(GetTextWindowForWindowID(event.text.windowID), "%s", event.text.text);
@@ -421,17 +344,17 @@ static void loop(void)
             break;
         }
         case SDL_EVENT_MOUSE_BUTTON_DOWN:
-            if (event.button.button == SDL_BUTTON_RIGHT) {
-                SDL_Window *window = SDL_GetWindowFromID(event.button.windowID);
-                if (SDL_TextInputActive(window)) {
-                    SDL_Log("Stopping text input for window %" SDL_PRIu32 "\n", event.button.windowID);
-                    SDL_StopTextInput(window);
-                } else {
-                    SDL_Log("Starting text input for window %" SDL_PRIu32 "\n", event.button.windowID);
-                    SDL_StartTextInput(window);
-                }
+        {
+            SDL_Window *window = SDL_GetWindowFromID(event.button.windowID);
+            if (SDL_TextInputActive(window)) {
+                SDL_Log("Stopping text input for window %" SDL_PRIu32 "\n", event.button.windowID);
+                SDL_StopTextInput(window);
+            } else {
+                SDL_Log("Starting text input for window %" SDL_PRIu32 "\n", event.button.windowID);
+                SDL_StartTextInput(window);
             }
             break;
+        }
         case SDL_EVENT_KEYMAP_CHANGED:
             SDL_Log("Keymap changed!\n");
             PrintKeymap();
@@ -454,11 +377,11 @@ static void loop(void)
 
         /* Draw the text */
         SDL_SetRenderDrawColor(state->renderers[i], 255, 255, 255, 255);
-        SDL_snprintf(caption, sizeof(caption), "Text input %s (click right mouse button to toggle)\n", SDL_TextInputActive(state->windows[i]) ? "enabled" : "disabled");
+        SDL_snprintf(caption, sizeof(caption), "Text input %s (click mouse button to toggle)\n", SDL_TextInputActive(state->windows[i]) ? "enabled" : "disabled");
         SDLTest_DrawString(state->renderers[i], TEXT_WINDOW_OFFSET_X, TEXT_WINDOW_OFFSET_X, caption);
-        SDLTest_TextWindowDisplay(windowstates[i].textwindow, state->renderers[i]);
+        SDLTest_TextWindowDisplay(textwindows[i], state->renderers[i]);
 
-        /* Draw the cursor */
+        /* Draw the cursor */        
         if ((now - last_cursor_change) >= CURSOR_BLINK_INTERVAL_MS) {
             cursor_visible = !cursor_visible;
             last_cursor_change = now;
@@ -466,10 +389,6 @@ static void loop(void)
         if (cursor_visible) {
             DrawCursor(i);
         }
-
-        /* Draw the composition text */
-        DrawEditText(i);
-
         SDL_RenderPresent(state->renderers[i]);
     }
 
@@ -513,8 +432,8 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    windowstates = (TextWindowState *)SDL_calloc(state->num_windows, sizeof(*windowstates));
-    if (!windowstates) {
+    textwindows = (SDLTest_TextWindow **)SDL_malloc(state->num_windows * sizeof(*textwindows));
+    if (!textwindows) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't allocate text windows: %s\n", SDL_GetError());
         goto done;
     }
@@ -528,7 +447,7 @@ int main(int argc, char *argv[])
         rect.y = TEXT_WINDOW_OFFSET_Y;
         rect.w = w - (2 * TEXT_WINDOW_OFFSET_X);
         rect.h = h - TEXT_WINDOW_OFFSET_Y;
-        windowstates[i].textwindow = SDLTest_TextWindowCreate(rect.x, rect.y, rect.w, rect.h);
+        textwindows[i] = SDLTest_TextWindowCreate(rect.x, rect.y, rect.w, rect.h);
     }
 
 #ifdef SDL_PLATFORM_IOS
@@ -539,6 +458,9 @@ int main(int argc, char *argv[])
         }
     }
 #endif
+
+    /* Enable showing IME candidates */
+    SDL_SetHint(SDL_HINT_IME_SHOW_UI, "1");
 
     for (i = 0; i < state->num_windows; ++i) {
         UpdateTextWindowInputRect(SDL_GetWindowID(state->windows[i]));
@@ -564,9 +486,9 @@ int main(int argc, char *argv[])
 
 done:
     for (i = 0; i < state->num_windows; ++i) {
-        SDLTest_TextWindowDestroy(windowstates[i].textwindow);
+        SDLTest_TextWindowDestroy(textwindows[i]);
     }
-    SDL_free(windowstates);
+    SDL_free(textwindows);
     SDLTest_CleanupTextDrawing();
     SDLTest_CommonQuit(state);
     return 0;
