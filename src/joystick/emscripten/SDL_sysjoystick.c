@@ -311,6 +311,7 @@ static int EMSCRIPTEN_JoystickOpen(SDL_Joystick *joystick, int device_index)
         return SDL_SetError("Joystick already opened");
     }
 
+    joystick->instance_id = item->device_instance;
     joystick->hwdata = (struct joystick_hwdata *)item;
     item->joystick = joystick;
 

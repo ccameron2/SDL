@@ -1,5 +1,5 @@
 
-#include "VULKAN_PixelShader_Common.hlsli"
+#include "VULKAN_PixelShader_Common.incl"
 
 float4 main(PixelShaderInput input) : SV_TARGET0
 {

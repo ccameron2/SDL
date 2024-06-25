@@ -57,7 +57,7 @@ test_multi_audio(SDL_AudioDeviceID *devices, int devcount)
 #endif
 
     for (i = 0; i < devcount; i++) {
-        const char *devname = SDL_GetAudioDeviceName(devices[i]);
+        char *devname = SDL_GetAudioDeviceName(devices[i]);
 
         SDL_Log("Playing on device #%d of %d: id=%u, name='%s'...", i, devcount, (unsigned int) devices[i], devname);
 
@@ -82,6 +82,7 @@ test_multi_audio(SDL_AudioDeviceID *devices, int devcount)
             SDL_Log("done.");
             SDL_DestroyAudioStream(stream);
         }
+        SDL_free(devname);
         stream = NULL;
     }
 
@@ -148,7 +149,7 @@ int main(int argc, char **argv)
     }
 
     /* Enable standard application logging */
-    SDL_SetLogPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
+    SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
 
     /* Parse commandline */
     for (i = 1; i < argc;) {
@@ -180,9 +181,9 @@ int main(int argc, char **argv)
 
     filename = GetResourceFilename(filename, "sample.wav");
 
-    devices = SDL_GetAudioPlaybackDevices(&devcount);
+    devices = SDL_GetAudioOutputDevices(&devcount);
     if (!devices) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Don't see any specific audio playback devices!");
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Don't see any specific audio devices!");
     } else {
         /* Load the wave file into memory */
         if (SDL_LoadWAV(filename, &spec, &sound, &soundlen) == -1) {

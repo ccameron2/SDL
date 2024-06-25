@@ -97,18 +97,7 @@ char *SDL_GetUserFolder(SDL_Folder folder)
         return NULL;
     }
 
-    char *retval = SDL_malloc(SDL_strlen(home) + 2);
-    if (!retval) {
-        return NULL;
-    }
-
-    if (SDL_snprintf(retval, SDL_strlen(home) + 2, "%s/", home) < 0) {
-        SDL_SetError("Couldn't snprintf home path for Emscripten: %s", home);
-        SDL_free(retval);
-        return NULL;
-    }
-
-    return retval;
+    return SDL_strdup(home);
 }
 
 #endif /* SDL_FILESYSTEM_EMSCRIPTEN */

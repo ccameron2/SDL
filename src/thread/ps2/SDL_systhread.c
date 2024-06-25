@@ -54,9 +54,7 @@ static int childThread(void *arg)
     return res;
 }
 
-int SDL_SYS_CreateThread(SDL_Thread *thread,
-                         SDL_FunctionPointer pfnBeginThread,
-                         SDL_FunctionPointer pfnEndThread)
+int SDL_SYS_CreateThread(SDL_Thread *thread)
 {
     ee_thread_status_t status;
     ee_thread_t eethread;

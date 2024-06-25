@@ -42,7 +42,7 @@ void SDL_SetWindowsMessageHook(SDL_WindowsMessageHook callback, void *userdata)
 
 #endif /* SDL_PLATFORM_WIN32 || SDL_PLATFORM_GDK */
 
-SDL_DECLSPEC SDL_bool SDLCALL SDL_DXGIGetOutputInfo(SDL_DisplayID displayID, int *adapterIndex, int *outputIndex);
+DECLSPEC SDL_bool SDLCALL SDL_DXGIGetOutputInfo(SDL_DisplayID displayID, int *adapterIndex, int *outputIndex);
 SDL_bool SDL_DXGIGetOutputInfo(SDL_DisplayID displayID, int *adapterIndex, int *outputIndex)
 {
     (void)displayID;
@@ -52,7 +52,7 @@ SDL_bool SDL_DXGIGetOutputInfo(SDL_DisplayID displayID, int *adapterIndex, int *
     return SDL_FALSE;
 }
 
-SDL_DECLSPEC int SDLCALL SDL_Direct3D9GetAdapterIndex(SDL_DisplayID displayID);
+DECLSPEC int SDLCALL SDL_Direct3D9GetAdapterIndex(SDL_DisplayID displayID);
 int SDL_Direct3D9GetAdapterIndex(SDL_DisplayID displayID)
 {
     (void)displayID;
@@ -61,7 +61,7 @@ int SDL_Direct3D9GetAdapterIndex(SDL_DisplayID displayID)
 
 #elif defined(SDL_PLATFORM_XBOXONE) || defined(SDL_PLATFORM_XBOXSERIES)
 
-SDL_DECLSPEC int SDLCALL SDL_Direct3D9GetAdapterIndex(SDL_DisplayID displayID);
+DECLSPEC int SDLCALL SDL_Direct3D9GetAdapterIndex(SDL_DisplayID displayID);
 int SDL_Direct3D9GetAdapterIndex(SDL_DisplayID displayID)
 {
     (void)displayID;
@@ -72,7 +72,7 @@ int SDL_Direct3D9GetAdapterIndex(SDL_DisplayID displayID)
 
 #ifndef SDL_PLATFORM_GDK
 
-SDL_DECLSPEC int SDLCALL SDL_GDKGetTaskQueue(void *outTaskQueue);
+DECLSPEC int SDLCALL SDL_GDKGetTaskQueue(void *outTaskQueue);
 int SDL_GDKGetTaskQueue(void *outTaskQueue)
 {
     (void)outTaskQueue;
@@ -83,7 +83,7 @@ int SDL_GDKGetTaskQueue(void *outTaskQueue)
 
 #ifndef SDL_VIDEO_DRIVER_UIKIT
 
-SDL_DECLSPEC void SDLCALL SDL_OnApplicationDidChangeStatusBarOrientation(void);
+DECLSPEC void SDLCALL SDL_OnApplicationDidChangeStatusBarOrientation(void);
 void SDL_OnApplicationDidChangeStatusBarOrientation(void)
 {
     SDL_Unsupported();
@@ -93,9 +93,8 @@ void SDL_OnApplicationDidChangeStatusBarOrientation(void)
 
 #ifndef SDL_VIDEO_DRIVER_UIKIT
 
-typedef void (SDLCALL *SDL_iOSAnimationCallback)(void *userdata);
-SDL_DECLSPEC int SDLCALL SDL_iOSSetAnimationCallback(SDL_Window *window, int interval, SDL_iOSAnimationCallback callback, void *callbackParam);
-int SDL_iOSSetAnimationCallback(SDL_Window *window, int interval, SDL_iOSAnimationCallback callback, void *callbackParam)
+DECLSPEC int SDLCALL SDL_iPhoneSetAnimationCallback(SDL_Window *window, int interval, void (*callback)(void *), void *callbackParam);
+int SDL_iPhoneSetAnimationCallback(SDL_Window *window, int interval, void (*callback)(void *), void *callbackParam)
 {
     (void)window;
     (void)interval;
@@ -104,8 +103,8 @@ int SDL_iOSSetAnimationCallback(SDL_Window *window, int interval, SDL_iOSAnimati
     return SDL_Unsupported();
 }
 
-SDL_DECLSPEC void SDLCALL SDL_iOSSetEventPump(SDL_bool enabled);
-void SDL_iOSSetEventPump(SDL_bool enabled)
+DECLSPEC void SDLCALL SDL_iPhoneSetEventPump(SDL_bool enabled);
+void SDL_iPhoneSetEventPump(SDL_bool enabled)
 {
     (void)enabled;
     SDL_Unsupported();

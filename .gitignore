@@ -35,8 +35,6 @@ cmake_uninstall.cmake
 SDL3ConfigVersion.cmake
 .ninja_*
 *.ninja
-compile_commands.json
-.cache/
 
 # for CLion
 .idea
@@ -93,7 +91,7 @@ test/gamepadmap
 test/loopwave
 test/loopwavequeue
 test/testatomic
-test/testaudiorecording
+test/testaudiocapture
 test/testaudiohotplug
 test/testaudioinfo
 test/testautomation

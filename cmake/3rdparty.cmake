@@ -98,16 +98,14 @@ function(get_clang_tidy_ignored_files OUTVAR)
       "vulkan_static_assertions.hpp"
       "vulkan_structs.hpp"
       "vulkan_to_string.hpp"
+      "vulkan.hpp"
       # HIDAPI
       "hid.c"
       "hid.cpp"
       "hid.m"
       "hidraw.cpp"
       "hidusb.cpp"
-      "hidapi.h"
-      # XSETTINGS
-      "xsettings-client.c"
-      "xsettings-client.h")
+      "hidapi.h")
 
   foreach(SOURCE_FILE ${3RD_PARTY_SOURCES})
     list(APPEND IGNORED_LIST "{\"name\":\"${SOURCE_FILE}\",\"lines\":[[1,1]]}")

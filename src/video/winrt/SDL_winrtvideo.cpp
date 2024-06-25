@@ -75,7 +75,7 @@ static void WINRT_VideoQuit(SDL_VideoDevice *_this);
 /* Window functions */
 static int WINRT_CreateWindow(SDL_VideoDevice *_this, SDL_Window *window, SDL_PropertiesID create_props);
 static void WINRT_SetWindowSize(SDL_VideoDevice *_this, SDL_Window *window);
-static int WINRT_SetWindowFullscreen(SDL_VideoDevice *_this, SDL_Window *window, SDL_VideoDisplay *display, SDL_FullscreenOp fullscreen);
+static int WINRT_SetWindowFullscreen(SDL_VideoDevice *_this, SDL_Window *window, SDL_VideoDisplay *display, SDL_bool fullscreen);
 static void WINRT_DestroyWindow(SDL_VideoDevice *_this, SDL_Window *window);
 
 /* Misc functions */
@@ -238,15 +238,10 @@ int WINRT_VideoInit(SDL_VideoDevice *_this)
         /* Initialize screensaver-disabling support */
         driverdata->displayRequest = WINRT_CreateDisplayRequest(_this);
     }
-
-    /* Assume we have a mouse and keyboard */
-    SDL_AddKeyboard(SDL_DEFAULT_KEYBOARD_ID, NULL, SDL_FALSE);
-    SDL_AddMouse(SDL_DEFAULT_MOUSE_ID, NULL, SDL_FALSE);
-
     return 0;
 }
 
-extern "C" SDL_PixelFormatEnum D3D11_DXGIFormatToSDLPixelFormat(DXGI_FORMAT dxgiFormat);
+extern "C" Uint32 D3D11_DXGIFormatToSDLPixelFormat(DXGI_FORMAT dxgiFormat);
 
 static void WINRT_DXGIModeToSDLDisplayMode(const DXGI_MODE_DESC *dxgiMode, SDL_DisplayMode *sdlMode)
 {
@@ -303,7 +298,7 @@ static int WINRT_AddDisplaysForOutput(SDL_VideoDevice *_this, IDXGIAdapter1 *dxg
         display.name = SDL_strdup("Windows Simulator / Terminal Services Display");
         mode.w = (dxgiOutputDesc.DesktopCoordinates.right - dxgiOutputDesc.DesktopCoordinates.left);
         mode.h = (dxgiOutputDesc.DesktopCoordinates.bottom - dxgiOutputDesc.DesktopCoordinates.top);
-        mode.format = D3D11_DXGIFormatToSDLPixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM);
+        mode.format = DXGI_FORMAT_B8G8R8A8_UNORM;
         display.desktop_mode = mode;
     } else if (FAILED(hr)) {
         WIN_SetErrorFromHRESULT(__FUNCTION__ ", IDXGIOutput::FindClosestMatchingMode failed", hr);
@@ -416,7 +411,7 @@ static int WINRT_AddDisplaysForAdapter(SDL_VideoDevice *_this, IDXGIFactory2 *dx
                 mode.h = (int)SDL_floorf(coreWin->Bounds.Height);
 #endif
                 mode.pixel_density = WINRT_DISPLAY_PROPERTY(LogicalDpi) / 96.0f;
-                mode.format = D3D11_DXGIFormatToSDLPixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM);
+                mode.format = DXGI_FORMAT_B8G8R8A8_UNORM;
 
                 display.desktop_mode = mode;
                 bool error = (SDL_AddVideoDisplay(&display, SDL_FALSE) == 0);
@@ -477,12 +472,12 @@ void WINRT_VideoQuit(SDL_VideoDevice *_this)
     WINRT_QuitMouse(_this);
 }
 
-static const SDL_WindowFlags WINRT_DetectableFlags = SDL_WINDOW_MAXIMIZED | SDL_WINDOW_FULLSCREEN | SDL_WINDOW_HIDDEN | SDL_WINDOW_MOUSE_FOCUS;
+static const Uint32 WINRT_DetectableFlags = SDL_WINDOW_MAXIMIZED | SDL_WINDOW_FULLSCREEN | SDL_WINDOW_HIDDEN | SDL_WINDOW_MOUSE_FOCUS;
 
-extern "C" SDL_WindowFlags
+extern "C" Uint32
 WINRT_DetectWindowFlags(SDL_Window *window)
 {
-    SDL_WindowFlags latestFlags = 0;
+    Uint32 latestFlags = 0;
     SDL_WindowData *data = window->driverdata;
     bool is_fullscreen = false;
 
@@ -548,7 +543,7 @@ WINRT_DetectWindowFlags(SDL_Window *window)
 }
 
 // TODO, WinRT: consider removing WINRT_UpdateWindowFlags, and just calling WINRT_DetectWindowFlags as-appropriate (with appropriate calls to SDL_SendWindowEvent)
-void WINRT_UpdateWindowFlags(SDL_Window *window, SDL_WindowFlags mask)
+void WINRT_UpdateWindowFlags(SDL_Window *window, Uint32 mask)
 {
     mask &= WINRT_DetectableFlags;
     if (window) {
@@ -745,7 +740,7 @@ void WINRT_SetWindowSize(SDL_VideoDevice *_this, SDL_Window *window)
 #endif
 }
 
-int WINRT_SetWindowFullscreen(SDL_VideoDevice *_this, SDL_Window *window, SDL_VideoDisplay *display, SDL_FullscreenOp fullscreen)
+int WINRT_SetWindowFullscreen(SDL_VideoDevice *_this, SDL_Window *window, SDL_VideoDisplay *display, SDL_bool fullscreen)
 {
 #if NTDDI_VERSION >= NTDDI_WIN10
     SDL_WindowData *data = window->driverdata;

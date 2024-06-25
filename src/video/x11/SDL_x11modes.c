@@ -23,7 +23,6 @@
 #ifdef SDL_VIDEO_DRIVER_X11
 
 #include "SDL_x11video.h"
-#include "SDL_x11settings.h"
 #include "edid.h"
 
 /* #define X11MODES_DEBUG */
@@ -153,7 +152,7 @@ static DBusHandlerResult DBus_MessageFilter(DBusConnection *conn, DBusMessage *m
 
         if (new_scale > 0.0) {
             *scale_factor = new_scale;
-            UpdateDisplayContentScale((float)new_scale);
+            UpdateDisplayContentScale(new_scale);
         }
 
         return DBUS_HANDLER_RESULT_HANDLED;
@@ -231,22 +230,9 @@ static float GetGlobalContentScale(SDL_VideoDevice *_this)
             }
         }
 
-        /* If that failed, try the XSETTINGS keys... */
-        if (scale_factor <= 0.0) {
-            scale_factor = X11_GetXsettingsIntKey(_this, "Gdk/WindowScalingFactor", -1);
-
-            /* The Xft/DPI key is stored in increments of 1024th */
-            if (scale_factor <= 0.0) {
-                int dpi = X11_GetXsettingsIntKey(_this, "Xft/DPI", -1);
-                if (dpi > 0) {
-                    scale_factor = (double) dpi / 1024.0;
-                    scale_factor /= 96.0;
-                }
-            }
-        }
-
         /* If that failed, try the GDK_SCALE envvar... */
-        if (scale_factor <= 0.0) {
+        if (scale_factor <= 0.0)
+        {
             const char *scale_str = SDL_getenv("GDK_SCALE");
             if (scale_str) {
                 scale_factor = SDL_atoi(scale_str);
@@ -259,7 +245,7 @@ static float GetGlobalContentScale(SDL_VideoDevice *_this)
         }
     }
 
-    return (float)scale_factor;
+    return scale_factor;
 }
 
 static int get_visualinfo(Display *display, int screen, XVisualInfo *vinfo)
@@ -308,7 +294,7 @@ int X11_GetVisualInfoFromVisual(Display *display, Visual *visual, XVisualInfo *v
     return -1;
 }
 
-SDL_PixelFormatEnum X11_GetPixelFormatFromVisualInfo(Display *display, XVisualInfo *vinfo)
+Uint32 X11_GetPixelFormatFromVisualInfo(Display *display, XVisualInfo *vinfo)
 {
     if (vinfo->class == DirectColor || vinfo->class == TrueColor) {
         int bpp;
@@ -416,7 +402,7 @@ static SDL_bool CheckXRandR(Display *display, int *major, int *minor)
 
 static float CalculateXRandRRefreshRate(const XRRModeInfo *info)
 {
-    float vTotal = info->vTotal;
+    double vTotal = info->vTotal;
 
     if (info->modeFlags & RR_DoubleScan) {
         /* doublescan doubles the number of lines */
@@ -429,7 +415,7 @@ static float CalculateXRandRRefreshRate(const XRRModeInfo *info)
         vTotal /= 2;
     }
 
-    if (info->hTotal && vTotal != 0.f) {
+    if (info->hTotal && vTotal) {
         return ((100 * (Sint64)info->dotClock) / (info->hTotal * vTotal)) / 100.0f;
     }
     return 0.0f;
@@ -935,13 +921,10 @@ int X11_SetDisplayMode(SDL_VideoDevice *_this, SDL_VideoDisplay *sdl_display, SD
 
     viddata->last_mode_change_deadline = SDL_GetTicks() + (PENDING_FOCUS_TIME * 2);
 
-    /* XWayland mode switches are emulated with viewports and thus instantaneous. */
-    if (!viddata->is_xwayland) {
-        if (sdl_display->current_mode != mode) {
-            data->mode_switch_deadline_ns = SDL_GetTicksNS() + MODE_SWITCH_TIMEOUT_NS;
-        } else {
-            data->mode_switch_deadline_ns = 0;
-        }
+    if (mode != &sdl_display->desktop_mode) {
+        data->mode_switch_deadline_ns = SDL_GetTicksNS() + MODE_SWITCH_TIMEOUT_NS;
+    } else {
+        data->mode_switch_deadline_ns = 0;
     }
 
 #ifdef SDL_VIDEO_DRIVER_X11_XRANDR

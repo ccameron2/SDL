@@ -319,9 +319,8 @@ void VITA_MinimizeWindow(SDL_VideoDevice *_this, SDL_Window *window)
 void VITA_RestoreWindow(SDL_VideoDevice *_this, SDL_Window *window)
 {
 }
-int VITA_SetWindowGrab(SDL_VideoDevice *_this, SDL_Window *window, SDL_bool grabbed)
+void VITA_SetWindowGrab(SDL_VideoDevice *_this, SDL_Window *window, SDL_bool grabbed)
 {
-    return 0;
 }
 
 void VITA_DestroyWindow(SDL_VideoDevice *_this, SDL_Window *window)
@@ -380,6 +379,7 @@ SceImeCaret caret_rev;
 void VITA_ImeEventHandler(void *arg, const SceImeEventData *e)
 {
     SDL_VideoData *videodata = (SDL_VideoData *)arg;
+    SDL_Scancode scancode;
     uint8_t utf8_buffer[SCE_IME_MAX_TEXT_LENGTH];
     switch (e->id) {
     case SCE_IME_EVENT_UPDATE_TEXT:
@@ -387,10 +387,11 @@ void VITA_ImeEventHandler(void *arg, const SceImeEventData *e)
             SDL_SendKeyboardKeyAutoRelease(0, SDL_SCANCODE_BACKSPACE);
             sceImeSetText((SceWChar16 *)libime_initval, 4);
         } else {
-            utf16_to_utf8((SceWChar16 *)&libime_out[1], utf8_buffer);
-            if (utf8_buffer[0] == ' ') {
+            scancode = SDL_GetScancodeFromKey(*(SceWChar16 *)&libime_out[1]);
+            if (scancode == SDL_SCANCODE_SPACE) {
                 SDL_SendKeyboardKeyAutoRelease(0, SDL_SCANCODE_SPACE);
             } else {
+                utf16_to_utf8((SceWChar16 *)&libime_out[1], utf8_buffer);
                 SDL_SendKeyboardText((const char *)utf8_buffer);
             }
             SDL_memset(&caret_rev, 0, sizeof(SceImeCaret));
@@ -402,7 +403,6 @@ void VITA_ImeEventHandler(void *arg, const SceImeEventData *e)
         break;
     case SCE_IME_EVENT_PRESS_ENTER:
         SDL_SendKeyboardKeyAutoRelease(0, SDL_SCANCODE_RETURN);
-        break;
     case SCE_IME_EVENT_PRESS_CLOSE:
         sceImeClose();
         videodata->ime_active = SDL_FALSE;

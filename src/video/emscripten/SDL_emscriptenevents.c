@@ -199,7 +199,7 @@ static const SDL_Keycode emscripten_keycode_table[] = {
     /* 157 */ SDLK_UNKNOWN,
     /* 158 */ SDLK_UNKNOWN,
     /* 159 */ SDLK_UNKNOWN,
-    /* 160 */ SDLK_GRAVE,
+    /* 160 */ SDLK_BACKQUOTE,
     /* 161 */ SDLK_UNKNOWN,
     /* 162 */ SDLK_UNKNOWN,
     /* 163 */ SDLK_KP_HASH, /*KaiOS phone keypad*/
@@ -215,12 +215,12 @@ static const SDL_Keycode emscripten_keycode_table[] = {
     /* 173 */ SDLK_MINUS,      /*FX*/
     /* 174 */ SDLK_VOLUMEDOWN, /*IE, Chrome*/
     /* 175 */ SDLK_VOLUMEUP,   /*IE, Chrome*/
-    /* 176 */ SDLK_MEDIA_NEXT_TRACK,  /*IE, Chrome*/
-    /* 177 */ SDLK_MEDIA_PREVIOUS_TRACK,  /*IE, Chrome*/
+    /* 176 */ SDLK_AUDIONEXT,  /*IE, Chrome*/
+    /* 177 */ SDLK_AUDIOPREV,  /*IE, Chrome*/
     /* 178 */ SDLK_UNKNOWN,
-    /* 179 */ SDLK_MEDIA_PLAY, /*IE, Chrome*/
+    /* 179 */ SDLK_AUDIOPLAY, /*IE, Chrome*/
     /* 180 */ SDLK_UNKNOWN,
-    /* 181 */ SDLK_UNKNOWN,
+    /* 181 */ SDLK_AUDIOMUTE,  /*FX*/
     /* 182 */ SDLK_VOLUMEDOWN, /*FX*/
     /* 183 */ SDLK_VOLUMEUP,   /*FX*/
     /* 184 */ SDLK_UNKNOWN,
@@ -231,7 +231,7 @@ static const SDL_Keycode emscripten_keycode_table[] = {
     /* 189 */ SDLK_MINUS, /*IE, Chrome, D3E legacy*/
     /* 190 */ SDLK_PERIOD,
     /* 191 */ SDLK_SLASH,
-    /* 192 */ SDLK_GRAVE, /*FX, D3E legacy (SDLK_APOSTROPHE in IE/Chrome)*/
+    /* 192 */ SDLK_BACKQUOTE, /*FX, D3E legacy (SDLK_APOSTROPHE in IE/Chrome)*/
     /* 193 */ SDLK_UNKNOWN,
     /* 194 */ SDLK_UNKNOWN,
     /* 195 */ SDLK_UNKNOWN,
@@ -261,7 +261,7 @@ static const SDL_Keycode emscripten_keycode_table[] = {
     /* 219 */ SDLK_LEFTBRACKET,
     /* 220 */ SDLK_BACKSLASH,
     /* 221 */ SDLK_RIGHTBRACKET,
-    /* 222 */ SDLK_APOSTROPHE, /*FX, D3E legacy*/
+    /* 222 */ SDLK_QUOTE, /*FX, D3E legacy*/
 };
 
 /*
@@ -410,25 +410,27 @@ static SDL_Scancode Emscripten_MapScanCode(const char *code)
     case DOM_PK_PASTE:
         return SDL_SCANCODE_PASTE;
     case DOM_PK_MEDIA_TRACK_PREVIOUS:
-        return SDL_SCANCODE_MEDIA_PREVIOUS_TRACK;
+        return SDL_SCANCODE_AUDIOPREV;
     case DOM_PK_CUT:
         return SDL_SCANCODE_CUT;
     case DOM_PK_COPY:
         return SDL_SCANCODE_COPY;
     case DOM_PK_MEDIA_TRACK_NEXT:
-        return SDL_SCANCODE_MEDIA_NEXT_TRACK;
+        return SDL_SCANCODE_AUDIONEXT;
     case DOM_PK_NUMPAD_ENTER:
         return SDL_SCANCODE_KP_ENTER;
     case DOM_PK_CONTROL_RIGHT:
         return SDL_SCANCODE_RCTRL;
     case DOM_PK_AUDIO_VOLUME_MUTE:
-        return SDL_SCANCODE_MUTE;
+        return SDL_SCANCODE_AUDIOMUTE;
+    case DOM_PK_LAUNCH_APP_2:
+        return SDL_SCANCODE_CALCULATOR;
     case DOM_PK_MEDIA_PLAY_PAUSE:
-        return SDL_SCANCODE_MEDIA_PLAY_PAUSE;
+        return SDL_SCANCODE_AUDIOPLAY;
     case DOM_PK_MEDIA_STOP:
-        return SDL_SCANCODE_MEDIA_STOP;
+        return SDL_SCANCODE_AUDIOSTOP;
     case DOM_PK_EJECT:
-        return SDL_SCANCODE_MEDIA_EJECT;
+        return SDL_SCANCODE_EJECT;
     case DOM_PK_AUDIO_VOLUME_DOWN:
         return SDL_SCANCODE_VOLUMEDOWN;
     case DOM_PK_AUDIO_VOLUME_UP:
@@ -483,8 +485,12 @@ static SDL_Scancode Emscripten_MapScanCode(const char *code)
         return SDL_SCANCODE_AC_FORWARD;
     case DOM_PK_BROWSER_BACK:
         return SDL_SCANCODE_AC_BACK;
+    case DOM_PK_LAUNCH_APP_1:
+        return SDL_SCANCODE_COMPUTER;
+    case DOM_PK_LAUNCH_MAIL:
+        return SDL_SCANCODE_MAIL;
     case DOM_PK_MEDIA_SELECT:
-        return SDL_SCANCODE_MEDIA_SELECT;
+        return SDL_SCANCODE_MEDIASELECT;
     }
 
     return SDL_SCANCODE_UNKNOWN;
@@ -509,8 +515,6 @@ static SDL_Keycode Emscripten_MapKeyCode(const EmscriptenKeyboardEvent *keyEvent
                     break;
                 case SDLK_LGUI:
                     keycode = SDLK_RGUI;
-                    break;
-                default:
                     break;
                 }
             } else if (keyEvent->location == DOM_KEY_LOCATION_NUMPAD) {
@@ -560,8 +564,6 @@ static SDL_Keycode Emscripten_MapKeyCode(const EmscriptenKeyboardEvent *keyEvent
                 case SDLK_DELETE:
                     keycode = SDLK_KP_PERIOD;
                     break;
-                default:
-                    break;
                 }
             }
         }
@@ -608,7 +610,7 @@ static EM_BOOL Emscripten_HandlePointerLockChange(int eventType, const Emscripte
 static EM_BOOL Emscripten_HandleMouseMove(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData)
 {
     SDL_WindowData *window_data = userData;
-    const SDL_bool isPointerLocked = window_data->has_pointer_lock;
+    const int isPointerLocked = window_data->has_pointer_lock;
     float mx, my;
 
     /* rescale (in case canvas is being scaled)*/
@@ -625,7 +627,7 @@ static EM_BOOL Emscripten_HandleMouseMove(int eventType, const EmscriptenMouseEv
         my = (float)(mouseEvent->targetY * yscale);
     }
 
-    SDL_SendMouseMotion(0, window_data->window, SDL_DEFAULT_MOUSE_ID, isPointerLocked, mx, my);
+    SDL_SendMouseMotion(0, window_data->window, 0, isPointerLocked, mx, my);
     return 0;
 }
 
@@ -663,7 +665,7 @@ static EM_BOOL Emscripten_HandleMouseButton(int eventType, const EmscriptenMouse
         sdl_event_type = SDL_EVENT_MOUSE_BUTTON_UP;
         prevent_default = SDL_EventEnabled(sdl_event_type);
     }
-    SDL_SendMouseButton(0, window_data->window, SDL_DEFAULT_MOUSE_ID, sdl_button_state, sdl_button);
+    SDL_SendMouseButton(0, window_data->window, 0, sdl_button_state, sdl_button);
 
     /* Do not consume the event if the mouse is outside of the canvas. */
     emscripten_get_element_css_size(window_data->canvas_id, &css_w, &css_h);
@@ -679,7 +681,7 @@ static EM_BOOL Emscripten_HandleMouseFocus(int eventType, const EmscriptenMouseE
 {
     SDL_WindowData *window_data = userData;
 
-    const SDL_bool isPointerLocked = window_data->has_pointer_lock;
+    const int isPointerLocked = window_data->has_pointer_lock;
 
     if (!isPointerLocked) {
         /* rescale (in case canvas is being scaled)*/
@@ -689,7 +691,7 @@ static EM_BOOL Emscripten_HandleMouseFocus(int eventType, const EmscriptenMouseE
 
         mx = (float)(mouseEvent->targetX * (window_data->window->w / client_w));
         my = (float)(mouseEvent->targetY * (window_data->window->h / client_h));
-        SDL_SendMouseMotion(0, window_data->window, SDL_GLOBAL_MOUSE_ID, isPointerLocked, mx, my);
+        SDL_SendMouseMotion(0, window_data->window, 0, isPointerLocked, mx, my);
     }
 
     SDL_SetMouseFocus(eventType == EMSCRIPTEN_EVENT_MOUSEENTER ? window_data->window : NULL);
@@ -714,7 +716,7 @@ static EM_BOOL Emscripten_HandleWheel(int eventType, const EmscriptenWheelEvent 
         break;
     }
 
-    SDL_SendMouseWheel(0, window_data->window, SDL_DEFAULT_MOUSE_ID, (float)wheelEvent->deltaX, -deltaY, SDL_MOUSEWHEEL_NORMAL);
+    SDL_SendMouseWheel(0, window_data->window, 0, (float)wheelEvent->deltaX, -deltaY, SDL_MOUSEWHEEL_NORMAL);
     return SDL_EventEnabled(SDL_EVENT_MOUSE_WHEEL);
 }
 
@@ -756,7 +758,7 @@ static EM_BOOL Emscripten_HandleTouch(int eventType, const EmscriptenTouchEvent 
             continue;
         }
 
-        id = touchEvent->touches[i].identifier + 1;
+        id = touchEvent->touches[i].identifier;
         if (client_w <= 1) {
             x = 0.5f;
         } else {
@@ -790,54 +792,23 @@ static EM_BOOL Emscripten_HandleTouch(int eventType, const EmscriptenTouchEvent 
 
 static EM_BOOL Emscripten_HandleKey(int eventType, const EmscriptenKeyboardEvent *keyEvent, void *userData)
 {
-    SDL_WindowData *window_data = (SDL_WindowData *)userData;
     const SDL_Keycode keycode = Emscripten_MapKeyCode(keyEvent);
     SDL_Scancode scancode = Emscripten_MapScanCode(keyEvent->code);
     SDL_bool prevent_default = SDL_TRUE;
     SDL_bool is_nav_key = SDL_FALSE;
 
     if (scancode == SDL_SCANCODE_UNKNOWN) {
-        if (SDL_strcmp(keyEvent->key, "Sleep") == 0) {
-            scancode = SDL_SCANCODE_SLEEP;
-        } else if (SDL_strcmp(keyEvent->key, "ChannelUp") == 0) {
-            scancode = SDL_SCANCODE_CHANNEL_INCREMENT;
-        } else if (SDL_strcmp(keyEvent->key, "ChannelDown") == 0) {
-            scancode = SDL_SCANCODE_CHANNEL_DECREMENT;
-        } else if (SDL_strcmp(keyEvent->key, "MediaPlay") == 0) {
-            scancode = SDL_SCANCODE_MEDIA_PLAY;
-        } else if (SDL_strcmp(keyEvent->key, "MediaPause") == 0) {
-            scancode = SDL_SCANCODE_MEDIA_PAUSE;
-        } else if (SDL_strcmp(keyEvent->key, "MediaRecord") == 0) {
-            scancode = SDL_SCANCODE_MEDIA_RECORD;
-        } else if (SDL_strcmp(keyEvent->key, "MediaFastForward") == 0) {
-            scancode = SDL_SCANCODE_MEDIA_FAST_FORWARD;
-        } else if (SDL_strcmp(keyEvent->key, "MediaRewind") == 0) {
-            scancode = SDL_SCANCODE_MEDIA_REWIND;
-        } else if (SDL_strcmp(keyEvent->key, "Close") == 0) {
-            scancode = SDL_SCANCODE_AC_CLOSE;
-        } else if (SDL_strcmp(keyEvent->key, "New") == 0) {
-            scancode = SDL_SCANCODE_AC_NEW;
-        } else if (SDL_strcmp(keyEvent->key, "Open") == 0) {
-            scancode = SDL_SCANCODE_AC_OPEN;
-        } else if (SDL_strcmp(keyEvent->key, "Print") == 0) {
-            scancode = SDL_SCANCODE_AC_PRINT;
-        } else if (SDL_strcmp(keyEvent->key, "Save") == 0) {
-            scancode = SDL_SCANCODE_AC_SAVE;
-        } else if (SDL_strcmp(keyEvent->key, "Props") == 0) {
-            scancode = SDL_SCANCODE_AC_PROPERTIES;
-        }
-    }
-
-    if (scancode == SDL_SCANCODE_UNKNOWN) {
         /* KaiOS Left Soft Key and Right Soft Key, they act as OK/Next/Menu and Cancel/Back/Clear */
-        if (SDL_strcmp(keyEvent->key, "SoftLeft") == 0) {
+        if (SDL_strncmp(keyEvent->key, "SoftLeft", 9) == 0) {
             scancode = SDL_SCANCODE_AC_FORWARD;
-        } else if (SDL_strcmp(keyEvent->key, "SoftRight") == 0) {
+        } else if (SDL_strncmp(keyEvent->key, "SoftRight", 10) == 0) {
             scancode = SDL_SCANCODE_AC_BACK;
         }
     }
 
-    SDL_SendKeyboardKeyAndKeycode(0, SDL_DEFAULT_KEYBOARD_ID, 0, scancode, keycode, eventType == EMSCRIPTEN_EVENT_KEYDOWN ? SDL_PRESSED : SDL_RELEASED);
+    if (scancode != SDL_SCANCODE_UNKNOWN) {
+        SDL_SendKeyboardKeyAndKeycode(0, eventType == EMSCRIPTEN_EVENT_KEYDOWN ? SDL_PRESSED : SDL_RELEASED, scancode, keycode);
+    }
 
     /* if TEXTINPUT events are enabled we can't prevent keydown or we won't get keypress
      * we need to ALWAYS prevent backspace and tab otherwise chrome takes action and does bad navigation UX
@@ -853,7 +824,7 @@ static EM_BOOL Emscripten_HandleKey(int eventType, const EmscriptenKeyboardEvent
         is_nav_key = SDL_TRUE;
     }
 
-    if ((eventType == EMSCRIPTEN_EVENT_KEYDOWN) && SDL_TextInputActive(window_data->window) && !is_nav_key) {
+    if ((eventType == EMSCRIPTEN_EVENT_KEYDOWN) && SDL_EventEnabled(SDL_EVENT_TEXT_INPUT) && !is_nav_key) {
         prevent_default = SDL_FALSE;
     }
 
@@ -862,16 +833,11 @@ static EM_BOOL Emscripten_HandleKey(int eventType, const EmscriptenKeyboardEvent
 
 static EM_BOOL Emscripten_HandleKeyPress(int eventType, const EmscriptenKeyboardEvent *keyEvent, void *userData)
 {
-    SDL_WindowData *window_data = (SDL_WindowData *)userData;
-
-    if (SDL_TextInputActive(window_data->window)) {
-        char text[5];
-        if (Emscripten_ConvertUTF32toUTF8(keyEvent->charCode, text)) {
-            SDL_SendKeyboardText(text);
-        }
-        return EM_TRUE;
+    char text[5];
+    if (Emscripten_ConvertUTF32toUTF8(keyEvent->charCode, text)) {
+        SDL_SendKeyboardText(text);
     }
-    return EM_FALSE;
+    return SDL_EventEnabled(SDL_EVENT_TEXT_INPUT);
 }
 
 static EM_BOOL Emscripten_HandleFullscreenChange(int eventType, const EmscriptenFullscreenChangeEvent *fullscreenChangeEvent, void *userData)
@@ -913,7 +879,7 @@ static EM_BOOL Emscripten_HandleResize(int eventType, const EmscriptenUiEvent *u
                 emscripten_get_element_css_size(window_data->canvas_id, &w, &h);
             }
 
-            emscripten_set_canvas_element_size(window_data->canvas_id, SDL_lroundf(w * window_data->pixel_ratio), SDL_lroundf(h * window_data->pixel_ratio));
+            emscripten_set_canvas_element_size(window_data->canvas_id, w * window_data->pixel_ratio, h * window_data->pixel_ratio);
 
             /* set_canvas_size unsets this */
             if (!window_data->external_size && window_data->pixel_ratio != 1.0f) {
@@ -926,7 +892,7 @@ static EM_BOOL Emscripten_HandleResize(int eventType, const EmscriptenUiEvent *u
                 window_data->window->h = 0;
             }
 
-            SDL_SendWindowEvent(window_data->window, SDL_EVENT_WINDOW_RESIZED, SDL_lroundf(w), SDL_lroundf(h));
+            SDL_SendWindowEvent(window_data->window, SDL_EVENT_WINDOW_RESIZED, w, h);
         }
     }
 
@@ -942,7 +908,7 @@ Emscripten_HandleCanvasResize(int eventType, const void *reserved, void *userDat
     if (window_data->fullscreen_resize) {
         double css_w, css_h;
         emscripten_get_element_css_size(window_data->canvas_id, &css_w, &css_h);
-        SDL_SendWindowEvent(window_data->window, SDL_EVENT_WINDOW_RESIZED, SDL_lroundf(css_w), SDL_lroundf(css_h));
+        SDL_SendWindowEvent(window_data->window, SDL_EVENT_WINDOW_RESIZED, css_w, css_h);
     }
 
     return 0;

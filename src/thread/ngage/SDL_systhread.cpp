@@ -57,9 +57,7 @@ int CreateUnique(TInt (*aFunc)(const TDesC &aName, TAny *, TAny *), TAny *aPtr1,
     return status;
 }
 
-int SDL_SYS_CreateThread(SDL_Thread *thread,
-                         SDL_FunctionPointer pfnBeginThread,
-                         SDL_FunctionPointer pfnEndThread)
+int SDL_SYS_CreateThread(SDL_Thread *thread)
 {
     RThread rthread;
 

@@ -74,6 +74,7 @@ static const char *cross[] = {
     ". c #ffffff",
     "  c None",
     /* pixels */
+    /* pixels */
     "                                ",
     "                                ",
     "                                ",
@@ -226,11 +227,11 @@ static void loop(void)
                 case (SDL_SystemCursor)-1:
                     SDL_Log("Custom cursor");
                     break;
-                case SDL_SYSTEM_CURSOR_DEFAULT:
-                    SDL_Log("Default");
+                case SDL_SYSTEM_CURSOR_ARROW:
+                    SDL_Log("Arrow");
                     break;
-                case SDL_SYSTEM_CURSOR_TEXT:
-                    SDL_Log("Text");
+                case SDL_SYSTEM_CURSOR_IBEAM:
+                    SDL_Log("I-beam");
                     break;
                 case SDL_SYSTEM_CURSOR_WAIT:
                     SDL_Log("Wait");
@@ -238,52 +239,52 @@ static void loop(void)
                 case SDL_SYSTEM_CURSOR_CROSSHAIR:
                     SDL_Log("Crosshair");
                     break;
-                case SDL_SYSTEM_CURSOR_PROGRESS:
-                    SDL_Log("Progress: Small wait cursor (or Wait if not available)");
+                case SDL_SYSTEM_CURSOR_WAITARROW:
+                    SDL_Log("Small wait cursor (or Wait if not available)");
                     break;
-                case SDL_SYSTEM_CURSOR_NWSE_RESIZE:
+                case SDL_SYSTEM_CURSOR_SIZENWSE:
                     SDL_Log("Double arrow pointing northwest and southeast");
                     break;
-                case SDL_SYSTEM_CURSOR_NESW_RESIZE:
+                case SDL_SYSTEM_CURSOR_SIZENESW:
                     SDL_Log("Double arrow pointing northeast and southwest");
                     break;
-                case SDL_SYSTEM_CURSOR_EW_RESIZE:
+                case SDL_SYSTEM_CURSOR_SIZEWE:
                     SDL_Log("Double arrow pointing west and east");
                     break;
-                case SDL_SYSTEM_CURSOR_NS_RESIZE:
+                case SDL_SYSTEM_CURSOR_SIZENS:
                     SDL_Log("Double arrow pointing north and south");
                     break;
-                case SDL_SYSTEM_CURSOR_MOVE:
-                    SDL_Log("Move: Four pointed arrow pointing north, south, east, and west");
+                case SDL_SYSTEM_CURSOR_SIZEALL:
+                    SDL_Log("Four pointed arrow pointing north, south, east, and west");
                     break;
-                case SDL_SYSTEM_CURSOR_NOT_ALLOWED:
-                    SDL_Log("Not Allowed: Slashed circle or crossbones");
+                case SDL_SYSTEM_CURSOR_NO:
+                    SDL_Log("Slashed circle or crossbones");
                     break;
-                case SDL_SYSTEM_CURSOR_POINTER:
-                    SDL_Log("Pointer: Hand");
+                case SDL_SYSTEM_CURSOR_HAND:
+                    SDL_Log("Hand");
                     break;
-                case SDL_SYSTEM_CURSOR_NW_RESIZE:
+                case SDL_SYSTEM_CURSOR_WINDOW_TOPLEFT:
                     SDL_Log("Window resize top-left");
                     break;
-                case SDL_SYSTEM_CURSOR_N_RESIZE:
+                case SDL_SYSTEM_CURSOR_WINDOW_TOP:
                     SDL_Log("Window resize top");
                     break;
-                case SDL_SYSTEM_CURSOR_NE_RESIZE:
+                case SDL_SYSTEM_CURSOR_WINDOW_TOPRIGHT:
                     SDL_Log("Window resize top-right");
                     break;
-                case SDL_SYSTEM_CURSOR_E_RESIZE:
+                case SDL_SYSTEM_CURSOR_WINDOW_RIGHT:
                     SDL_Log("Window resize right");
                     break;
-                case SDL_SYSTEM_CURSOR_SE_RESIZE:
+                case SDL_SYSTEM_CURSOR_WINDOW_BOTTOMRIGHT:
                     SDL_Log("Window resize bottom-right");
                     break;
-                case SDL_SYSTEM_CURSOR_S_RESIZE:
+                case SDL_SYSTEM_CURSOR_WINDOW_BOTTOM:
                     SDL_Log("Window resize bottom");
                     break;
-                case SDL_SYSTEM_CURSOR_SW_RESIZE:
+                case SDL_SYSTEM_CURSOR_WINDOW_BOTTOMLEFT:
                     SDL_Log("Window resize bottom-left");
                     break;
-                case SDL_SYSTEM_CURSOR_W_RESIZE:
+                case SDL_SYSTEM_CURSOR_WINDOW_LEFT:
                     SDL_Log("Window resize left");
                     break;
                 default:
@@ -343,7 +344,7 @@ int main(int argc, char *argv[])
     SDL_Cursor *cursor;
 
     /* Enable standard application logging */
-    SDL_SetLogPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
+    SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
 
     /* Initialize test framework */
     state = SDLTest_CommonCreateState(argv, SDL_INIT_VIDEO);

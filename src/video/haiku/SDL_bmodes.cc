@@ -132,7 +132,7 @@ void _SpoutModeData(display_mode *bmode) {
 
 
 
-SDL_PixelFormatEnum HAIKU_ColorSpaceToSDLPxFormat(uint32 colorspace)
+int32 HAIKU_ColorSpaceToSDLPxFormat(uint32 colorspace)
 {
     switch (colorspace) {
     case B_CMAP8:
@@ -142,7 +142,7 @@ SDL_PixelFormatEnum HAIKU_ColorSpaceToSDLPxFormat(uint32 colorspace)
     case B_RGBA15:
     case B_RGB15_BIG:
     case B_RGBA15_BIG:
-        return SDL_PIXELFORMAT_XRGB1555;
+        return SDL_PIXELFORMAT_RGB555;
         break;
     case B_RGB16:
     case B_RGB16_BIG:
@@ -162,7 +162,7 @@ SDL_PixelFormatEnum HAIKU_ColorSpaceToSDLPxFormat(uint32 colorspace)
 
     /* May never get here, but safer and needed to shut up compiler */
     SDL_SetError("Invalid color space");
-    return SDL_PIXELFORMAT_UNKNOWN;
+    return 0;
 }
 
 static void _BDisplayModeToSdlDisplayMode(display_mode *bmode, SDL_DisplayMode *mode) {

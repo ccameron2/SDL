@@ -37,8 +37,8 @@ struct SDL_PrivateAudioData
 
     int bytes_requested; // bytes of data the hardware wants _now_.
 
-    const Uint8 *recordingbuf;
-    int recordinglen;
+    const Uint8 *capturebuf;
+    int capturelen;
 };
 
 #endif // SDL_pulseaudio_h_

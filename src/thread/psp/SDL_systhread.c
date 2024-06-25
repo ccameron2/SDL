@@ -38,9 +38,7 @@ static int ThreadEntry(SceSize args, void *argp)
     return 0;
 }
 
-int SDL_SYS_CreateThread(SDL_Thread *thread,
-                         SDL_FunctionPointer pfnBeginThread,
-                         SDL_FunctionPointer pfnEndThread)
+int SDL_SYS_CreateThread(SDL_Thread *thread)
 {
     SceKernelThreadInfo status;
     int priority = 32;

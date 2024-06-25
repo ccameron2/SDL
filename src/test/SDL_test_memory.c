@@ -161,8 +161,8 @@ static void SDL_TrackAllocation(void *mem, size_t size)
 
         count = CaptureStackBackTrace(1, SDL_arraysize(frames), frames, NULL);
 
-        count = SDL_min(count, MAXIMUM_TRACKED_STACK_DEPTH);
-        for (i = 0; i < count; i++) {
+        entry->size = SDL_min(count, MAXIMUM_TRACKED_STACK_DEPTH);
+        for (i = 0; i < entry->size; i++) {
             char symbol_buffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(TCHAR)];
             PSYMBOL_INFO pSymbol = (PSYMBOL_INFO)symbol_buffer;
             DWORD64 dwDisplacement = 0;

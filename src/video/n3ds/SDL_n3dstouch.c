@@ -26,9 +26,7 @@
 #include <3ds.h>
 
 #include "../../events/SDL_touch_c.h"
-#include "../SDL_sysvideo.h"
 #include "SDL_n3dstouch.h"
-#include "SDL_n3dsvideo.h"
 
 #define N3DS_TOUCH_ID 1
 #define N3DS_TOUCH_FINGER 1
@@ -52,31 +50,25 @@ void N3DS_QuitTouch(void)
     SDL_DelTouch(N3DS_TOUCH_ID);
 }
 
-void N3DS_PollTouch(SDL_VideoDevice *_this)
+void N3DS_PollTouch(void)
 {
-    SDL_VideoData *driverdata = (SDL_VideoData *)_this->driverdata;
     touchPosition touch;
-    SDL_Window *window;
-    SDL_VideoDisplay *display;
     static SDL_bool was_pressed = SDL_FALSE;
     SDL_bool pressed;
     hidTouchRead(&touch);
     pressed = (touch.px != 0 || touch.py != 0);
 
-    display = SDL_GetVideoDisplay(driverdata->touch_display);
-    window = display ? display->fullscreen_window : NULL;
-
     if (pressed != was_pressed) {
         was_pressed = pressed;
         SDL_SendTouch(0, N3DS_TOUCH_ID, N3DS_TOUCH_FINGER,
-                      window,
+                      NULL,
                       pressed,
                       touch.px * TOUCHSCREEN_SCALE_X,
                       touch.py * TOUCHSCREEN_SCALE_Y,
                       pressed ? 1.0f : 0.0f);
     } else if (pressed) {
         SDL_SendTouchMotion(0, N3DS_TOUCH_ID, N3DS_TOUCH_FINGER,
-                            window,
+                            NULL,
                             touch.px * TOUCHSCREEN_SCALE_X,
                             touch.py * TOUCHSCREEN_SCALE_Y,
                             1.0f);

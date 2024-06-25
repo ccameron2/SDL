@@ -45,7 +45,7 @@ static SDL_FRect textRect, markedRect;
 static SDL_Color lineColor = { 0, 0, 0, 255 };
 static SDL_Color backColor = { 255, 255, 255, 255 };
 static SDL_Color textColor = { 0, 0, 0, 255 };
-static char text[MAX_TEXT_LENGTH], markedText[MAX_TEXT_LENGTH];
+static char text[MAX_TEXT_LENGTH], markedText[SDL_TEXTEDITINGEVENT_TEXT_SIZE];
 static int cursor = 0;
 #ifdef HAVE_SDL_TTF
 static TTF_Font *font;
@@ -109,7 +109,7 @@ static int unifont_init(const char *fontname)
     Uint32 numGlyphs = 0;
     int lineNumber = 1;
     size_t bytesRead;
-    SDL_IOStream *hexFile;
+    SDL_RWops *hexFile;
     const size_t unifontGlyphSize = UNIFONT_NUM_GLYPHS * sizeof(struct UnifontGlyph);
     const size_t unifontTextureSize = UNIFONT_NUM_TEXTURES * state->num_windows * sizeof(void *);
     char *filename;
@@ -135,7 +135,7 @@ static int unifont_init(const char *fontname)
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Out of memory\n");
         return -1;
     }
-    hexFile = SDL_IOFromFile(filename, "rb");
+    hexFile = SDL_RWFromFile(filename, "rb");
     SDL_free(filename);
     if (!hexFile) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "unifont: Failed to open font file: %s\n", fontname);
@@ -149,7 +149,7 @@ static int unifont_init(const char *fontname)
         Uint8 glyphWidth;
         Uint32 codepoint;
 
-        bytesRead = SDL_ReadIO(hexFile, hexBuffer, 9);
+        bytesRead = SDL_RWread(hexFile, hexBuffer, 9);
         if (numGlyphs > 0 && bytesRead == 0) {
             break; /* EOF */
         }
@@ -185,7 +185,11 @@ static int unifont_init(const char *fontname)
         if (codepointHexSize < 8) {
             SDL_memmove(hexBuffer, hexBuffer + codepointHexSize + 1, bytesOverread);
         }
-        bytesRead = SDL_ReadIO(hexFile, hexBuffer + bytesOverread, 33 - bytesOverread);
+        bytesRead = SDL_RWread(hexFile, hexBuffer + bytesOverread, 33 - bytesOverread);
+        if (bytesRead < 0) {
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "error SDL_RWread\n");
+            return -1;
+        }
 
         if (bytesRead < (33 - bytesOverread)) {
             SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "unifont: Unexpected end of hex file.\n");
@@ -195,7 +199,12 @@ static int unifont_init(const char *fontname)
             glyphWidth = 8;
         } else {
             glyphWidth = 16;
-            bytesRead = SDL_ReadIO(hexFile, hexBuffer + 33, 32);
+            bytesRead = SDL_RWread(hexFile, hexBuffer + 33, 32);
+            if (bytesRead < 0) {
+                SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "error SDL_RWread\n");
+                return -1;
+            }
+
             if (bytesRead < 32) {
                 SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "unifont: Unexpected end of hex file.\n");
                 return -1;
@@ -223,7 +232,7 @@ static int unifont_init(const char *fontname)
         lineNumber++;
     } while (bytesRead > 0);
 
-    SDL_CloseIO(hexFile);
+    SDL_RWclose(hexFile);
     SDL_Log("unifont: Loaded %" SDL_PRIu32 " glyphs.\n", numGlyphs);
     return 0;
 }
@@ -440,12 +449,12 @@ static void InitInput(void)
     markedRect = textRect;
     markedText[0] = 0;
 
-    SDL_StartTextInput(state->windows[0]);
+    SDL_StartTextInput();
 }
 
 static void CleanupVideo(void)
 {
-    SDL_StopTextInput(state->windows[0]);
+    SDL_StopTextInput();
 #ifdef HAVE_SDL_TTF
     TTF_CloseFont(font);
     TTF_Quit();
@@ -507,10 +516,10 @@ static void _Redraw(int rendererID)
     markedRect.w = textRect.w - drawnTextRect.w;
     if (markedRect.w < 0) {
         /* Stop text input because we cannot hold any more characters */
-        SDL_StopTextInput(state->windows[0]);
+        SDL_StopTextInput();
         return;
     } else {
-        SDL_StartTextInput(state->windows[0]);
+        SDL_StartTextInput();
     }
 
     cursorRect = drawnTextRect;
@@ -602,7 +611,7 @@ static void _Redraw(int rendererID)
         inputrect.y = (int)markedRect.y;
         inputrect.w = (int)markedRect.w;
         inputrect.h = (int)markedRect.h;
-        SDL_SetTextInputRect(state->windows[0], &inputrect);
+        SDL_SetTextInputRect(&inputrect);
     }
 }
 
@@ -637,7 +646,7 @@ int main(int argc, char *argv[])
     }
 
     /* Enable standard application logging */
-    SDL_SetLogPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
+    SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
 
     /* Parse commandline */
     for (i = 1; i < argc;) {
@@ -699,7 +708,7 @@ int main(int argc, char *argv[])
             SDLTest_CommonEvent(state, &event, &done);
             switch (event.type) {
             case SDL_EVENT_KEY_DOWN:
-                switch (event.key.key) {
+                switch (event.key.keysym.sym) {
                 case SDLK_RETURN:
                     text[0] = 0x00;
                     Redraw();
@@ -733,8 +742,6 @@ int main(int argc, char *argv[])
                         Redraw();
                     }
                     break;
-                default:
-                    break;
                 }
 
                 if (done) {
@@ -742,10 +749,10 @@ int main(int argc, char *argv[])
                 }
 
                 SDL_Log("Keyboard: scancode 0x%08X = %s, keycode 0x%08" SDL_PRIX32 " = %s\n",
-                        event.key.scancode,
-                        SDL_GetScancodeName(event.key.scancode),
-                        SDL_static_cast(Uint32, event.key.key),
-                        SDL_GetKeyName(event.key.key));
+                        event.key.keysym.scancode,
+                        SDL_GetScancodeName(event.key.keysym.scancode),
+                        SDL_static_cast(Uint32, event.key.keysym.sym),
+                        SDL_GetKeyName(event.key.keysym.sym));
                 break;
 
             case SDL_EVENT_TEXT_INPUT:
@@ -771,12 +778,9 @@ int main(int argc, char *argv[])
                 SDL_Log("text editing \"%s\", selected range (%" SDL_PRIs32 ", %" SDL_PRIs32 ")\n",
                         event.edit.text, event.edit.start, event.edit.length);
 
-                SDL_strlcpy(markedText, event.edit.text, sizeof(markedText));
+                SDL_strlcpy(markedText, event.edit.text, SDL_TEXTEDITINGEVENT_TEXT_SIZE);
                 cursor = event.edit.start;
                 Redraw();
-                break;
-
-            default:
                 break;
             }
         }

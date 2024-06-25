@@ -31,7 +31,6 @@
 
 /* Table to do pixel byte expansion */
 extern Uint8 *SDL_expand_byte[9];
-extern Uint16 SDL_expand_byte10[];
 
 /* SDL blit copy flags */
 #define SDL_COPY_MODULATE_COLOR 0x00000001
@@ -86,15 +85,13 @@ typedef struct
     SDL_BlitFunc func;
 } SDL_BlitFuncEntry;
 
-typedef int (SDLCALL *SDL_Blit) (struct SDL_Surface *src, const SDL_Rect *srcrect, struct SDL_Surface *dst, const SDL_Rect *dstrect);
-
 /* Blit mapping definition */
 /* typedef'ed in SDL_surface.h */
 struct SDL_BlitMap
 {
     SDL_Surface *dst;
     int identity;
-    SDL_Blit blit;
+    SDL_blit blit;
     void *data;
     SDL_BlitInfo info;
 

@@ -52,9 +52,9 @@ typedef struct SDL_cond_generic
 /* Create a condition variable */
 SDL_Condition *SDL_CreateCondition_generic(void)
 {
-    SDL_cond_generic *cond = (SDL_cond_generic *)SDL_calloc(1, sizeof(*cond));
+    SDL_cond_generic *cond;
 
-#ifndef SDL_THREADS_DISABLED
+    cond = (SDL_cond_generic *)SDL_malloc(sizeof(SDL_cond_generic));
     if (cond) {
         cond->lock = SDL_CreateMutex();
         cond->wait_sem = SDL_CreateSemaphore(0);
@@ -65,8 +65,6 @@ SDL_Condition *SDL_CreateCondition_generic(void)
             cond = NULL;
         }
     }
-#endif
-
     return (SDL_Condition *)cond;
 }
 
@@ -96,7 +94,6 @@ int SDL_SignalCondition_generic(SDL_Condition *_cond)
         return SDL_InvalidParamError("cond");
     }
 
-#ifndef SDL_THREADS_DISABLED
     /* If there are waiting threads not already signalled, then
        signal the condition and wait for the thread to respond.
      */
@@ -109,7 +106,6 @@ int SDL_SignalCondition_generic(SDL_Condition *_cond)
     } else {
         SDL_UnlockMutex(cond->lock);
     }
-#endif
 
     return 0;
 }
@@ -122,7 +118,6 @@ int SDL_BroadcastCondition_generic(SDL_Condition *_cond)
         return SDL_InvalidParamError("cond");
     }
 
-#ifndef SDL_THREADS_DISABLED
     /* If there are waiting threads not already signalled, then
        signal the condition and wait for the thread to respond.
      */
@@ -145,7 +140,6 @@ int SDL_BroadcastCondition_generic(SDL_Condition *_cond)
     } else {
         SDL_UnlockMutex(cond->lock);
     }
-#endif
 
     return 0;
 }
@@ -174,13 +168,12 @@ Thread B:
 int SDL_WaitConditionTimeoutNS_generic(SDL_Condition *_cond, SDL_Mutex *mutex, Sint64 timeoutNS)
 {
     SDL_cond_generic *cond = (SDL_cond_generic *)_cond;
-    int retval = 0;
+    int retval;
 
     if (!cond) {
         return SDL_InvalidParamError("cond");
     }
 
-#ifndef SDL_THREADS_DISABLED
     /* Obtain the protection mutex, and increment the number of waiters.
        This allows the signal mechanism to only perform a signal if there
        are waiting threads.
@@ -218,7 +211,6 @@ int SDL_WaitConditionTimeoutNS_generic(SDL_Condition *_cond, SDL_Mutex *mutex, S
 
     /* Lock the mutex, as is required by condition variable semantics */
     SDL_LockMutex(mutex);
-#endif
 
     return retval;
 }

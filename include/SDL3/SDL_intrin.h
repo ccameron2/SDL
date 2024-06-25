@@ -19,7 +19,9 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-/*
+/**
+ *  \file SDL_intrin.h
+ *
  *  Header file for CPU intrinsics for SDL
  */
 

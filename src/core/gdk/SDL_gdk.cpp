@@ -32,11 +32,10 @@ extern "C" {
 static XTaskQueueHandle GDK_GlobalTaskQueue;
 
 PAPPSTATE_REGISTRATION hPLM = {};
-PAPPCONSTRAIN_REGISTRATION hCPLM = {};
 HANDLE plmSuspendComplete = nullptr;
 
-extern "C"
-int SDL_GDKGetTaskQueue(XTaskQueueHandle *outTaskQueue)
+extern "C" DECLSPEC int
+SDL_GDKGetTaskQueue(XTaskQueueHandle *outTaskQueue)
 {
     /* If this is the first call, first create the global task queue. */
     if (!GDK_GlobalTaskQueue) {
@@ -61,8 +60,8 @@ int SDL_GDKGetTaskQueue(XTaskQueueHandle *outTaskQueue)
     return 0;
 }
 
-extern "C"
-void GDK_DispatchTaskQueue(void)
+extern "C" void
+GDK_DispatchTaskQueue(void)
 {
     /* If there is no global task queue, don't do anything.
      * This gives the option to opt-out for those who want to handle everything themselves.
@@ -75,7 +74,8 @@ void GDK_DispatchTaskQueue(void)
 }
 
 /* Pop up an out of memory message, returns to Windows */
-static BOOL OutOfMemory(void)
+extern "C" static BOOL
+OutOfMemory(void)
 {
     SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Fatal Error", "Out of memory - aborting", NULL);
     return FALSE;
@@ -83,8 +83,8 @@ static BOOL OutOfMemory(void)
 
 /* Gets the arguments with GetCommandLine, converts them to argc and argv
    and calls SDL_main */
-extern "C"
-int SDL_RunApp(int, char**, SDL_main_func mainFunction, void *reserved)
+extern "C" DECLSPEC int
+SDL_RunApp(int, char**, SDL_main_func mainFunction, void *reserved)
 {
     LPWSTR *argvw;
     char **argv;
@@ -108,21 +108,18 @@ int SDL_RunApp(int, char**, SDL_main_func mainFunction, void *reserved)
         return OutOfMemory();
     }
     for (i = 0; i < argc; ++i) {
-        const int utf8size = WideCharToMultiByte(CP_UTF8, 0, argvw[i], -1, NULL, 0, NULL, NULL);
-        if (!utf8size) {  // uhoh?
-            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Fatal Error", "Error processing command line arguments", NULL);
-            return -1;
+        DWORD len;
+        char *arg = WIN_StringToUTF8W(argvw[i]);
+        if (arg == NULL) {
+            return OutOfMemory();
         }
-
-        argv[i] = (char *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, utf8size);  // this size includes the null-terminator character.
+        len = (DWORD)SDL_strlen(arg);
+        argv[i] = (char *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len + 1);
         if (!argv[i]) {
             return OutOfMemory();
         }
-
-        if (WideCharToMultiByte(CP_UTF8, 0, argvw[i], -1, argv[i], utf8size, NULL, NULL) == 0) {  // failed? uhoh!
-            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Fatal Error", "Error processing command line arguments", NULL);
-            return -1;
-        }
+        SDL_memcpy(argv[i], arg, len);
+        SDL_free(arg);
     }
     argv[i] = NULL;
     LocalFree(argvw);
@@ -176,32 +173,12 @@ int SDL_RunApp(int, char**, SDL_main_func mainFunction, void *reserved)
             return -1;
         }
 
-        /* Register constrain/unconstrain handling */
-        auto raccn = [](BOOLEAN constrained, PVOID context) {
-            SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "[GDK] in RegisterAppConstrainedChangeNotification handler");
-            SDL_VideoDevice *_this = SDL_GetVideoDevice();
-            if (_this) {
-                if (constrained) {
-                    SDL_SetKeyboardFocus(NULL);
-                } else {
-                    SDL_SetKeyboardFocus(_this->windows);
-                }
-            }
-        };
-        if (RegisterAppConstrainedChangeNotification(raccn, NULL, &hCPLM)) {
-            SDL_SetError("[GDK] Unable to call RegisterAppConstrainedChangeNotification");
-            return -1;
-        }
-
         /* Run the application main() code */
         result = mainFunction(argc, argv);
 
         /* Unregister suspend/resume handling */
         UnregisterAppStateChangeNotification(hPLM);
         CloseHandle(plmSuspendComplete);
-
-        /* Unregister constrain/unconstrain handling */
-        UnregisterAppConstrainedChangeNotification(hCPLM);
 
         /* !!! FIXME: This follows the docs exactly, but for some reason still leaks handles on exit? */
         /* Terminate the task queue and dispatch any pending tasks */
@@ -230,16 +207,16 @@ int SDL_RunApp(int, char**, SDL_main_func mainFunction, void *reserved)
     return result;
 }
 
-extern "C"
-void SDL_GDKSuspendComplete()
+extern "C" DECLSPEC void
+SDL_GDKSuspendComplete()
 {
     if (plmSuspendComplete) {
         SetEvent(plmSuspendComplete);
     }
 }
 
-extern "C"
-int SDL_GDKGetDefaultUser(XUserHandle *outUserHandle)
+extern "C" DECLSPEC int
+SDL_GDKGetDefaultUser(XUserHandle *outUserHandle)
 {
     XAsyncBlock block = { 0 };
     HRESULT result;

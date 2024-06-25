@@ -20,9 +20,9 @@
 */
 
 /**
- * # CategoryLocale
+ *  \file SDL_locale.h
  *
- * SDL locale services.
+ *  Include file for SDL locale services
  */
 
 #ifndef SDL_locale_h
@@ -39,18 +39,7 @@ extern "C" {
 /* *INDENT-ON* */
 #endif
 
-/**
- * A struct to provide locale data.
- *
- * Locale data is split into a spoken language, like English, and an optional
- * country, like Canada. The language will be in ISO-639 format (so English
- * would be "en"), and the country, if not NULL, will be an ISO-3166 country
- * code (so Canada would be "CA").
- *
- * \since This function is available since SDL 3.0.0.
- *
- * \sa SDL_GetPreferredLocales
- */
+
 typedef struct SDL_Locale
 {
     const char *language;  /**< A language name, like "en" for English. */
@@ -95,12 +84,11 @@ typedef struct SDL_Locale
  * preferred locales.
  *
  * \returns array of locales, terminated with a locale with a NULL language
- *          field. Will return NULL on error; call SDL_GetError() for more
- *          information.
+ *          field. Will return NULL on error.
  *
  * \since This function is available since SDL 3.0.0.
  */
-extern SDL_DECLSPEC SDL_Locale * SDLCALL SDL_GetPreferredLocales(void);
+extern DECLSPEC SDL_Locale * SDLCALL SDL_GetPreferredLocales(void);
 
 /* Ends C function definitions when using C++ */
 #ifdef __cplusplus

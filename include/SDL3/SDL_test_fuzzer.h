@@ -20,6 +20,8 @@
 */
 
 /**
+ *  \file SDL_test_fuzzer.h
+ *
  *  Fuzzer functions of SDL test framework.
  *
  *  This code is a part of the SDL test library, not the main SDL library.
@@ -47,6 +49,7 @@ extern "C" {
 
 
 /**
+ * \file
  * Note: The fuzzer implementation uses a static instance of random context
  * internally which makes it thread-UNsafe.
  */

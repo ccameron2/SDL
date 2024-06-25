@@ -23,46 +23,41 @@
 
 #ifdef SDL_VIDEO_DRIVER_WAYLAND
 
-#include "../../core/linux/SDL_system_theme.h"
 #include "../../events/SDL_events_c.h"
+#include "../../core/linux/SDL_system_theme.h"
 
-#include "SDL_waylandclipboard.h"
-#include "SDL_waylandevents_c.h"
-#include "SDL_waylandkeyboard.h"
-#include "SDL_waylandmessagebox.h"
-#include "SDL_waylandmouse.h"
-#include "SDL_waylandopengles.h"
 #include "SDL_waylandvideo.h"
-#include "SDL_waylandvulkan.h"
+#include "SDL_waylandevents_c.h"
 #include "SDL_waylandwindow.h"
+#include "SDL_waylandopengles.h"
+#include "SDL_waylandmouse.h"
+#include "SDL_waylandkeyboard.h"
+#include "SDL_waylandclipboard.h"
+#include "SDL_waylandvulkan.h"
+#include "SDL_waylandmessagebox.h"
 
-#include <fcntl.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <xkbcommon/xkbcommon.h>
 
 #include <wayland-util.h>
 
-#include "alpha-modifier-v1-client-protocol.h"
-#include "cursor-shape-v1-client-protocol.h"
-#include "fractional-scale-v1-client-protocol.h"
-#include "frog-color-management-v1-client-protocol.h"
-#include "idle-inhibit-unstable-v1-client-protocol.h"
-#include "input-timestamps-unstable-v1-client-protocol.h"
-#include "kde-output-order-v1-client-protocol.h"
-#include "keyboard-shortcuts-inhibit-unstable-v1-client-protocol.h"
-#include "pointer-constraints-unstable-v1-client-protocol.h"
-#include "primary-selection-unstable-v1-client-protocol.h"
-#include "relative-pointer-unstable-v1-client-protocol.h"
-#include "tablet-v2-client-protocol.h"
-#include "text-input-unstable-v3-client-protocol.h"
-#include "viewporter-client-protocol.h"
-#include "xdg-activation-v1-client-protocol.h"
-#include "xdg-decoration-unstable-v1-client-protocol.h"
-#include "xdg-dialog-v1-client-protocol.h"
-#include "xdg-foreign-unstable-v2-client-protocol.h"
-#include "xdg-output-unstable-v1-client-protocol.h"
 #include "xdg-shell-client-protocol.h"
+#include "xdg-decoration-unstable-v1-client-protocol.h"
+#include "keyboard-shortcuts-inhibit-unstable-v1-client-protocol.h"
+#include "idle-inhibit-unstable-v1-client-protocol.h"
+#include "xdg-activation-v1-client-protocol.h"
+#include "text-input-unstable-v3-client-protocol.h"
+#include "tablet-unstable-v2-client-protocol.h"
+#include "xdg-output-unstable-v1-client-protocol.h"
+#include "viewporter-client-protocol.h"
+#include "primary-selection-unstable-v1-client-protocol.h"
+#include "fractional-scale-v1-client-protocol.h"
+#include "input-timestamps-unstable-v1-client-protocol.h"
+#include "relative-pointer-unstable-v1-client-protocol.h"
+#include "pointer-constraints-unstable-v1-client-protocol.h"
+#include "kde-output-order-v1-client-protocol.h"
 
 #ifdef HAVE_LIBDECOR_H
 #include <libdecor.h>
@@ -259,7 +254,7 @@ static void Wayland_SortOutputs(SDL_VideoData *vid)
         WAYLAND_wl_list_init(&sorted_list);
         wl_list_for_each (c, &vid->output_order, link) {
             wl_list_for_each (d, &vid->output_list, link) {
-                if (d->wl_output_name && SDL_strcmp(c->wl_output_name, d->wl_output_name) == 0) {
+                if (SDL_strcmp(c->wl_output_name, d->wl_output_name) == 0) {
                     /* Remove from the current list and Append the next node to the end of the new list. */
                     WAYLAND_wl_list_remove(&d->link);
                     WAYLAND_wl_list_insert(sorted_list.prev, &d->link);
@@ -425,7 +420,6 @@ static SDL_VideoDevice *Wayland_CreateDevice(void)
     data->display = display;
     data->input = input;
     data->display_externally_owned = display_is_external;
-    data->scale_to_display_enabled = SDL_GetHintBoolean(SDL_HINT_VIDEO_WAYLAND_SCALE_TO_DISPLAY, SDL_FALSE);
     WAYLAND_wl_list_init(&data->output_list);
     WAYLAND_wl_list_init(&data->output_order);
     WAYLAND_wl_list_init(&external_window_list);
@@ -489,10 +483,8 @@ static SDL_VideoDevice *Wayland_CreateDevice(void)
     device->SetWindowMinimumSize = Wayland_SetWindowMinimumSize;
     device->SetWindowMaximumSize = Wayland_SetWindowMaximumSize;
     device->SetWindowModalFor = Wayland_SetWindowModalFor;
-    device->SetWindowOpacity = Wayland_SetWindowOpacity;
     device->SetWindowTitle = Wayland_SetWindowTitle;
     device->GetWindowSizeInPixels = Wayland_GetWindowSizeInPixels;
-    device->GetDisplayForWindow = Wayland_GetDisplayForWindow;
     device->DestroyWindow = Wayland_DestroyWindow;
     device->SetWindowHitTest = Wayland_SetWindowHitTest;
     device->FlashWindow = Wayland_FlashWindow;
@@ -511,24 +503,20 @@ static SDL_VideoDevice *Wayland_CreateDevice(void)
     device->HasClipboardData = Wayland_HasClipboardData;
     device->StartTextInput = Wayland_StartTextInput;
     device->StopTextInput = Wayland_StopTextInput;
-    device->UpdateTextInputRect = Wayland_UpdateTextInputRect;
+    device->SetTextInputRect = Wayland_SetTextInputRect;
 
 #ifdef SDL_VIDEO_VULKAN
     device->Vulkan_LoadLibrary = Wayland_Vulkan_LoadLibrary;
     device->Vulkan_UnloadLibrary = Wayland_Vulkan_UnloadLibrary;
     device->Vulkan_GetInstanceExtensions = Wayland_Vulkan_GetInstanceExtensions;
     device->Vulkan_CreateSurface = Wayland_Vulkan_CreateSurface;
-    device->Vulkan_DestroySurface = Wayland_Vulkan_DestroySurface;
 #endif
 
     device->free = Wayland_DeleteDevice;
 
     device->device_caps = VIDEO_DEVICE_CAPS_MODE_SWITCHING_EMULATED |
                           VIDEO_DEVICE_CAPS_HAS_POPUP_WINDOW_SUPPORT |
-                          VIDEO_DEVICE_CAPS_SENDS_FULLSCREEN_DIMENSIONS |
-                          VIDEO_DEVICE_CAPS_SENDS_DISPLAY_CHANGES |
-                          VIDEO_DEVICE_CAPS_DISABLE_MOUSE_WARP_ON_FULLSCREEN_TRANSITIONS |
-                          VIDEO_DEVICE_CAPS_SENDS_HDR_CHANGES;
+                          VIDEO_DEVICE_CAPS_SENDS_FULLSCREEN_DIMENSIONS;
 
     return device;
 }
@@ -575,14 +563,7 @@ static void xdg_output_handle_done(void *data, struct zxdg_output_v1 *xdg_output
 static void xdg_output_handle_name(void *data, struct zxdg_output_v1 *xdg_output,
                                    const char *name)
 {
-    SDL_DisplayData *driverdata = (SDL_DisplayData *)data;
-
     /* Deprecated as of wl_output v4. */
-    if (wl_output_get_version(driverdata->output) < WL_OUTPUT_NAME_SINCE_VERSION &&
-        driverdata->display == 0) {
-        SDL_free(driverdata->wl_output_name);
-        driverdata->wl_output_name = SDL_strdup(name);
-    }
 }
 
 static void xdg_output_handle_description(void *data, struct zxdg_output_v1 *xdg_output,
@@ -815,7 +796,7 @@ static void display_handle_done(void *data,
             /* ...and the compositor scales the logical viewport... */
             if (video->viewporter) {
                 /* ...and viewports are supported, calculate the true scale of the output. */
-                driverdata->scale_factor = (float)native_mode.w / (float)driverdata->screen_width;
+                driverdata->scale_factor = (float) native_mode.w / (float)driverdata->screen_width;
             } else {
                 /* ...otherwise, the 'native' pixel values are a multiple of the logical screen size. */
                 driverdata->pixel_width = driverdata->screen_width * (int)driverdata->scale_factor;
@@ -840,26 +821,15 @@ static void display_handle_done(void *data,
     SDL_zero(desktop_mode);
     desktop_mode.format = SDL_PIXELFORMAT_XRGB8888;
 
-    if (!video->scale_to_display_enabled) {
-        desktop_mode.w = driverdata->screen_width;
-        desktop_mode.h = driverdata->screen_height;
-        desktop_mode.pixel_density = driverdata->scale_factor;
-    } else {
-        desktop_mode.w = native_mode.w;
-        desktop_mode.h = native_mode.h;
-        desktop_mode.pixel_density = 1.0f;
-    }
-
+    desktop_mode.w = driverdata->screen_width;
+    desktop_mode.h = driverdata->screen_height;
+    desktop_mode.pixel_density = driverdata->scale_factor;
     desktop_mode.refresh_rate = ((100 * driverdata->refresh) / 1000) / 100.0f; /* mHz to Hz */
 
     if (driverdata->display > 0) {
         dpy = SDL_GetVideoDisplay(driverdata->display);
     } else {
         dpy = &driverdata->placeholder;
-    }
-
-    if (video->scale_to_display_enabled) {
-        SDL_SetDisplayContentScale(dpy, driverdata->scale_factor);
     }
 
     /* Set the desktop display mode. */
@@ -936,11 +906,11 @@ static void display_handle_description(void *data, struct wl_output *wl_output, 
 }
 
 static const struct wl_output_listener output_listener = {
-    display_handle_geometry,   /* Version 1 */
-    display_handle_mode,       /* Version 1 */
-    display_handle_done,       /* Version 2 */
-    display_handle_scale,      /* Version 2 */
-    display_handle_name,       /* Version 4 */
+    display_handle_geometry, /* Version 1 */
+    display_handle_mode, /* Version 1 */
+    display_handle_done, /* Version 2 */
+    display_handle_scale, /* Version 2 */
+    display_handle_name, /* Version 4 */
     display_handle_description /* Version 4 */
 };
 
@@ -1008,7 +978,7 @@ static void Wayland_FinalizeDisplays(SDL_VideoData *vid)
     SDL_DisplayData *d;
 
     Wayland_SortOutputs(vid);
-    wl_list_for_each (d, &vid->output_list, link) {
+    wl_list_for_each(d, &vid->output_list, link) {
         d->display = SDL_AddVideoDisplay(&d->placeholder, SDL_FALSE);
         SDL_free(d->placeholder.name);
         SDL_zero(d->placeholder);
@@ -1102,29 +1072,16 @@ static void display_handle_global(void *data, struct wl_registry *registry, uint
         if (d->input) {
             Wayland_RegisterTimestampListeners(d->input);
         }
-    } else if (SDL_strcmp(interface, "wp_cursor_shape_manager_v1") == 0) {
-        d->cursor_shape_manager = wl_registry_bind(d->registry, id, &wp_cursor_shape_manager_v1_interface, 1);
-        if (d->input) {
-            Wayland_CreateCursorShapeDevice(d->input);
-        }
-    } else if (SDL_strcmp(interface, "zxdg_exporter_v2") == 0) {
-        d->zxdg_exporter_v2 = wl_registry_bind(d->registry, id, &zxdg_exporter_v2_interface, 1);
-    } else if (SDL_strcmp(interface, "xdg_wm_dialog_v1") == 0) {
-        d->xdg_wm_dialog_v1 = wl_registry_bind(d->registry, id, &xdg_wm_dialog_v1_interface, 1);
-    } else if (SDL_strcmp(interface, "wp_alpha_modifier_v1") == 0) {
-        d->wp_alpha_modifier_v1 = wl_registry_bind(d->registry, id, &wp_alpha_modifier_v1_interface, 1);
     } else if (SDL_strcmp(interface, "kde_output_order_v1") == 0) {
         d->kde_output_order = wl_registry_bind(d->registry, id, &kde_output_order_v1_interface, 1);
         kde_output_order_v1_add_listener(d->kde_output_order, &kde_output_order_listener, d);
-    } else if (SDL_strcmp(interface, "frog_color_management_factory_v1") == 0) {
-        d->frog_color_management_factory_v1 = wl_registry_bind(d->registry, id, &frog_color_management_factory_v1_interface, 1);
     }
 }
 
 static void display_remove_global(void *data, struct wl_registry *registry, uint32_t id)
 {
     SDL_VideoData *d = data;
-    SDL_DisplayData *node;
+    SDL_DisplayData  *node;
 
     /* We don't get an interface, just an ID, so assume it's a wl_output :shrug: */
     wl_list_for_each (node, &d->output_list, link) {
@@ -1200,12 +1157,6 @@ int Wayland_VideoInit(SDL_VideoDevice *_this)
     // First roundtrip to receive all registry objects.
     WAYLAND_wl_display_roundtrip(data->display);
 
-    // Require viewports for display scaling.
-    if (data->scale_to_display_enabled && !data->viewporter) {
-        SDL_LogError(SDL_LOG_CATEGORY_VIDEO, "wayland: Display scaling requires the missing 'wp_viewporter' protocol: disabling");
-        data->scale_to_display_enabled = SDL_FALSE;
-    }
-
     /* Now that we have all the protocols, load libdecor if applicable */
     Wayland_LoadLibdecor(data, SDL_FALSE);
 
@@ -1233,7 +1184,6 @@ int Wayland_VideoInit(SDL_VideoDevice *_this)
 
 static int Wayland_GetDisplayBounds(SDL_VideoDevice *_this, SDL_VideoDisplay *display, SDL_Rect *rect)
 {
-    SDL_VideoData *viddata = _this->driverdata;
     SDL_DisplayData *driverdata = display->driverdata;
     rect->x = driverdata->x;
     rect->y = driverdata->y;
@@ -1247,7 +1197,15 @@ static int Wayland_GetDisplayBounds(SDL_VideoDevice *_this, SDL_VideoDisplay *di
         rect->w = display->fullscreen_window->current_fullscreen_mode.w;
         rect->h = display->fullscreen_window->current_fullscreen_mode.h;
     } else {
-        if (!viddata->scale_to_display_enabled) {
+        /* If the focused window is on the requested display and requires display scaling,
+         * return the physical dimensions in pixels.
+         */
+        SDL_Window *kb = SDL_GetKeyboardFocus();
+        SDL_Window *m = SDL_GetMouseFocus();
+        SDL_bool scale_output = (kb && kb->driverdata->scale_to_display && (kb->last_displayID == display->id)) ||
+                                (m && m->driverdata->scale_to_display && (m->last_displayID == display->id));
+
+        if (!scale_output) {
             rect->w = display->current_mode->w;
             rect->h = display->current_mode->h;
         } else if (driverdata->transform & WL_OUTPUT_TRANSFORM_90) {
@@ -1362,35 +1320,10 @@ static void Wayland_VideoCleanup(SDL_VideoDevice *_this)
         data->input_timestamps_manager = NULL;
     }
 
-    if (data->cursor_shape_manager) {
-        wp_cursor_shape_manager_v1_destroy(data->cursor_shape_manager);
-        data->cursor_shape_manager = NULL;
-    }
-
-    if (data->zxdg_exporter_v2) {
-        zxdg_exporter_v2_destroy(data->zxdg_exporter_v2);
-        data->zxdg_exporter_v2 = NULL;
-    }
-
-    if (data->xdg_wm_dialog_v1) {
-        xdg_wm_dialog_v1_destroy(data->xdg_wm_dialog_v1);
-        data->xdg_wm_dialog_v1 = NULL;
-    }
-
-    if (data->wp_alpha_modifier_v1) {
-        wp_alpha_modifier_v1_destroy(data->wp_alpha_modifier_v1);
-        data->wp_alpha_modifier_v1 = NULL;
-    }
-
     if (data->kde_output_order) {
         Wayland_FlushOutputOrder(data);
         kde_output_order_v1_destroy(data->kde_output_order);
         data->kde_output_order = NULL;
-    }
-
-    if (data->frog_color_management_factory_v1) {
-        frog_color_management_factory_v1_destroy(data->frog_color_management_factory_v1);
-        data->frog_color_management_factory_v1 = NULL;
     }
 
     if (data->compositor) {

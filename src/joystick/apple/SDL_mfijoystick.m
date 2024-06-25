@@ -948,6 +948,7 @@ static int IOS_JoystickOpen(SDL_Joystick *joystick, int device_index)
     }
 
     joystick->hwdata = device;
+    joystick->instance_id = device->instance_id;
 
     joystick->naxes = device->naxes;
     joystick->nhats = device->nhats;
@@ -1252,14 +1253,14 @@ static void IOS_MFIJoystickUpdate(SDL_Joystick *joystick)
                 GCControllerDirectionPad *dpad;
 
                 dpad = controller.physicalInputProfile.dpads[GCInputDualShockTouchpadOne];
-                if (dpad.xAxis.value != 0.f || dpad.yAxis.value != 0.f) {
+                if (dpad.xAxis.value || dpad.yAxis.value) {
                     SDL_SendJoystickTouchpad(timestamp, joystick, 0, 0, SDL_PRESSED, (1.0f + dpad.xAxis.value) * 0.5f, 1.0f - (1.0f + dpad.yAxis.value) * 0.5f, 1.0f);
                 } else {
                     SDL_SendJoystickTouchpad(timestamp, joystick, 0, 0, SDL_RELEASED, 0.0f, 0.0f, 1.0f);
                 }
 
                 dpad = controller.physicalInputProfile.dpads[GCInputDualShockTouchpadTwo];
-                if (dpad.xAxis.value != 0.f || dpad.yAxis.value != 0.f) {
+                if (dpad.xAxis.value || dpad.yAxis.value) {
                     SDL_SendJoystickTouchpad(timestamp, joystick, 0, 1, SDL_PRESSED, (1.0f + dpad.xAxis.value) * 0.5f, 1.0f - (1.0f + dpad.yAxis.value) * 0.5f, 1.0f);
                 } else {
                     SDL_SendJoystickTouchpad(timestamp, joystick, 0, 1, SDL_RELEASED, 0.0f, 0.0f, 1.0f);
@@ -1296,24 +1297,33 @@ static void IOS_MFIJoystickUpdate(SDL_Joystick *joystick)
         if (@available(macOS 10.16, iOS 14.0, tvOS 14.0, *)) {
             GCDeviceBattery *battery = controller.battery;
             if (battery) {
-                SDL_PowerState state = SDL_POWERSTATE_UNKNOWN;
-                int percent = (int)SDL_roundf(battery.batteryLevel * 100.0f);
+                SDL_JoystickPowerLevel ePowerLevel = SDL_JOYSTICK_POWER_UNKNOWN;
 
                 switch (battery.batteryState) {
                 case GCDeviceBatteryStateDischarging:
-                    state = SDL_POWERSTATE_ON_BATTERY;
-                    break;
+                {
+                    float power_level = battery.batteryLevel;
+                    if (power_level <= 0.05f) {
+                        ePowerLevel = SDL_JOYSTICK_POWER_EMPTY;
+                    } else if (power_level <= 0.20f) {
+                        ePowerLevel = SDL_JOYSTICK_POWER_LOW;
+                    } else if (power_level <= 0.70f) {
+                        ePowerLevel = SDL_JOYSTICK_POWER_MEDIUM;
+                    } else {
+                        ePowerLevel = SDL_JOYSTICK_POWER_FULL;
+                    }
+                } break;
                 case GCDeviceBatteryStateCharging:
-                    state = SDL_POWERSTATE_CHARGING;
+                    ePowerLevel = SDL_JOYSTICK_POWER_WIRED;
                     break;
                 case GCDeviceBatteryStateFull:
-                    state = SDL_POWERSTATE_CHARGED;
+                    ePowerLevel = SDL_JOYSTICK_POWER_FULL;
                     break;
                 default:
                     break;
                 }
 
-                SDL_SendJoystickPowerInfo(joystick, state, percent);
+                SDL_SendJoystickBatteryLevel(joystick, ePowerLevel);
             }
         }
 #endif /* ENABLE_MFI_BATTERY */
@@ -1916,11 +1926,11 @@ static GCControllerDirectionPad *GetDirectionalPadForController(GCController *co
 }
 #endif /* SDL_JOYSTICK_MFI && ENABLE_PHYSICAL_INPUT_PROFILE */
 
-char *IOS_GetAppleSFSymbolsNameForButton(SDL_Gamepad *gamepad, SDL_GamepadButton button)
-{
-    char elementName[256];
-    elementName[0] = '\0';
+static char elementName[256];
 
+const char *IOS_GetAppleSFSymbolsNameForButton(SDL_Gamepad *gamepad, SDL_GamepadButton button)
+{
+    elementName[0] = '\0';
 #if defined(SDL_JOYSTICK_MFI) && defined(ENABLE_PHYSICAL_INPUT_PROFILE)
     if (gamepad && SDL_GetGamepadJoystick(gamepad)->driver == &SDL_IOS_JoystickDriver) {
         if (@available(macOS 10.16, iOS 14.0, tvOS 14.0, *)) {
@@ -2030,15 +2040,12 @@ char *IOS_GetAppleSFSymbolsNameForButton(SDL_Gamepad *gamepad, SDL_GamepadButton
         }
     }
 #endif
-
-    return SDL_strdup(elementName);
+    return elementName;
 }
 
-char *IOS_GetAppleSFSymbolsNameForAxis(SDL_Gamepad *gamepad, SDL_GamepadAxis axis)
+const char *IOS_GetAppleSFSymbolsNameForAxis(SDL_Gamepad *gamepad, SDL_GamepadAxis axis)
 {
-    char elementName[256];
     elementName[0] = '\0';
-
 #if defined(SDL_JOYSTICK_MFI) && defined(ENABLE_PHYSICAL_INPUT_PROFILE)
     if (gamepad && SDL_GetGamepadJoystick(gamepad)->driver == &SDL_IOS_JoystickDriver) {
         if (@available(macOS 10.16, iOS 14.0, tvOS 14.0, *)) {
@@ -2071,7 +2078,7 @@ char *IOS_GetAppleSFSymbolsNameForAxis(SDL_Gamepad *gamepad, SDL_GamepadAxis axi
         }
     }
 #endif
-    return *elementName ? SDL_strdup(elementName) : NULL;
+    return *elementName ? elementName : NULL;
 }
 
 SDL_JoystickDriver SDL_IOS_JoystickDriver = {

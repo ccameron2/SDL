@@ -13,10 +13,16 @@
 /* Definitions for platform dependent windowing functions to test SDL
    integration with native windows
 */
-
 #include <SDL3/SDL.h>
 
-#include "build_config/SDL_build_config.h"
+/* Hack to avoid dynapi renaming */
+#include "../src/dynapi/SDL_dynapi.h"
+#ifdef SDL_DYNAMIC_API
+#undef SDL_DYNAMIC_API
+#endif
+#define SDL_DYNAMIC_API 0
+
+#include "../src/SDL_internal.h"
 
 typedef struct
 {

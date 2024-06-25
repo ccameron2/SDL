@@ -55,14 +55,14 @@ def main():
     # Get list of SDL headers
     sdl_list_includes = get_header_list()
 
-    reg_externC = re.compile(r'.*extern[ "]*C[ "].*')
-    reg_comment_remove_content = re.compile(r'\/\*.*\*/')
-    reg_parsing_function = re.compile(r'(.*SDLCALL[^\(\)]*) ([a-zA-Z0-9_]+) *\((.*)\) *;.*')
+    reg_externC = re.compile('.*extern[ "]*C[ "].*')
+    reg_comment_remove_content = re.compile('\/\*.*\*/')
+    reg_parsing_function = re.compile('(.*SDLCALL[^\(\)]*) ([a-zA-Z0-9_]+) *\((.*)\) *;.*')
 
     #eg:
     # void (SDLCALL *callback)(void*, int)
     # \1(\2)\3
-    reg_parsing_callback = re.compile(r'([^\(\)]*)\(([^\(\)]+)\)(.*)')
+    reg_parsing_callback = re.compile('([^\(\)]*)\(([^\(\)]+)\)(.*)')
 
     for filename in sdl_list_includes:
         if args.debug:
@@ -75,20 +75,7 @@ def main():
         parsing_comment = False
         current_comment = ""
 
-        ignore_wiki_documentation = False
-
         for line in input:
-
-            # Skip lines if we're in a wiki documentation block.
-            if ignore_wiki_documentation:
-                if line.startswith("#endif"):
-                    ignore_wiki_documentation = False
-                continue
-
-            # Discard wiki documentions blocks.
-            if line.startswith("#ifdef SDL_WIKI_DOCUMENTATION_SECTION"):
-                ignore_wiki_documentation = True
-                continue
 
             # Discard pre-processor directives ^#.*
             if line.startswith("#"):
@@ -100,7 +87,7 @@ def main():
                 continue
 
             # Remove one line comment /* ... */
-            # eg: extern SDL_DECLSPEC SDL_hid_device * SDLCALL SDL_hid_open_path(const char *path, int bExclusive /* = false */);
+            # eg: extern DECLSPEC SDL_hid_device * SDLCALL SDL_hid_open_path(const char *path, int bExclusive /* = false */);
             line = reg_comment_remove_content.sub('', line)
 
             # Get the comment block /* ... */ across several lines
@@ -169,17 +156,17 @@ def main():
             func = func.replace(" SDL_WPRINTF_VARARG_FUNC(3)", "");
             func = func.replace(" SDL_SCANF_VARARG_FUNC(2)", "");
             func = func.replace(" SDL_SCANF_VARARG_FUNCV(2)", "");
-            func = func.replace(" SDL_ANALYZER_NORETURN", "");
+            func = func.replace(" __attribute__((analyzer_noreturn))", "");
             func = func.replace(" SDL_MALLOC", "");
             func = func.replace(" SDL_ALLOC_SIZE2(1, 2)", "");
             func = func.replace(" SDL_ALLOC_SIZE(2)", "");
-            func = re.sub(r" SDL_ACQUIRE\(.*\)", "", func);
-            func = re.sub(r" SDL_ACQUIRE_SHARED\(.*\)", "", func);
-            func = re.sub(r" SDL_TRY_ACQUIRE\(.*\)", "", func);
-            func = re.sub(r" SDL_TRY_ACQUIRE_SHARED\(.*\)", "", func);
-            func = re.sub(r" SDL_RELEASE\(.*\)", "", func);
-            func = re.sub(r" SDL_RELEASE_SHARED\(.*\)", "", func);
-            func = re.sub(r" SDL_RELEASE_GENERIC\(.*\)", "", func);
+            func = re.sub(" SDL_ACQUIRE\(.*\)", "", func);
+            func = re.sub(" SDL_ACQUIRE_SHARED\(.*\)", "", func);
+            func = re.sub(" SDL_TRY_ACQUIRE\(.*\)", "", func);
+            func = re.sub(" SDL_TRY_ACQUIRE_SHARED\(.*\)", "", func);
+            func = re.sub(" SDL_RELEASE\(.*\)", "", func);
+            func = re.sub(" SDL_RELEASE_SHARED\(.*\)", "", func);
+            func = re.sub(" SDL_RELEASE_GENERIC\(.*\)", "", func);
 
             # Should be a valid function here
             match = reg_parsing_function.match(func)
@@ -196,7 +183,7 @@ def main():
             #
             func_ret = func_ret.replace('extern', ' ')
             func_ret = func_ret.replace('SDLCALL', ' ')
-            func_ret = func_ret.replace('SDL_DECLSPEC', ' ')
+            func_ret = func_ret.replace('DECLSPEC', ' ')
             # Remove trailing spaces in front of '*'
             tmp = ""
             while func_ret != tmp:
@@ -355,7 +342,7 @@ def main():
 def full_API_json():
     if args.dump:
         filename = 'sdl.json'
-        with open(filename, 'w', newline='') as f:
+        with open(filename, 'w') as f:
             json.dump(full_API, f, indent=4, sort_keys=True)
             print("dump API to '%s'" % filename);
 
@@ -440,7 +427,7 @@ def check_comment():
 
 # Parse 'sdl_dynapi_procs_h' file to find existing functions
 def find_existing_procs():
-    reg = re.compile(r'SDL_DYNAPI_PROC\([^,]*,([^,]*),.*\)')
+    reg = re.compile('SDL_DYNAPI_PROC\([^,]*,([^,]*),.*\)')
     ret = []
     input = open(SDL_DYNAPI_PROCS_H)
 
@@ -457,7 +444,7 @@ def find_existing_procs():
 
 # Get list of SDL headers
 def get_header_list():
-    reg = re.compile(r'^.*\.h$')
+    reg = re.compile('^.*\.h$')
     ret = []
     tmp = os.listdir(SDL_INCLUDE_DIR)
 
@@ -483,7 +470,7 @@ def add_dyn_api(proc):
     #
     # Add at last
     # SDL_DYNAPI_PROC(SDL_EGLConfig,SDL_EGL_GetCurrentEGLConfig,(void),(),return)
-    f = open(SDL_DYNAPI_PROCS_H, "a", newline="")
+    f = open(SDL_DYNAPI_PROCS_H, "a")
     dyn_proc = "SDL_DYNAPI_PROC(" + func_ret + "," + func_name + ",("
 
     i = ord('a')
@@ -545,7 +532,7 @@ def add_dyn_api(proc):
     #
     # Add at last
     # "#define SDL_DelayNS SDL_DelayNS_REAL
-    f = open(SDL_DYNAPI_OVERRIDES_H, "a", newline="")
+    f = open(SDL_DYNAPI_OVERRIDES_H, "a")
     f.write("#define " + func_name + " " + func_name + "_REAL\n")
     f.close()
 
@@ -559,7 +546,7 @@ def add_dyn_api(proc):
             new_input.append("    " + func_name + ";\n")
         new_input.append(line)
     input.close()
-    f = open(SDL_DYNAPI_SYM, 'w', newline='')
+    f = open(SDL_DYNAPI_SYM, 'w')
     for line in new_input:
         f.write(line)
     f.close()

@@ -12,7 +12,7 @@ LOCAL_MODULE := SDL3
 
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/include $(LOCAL_PATH)/src
 
-LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)/include
+LOCAL_EXPORT_C_INCLUDES := $(LOCAL_C_INCLUDES)
 
 LOCAL_SRC_FILES := \
 	$(subst $(LOCAL_PATH)/,, \
@@ -30,19 +30,15 @@ LOCAL_SRC_FILES := \
 	$(wildcard $(LOCAL_PATH)/src/core/*.c) \
 	$(wildcard $(LOCAL_PATH)/src/core/android/*.c) \
 	$(wildcard $(LOCAL_PATH)/src/cpuinfo/*.c) \
-    $(LOCAL_PATH)/src/dialog/SDL_dialog_utils.c \
-    $(LOCAL_PATH)/src/dialog/android/SDL_androiddialog.c \
 	$(wildcard $(LOCAL_PATH)/src/dynapi/*.c) \
 	$(wildcard $(LOCAL_PATH)/src/events/*.c) \
 	$(wildcard $(LOCAL_PATH)/src/file/*.c) \
 	$(wildcard $(LOCAL_PATH)/src/haptic/*.c) \
 	$(wildcard $(LOCAL_PATH)/src/haptic/android/*.c) \
-	$(wildcard $(LOCAL_PATH)/src/haptic/dummy/*.c) \
 	$(wildcard $(LOCAL_PATH)/src/hidapi/*.c) \
 	$(wildcard $(LOCAL_PATH)/src/hidapi/android/*.cpp) \
 	$(wildcard $(LOCAL_PATH)/src/joystick/*.c) \
 	$(wildcard $(LOCAL_PATH)/src/joystick/android/*.c) \
-	$(wildcard $(LOCAL_PATH)/src/joystick/dummy/*.c) \
 	$(wildcard $(LOCAL_PATH)/src/joystick/hidapi/*.c) \
 	$(wildcard $(LOCAL_PATH)/src/joystick/virtual/*.c) \
 	$(wildcard $(LOCAL_PATH)/src/loadso/dlopen/*.c) \
@@ -54,19 +50,14 @@ LOCAL_SRC_FILES := \
 	$(wildcard $(LOCAL_PATH)/src/misc/android/*.c) \
 	$(wildcard $(LOCAL_PATH)/src/power/*.c) \
 	$(wildcard $(LOCAL_PATH)/src/power/android/*.c) \
-	$(wildcard $(LOCAL_PATH)/src/filesystem/*.c) \
 	$(wildcard $(LOCAL_PATH)/src/filesystem/android/*.c) \
-	$(wildcard $(LOCAL_PATH)/src/filesystem/posix/*.c) \
 	$(wildcard $(LOCAL_PATH)/src/sensor/*.c) \
 	$(wildcard $(LOCAL_PATH)/src/sensor/android/*.c) \
-	$(wildcard $(LOCAL_PATH)/src/sensor/dummy/*.c) \
 	$(wildcard $(LOCAL_PATH)/src/render/*.c) \
 	$(wildcard $(LOCAL_PATH)/src/render/*/*.c) \
 	$(wildcard $(LOCAL_PATH)/src/stdlib/*.c) \
 	$(wildcard $(LOCAL_PATH)/src/thread/*.c) \
 	$(wildcard $(LOCAL_PATH)/src/thread/pthread/*.c) \
-	$(wildcard $(LOCAL_PATH)/src/time/*.c) \
-	$(wildcard $(LOCAL_PATH)/src/time/unix/*.c) \
 	$(wildcard $(LOCAL_PATH)/src/timer/*.c) \
 	$(wildcard $(LOCAL_PATH)/src/timer/unix/*.c) \
 	$(wildcard $(LOCAL_PATH)/src/video/*.c) \

@@ -35,17 +35,18 @@
 #endif
 #include "../video/SDL_sysvideo.h"
 
+#undef SDL_PRIs64
+#if (defined(SDL_PLATFORM_WIN32) || defined(SDL_PLATFORM_GDK)) && !defined(SDL_PLATFORM_CYGWIN)
+#define SDL_PRIs64 "I64d"
+#else
+#define SDL_PRIs64 "lld"
+#endif
+
 /* An arbitrary limit so we don't have unbounded growth */
 #define SDL_MAX_QUEUED_EVENTS 65535
 
-/* Determines how often we pump events if joystick or sensor subsystems are active */
-#define ENUMERATION_POLL_INTERVAL_NS (3 * SDL_NS_PER_SECOND)
-
-/* Determines how often to pump events if joysticks or sensors are actively being read */
-#define EVENT_POLL_INTERVAL_NS SDL_MS_TO_NS(1)
-
-/* Make sure the type in the SDL_Event aligns properly across the union */
-SDL_COMPILE_TIME_ASSERT(SDL_Event_type, sizeof(Uint32) == sizeof(SDL_EventType));
+/* Determines how often we wake to call SDL_PumpEvents() in SDL_WaitEventTimeout_Device() */
+#define PERIODIC_POLL_INTERVAL_NS (3 * SDL_NS_PER_SECOND)
 
 typedef struct SDL_EventWatcher
 {
@@ -101,46 +102,35 @@ static SDL_Mutex *SDL_event_memory_lock;
 static SDL_EventMemory *SDL_event_memory_head;
 static SDL_EventMemory *SDL_event_memory_tail;
 
-void *SDL_FreeLater(void *memory)
+void *SDL_AllocateEventMemory(size_t size)
 {
-    if (memory == NULL) {
+    void *memory = SDL_malloc(size);
+    if (!memory) {
         return NULL;
-    }
-
-    SDL_EventMemory *entry = (SDL_EventMemory *)SDL_malloc(sizeof(*entry));
-    if (!entry) {
-        return memory;  // this is now a leak, but you probably have bigger problems if malloc failed. We could probably pool up and reuse entries, though.
     }
 
     SDL_LockMutex(SDL_event_memory_lock);
     {
-        entry->eventID = SDL_last_event_id;
-        entry->memory = memory;
-        entry->next = NULL;
+        SDL_EventMemory *entry = (SDL_EventMemory *)SDL_malloc(sizeof(*entry));
+        if (entry) {
+            entry->eventID = SDL_last_event_id;
+            entry->memory = memory;
+            entry->next = NULL;
 
-        if (SDL_event_memory_tail) {
-            SDL_event_memory_tail->next = entry;
+            if (SDL_event_memory_tail) {
+                SDL_event_memory_tail->next = entry;
+            } else {
+                SDL_event_memory_head = entry;
+            }
+            SDL_event_memory_tail = entry;
         } else {
-            SDL_event_memory_head = entry;
+            SDL_free(memory);
+            memory = NULL;
         }
-        SDL_event_memory_tail = entry;
     }
     SDL_UnlockMutex(SDL_event_memory_lock);
 
     return memory;
-}
-
-void *SDL_AllocateEventMemory(size_t size)
-{
-    return SDL_FreeLater(SDL_malloc(size));
-}
-
-const char *SDL_AllocateEventString(const char *string)
-{
-    if (string) {
-        return SDL_FreeLater(SDL_strdup(string));
-    }
-    return NULL;
 }
 
 static void SDL_FlushEventMemory(Uint32 eventID)
@@ -293,6 +283,7 @@ static void SDL_LogEvent(const SDL_Event *event)
         SDL_DISPLAYEVENT_CASE(SDL_EVENT_DISPLAY_REMOVED);
         SDL_DISPLAYEVENT_CASE(SDL_EVENT_DISPLAY_MOVED);
         SDL_DISPLAYEVENT_CASE(SDL_EVENT_DISPLAY_CONTENT_SCALE_CHANGED);
+        SDL_DISPLAYEVENT_CASE(SDL_EVENT_DISPLAY_HDR_STATE_CHANGED);
 #undef SDL_DISPLAYEVENT_CASE
 
 #define SDL_WINDOWEVENT_CASE(x)                \
@@ -326,26 +317,16 @@ static void SDL_LogEvent(const SDL_Event *event)
         SDL_WINDOWEVENT_CASE(SDL_EVENT_WINDOW_ENTER_FULLSCREEN);
         SDL_WINDOWEVENT_CASE(SDL_EVENT_WINDOW_LEAVE_FULLSCREEN);
         SDL_WINDOWEVENT_CASE(SDL_EVENT_WINDOW_DESTROYED);
-        SDL_WINDOWEVENT_CASE(SDL_EVENT_WINDOW_HDR_STATE_CHANGED);
 #undef SDL_WINDOWEVENT_CASE
 
-#define PRINT_KEYDEV_EVENT(event) (void)SDL_snprintf(details, sizeof(details), " (timestamp=%u which=%u)", (uint)event->kdevice.timestamp, (uint)event->kdevice.which)
-        SDL_EVENT_CASE(SDL_EVENT_KEYBOARD_ADDED)
-        PRINT_KEYDEV_EVENT(event);
-        break;
-        SDL_EVENT_CASE(SDL_EVENT_KEYBOARD_REMOVED)
-        PRINT_KEYDEV_EVENT(event);
-        break;
-#undef PRINT_KEYDEV_EVENT
-
-#define PRINT_KEY_EVENT(event)                                                                                                              \
-    (void)SDL_snprintf(details, sizeof(details), " (timestamp=%u windowid=%u which=%u state=%s repeat=%s scancode=%u keycode=%u mod=0x%x)", \
-                       (uint)event->key.timestamp, (uint)event->key.windowID, (uint)event->key.which,                                       \
-                       event->key.state == SDL_PRESSED ? "pressed" : "released",                                                            \
-                       event->key.repeat ? "true" : "false",                                                                                \
-                       (uint)event->key.scancode,                                                                                           \
-                       (uint)event->key.key,                                                                                                \
-                       (uint)event->key.mod)
+#define PRINT_KEY_EVENT(event)                                                                                                   \
+    (void)SDL_snprintf(details, sizeof(details), " (timestamp=%u windowid=%u state=%s repeat=%s scancode=%u keycode=%u mod=%u)", \
+                       (uint)event->key.timestamp, (uint)event->key.windowID,                                                    \
+                       event->key.state == SDL_PRESSED ? "pressed" : "released",                                                 \
+                       event->key.repeat ? "true" : "false",                                                                     \
+                       (uint)event->key.keysym.scancode,                                                                         \
+                       (uint)event->key.keysym.sym,                                                                              \
+                       (uint)event->key.keysym.mod)
         SDL_EVENT_CASE(SDL_EVENT_KEY_DOWN)
         PRINT_KEY_EVENT(event);
         break;
@@ -363,15 +344,6 @@ static void SDL_LogEvent(const SDL_Event *event)
         SDL_EVENT_CASE(SDL_EVENT_TEXT_INPUT)
         (void)SDL_snprintf(details, sizeof(details), " (timestamp=%u windowid=%u text='%s')", (uint)event->text.timestamp, (uint)event->text.windowID, event->text.text);
         break;
-
-#define PRINT_MOUSEDEV_EVENT(event) (void)SDL_snprintf(details, sizeof(details), " (timestamp=%u which=%u)", (uint)event->mdevice.timestamp, (uint)event->mdevice.which)
-        SDL_EVENT_CASE(SDL_EVENT_MOUSE_ADDED)
-        PRINT_MOUSEDEV_EVENT(event);
-        break;
-        SDL_EVENT_CASE(SDL_EVENT_MOUSE_REMOVED)
-        PRINT_MOUSEDEV_EVENT(event);
-        break;
-#undef PRINT_MOUSEDEV_EVENT
 
         SDL_EVENT_CASE(SDL_EVENT_MOUSE_MOTION)
         (void)SDL_snprintf(details, sizeof(details), " (timestamp=%u windowid=%u which=%u state=%u x=%g y=%g xrel=%g yrel=%g)",
@@ -408,12 +380,6 @@ static void SDL_LogEvent(const SDL_Event *event)
                            (uint)event->jaxis.axis, (int)event->jaxis.value);
         break;
 
-        SDL_EVENT_CASE(SDL_EVENT_JOYSTICK_BALL_MOTION)
-        (void)SDL_snprintf(details, sizeof(details), " (timestamp=%u which=%d ball=%u xrel=%d yrel=%d)",
-                           (uint)event->jball.timestamp, (int)event->jball.which,
-                           (uint)event->jball.ball, (int)event->jball.xrel, (int)event->jball.yrel);
-        break;
-
         SDL_EVENT_CASE(SDL_EVENT_JOYSTICK_HAT_MOTION)
         (void)SDL_snprintf(details, sizeof(details), " (timestamp=%u which=%d hat=%u value=%u)",
                            (uint)event->jhat.timestamp, (int)event->jhat.which,
@@ -432,20 +398,11 @@ static void SDL_LogEvent(const SDL_Event *event)
         break;
 #undef PRINT_JBUTTON_EVENT
 
-        SDL_EVENT_CASE(SDL_EVENT_JOYSTICK_BATTERY_UPDATED)
-        (void)SDL_snprintf(details, sizeof(details), " (timestamp=%u which=%d state=%u percent=%d)",
-                           (uint)event->jbattery.timestamp, (int)event->jbattery.which,
-                           event->jbattery.state, event->jbattery.percent);
-        break;
-
 #define PRINT_JOYDEV_EVENT(event) (void)SDL_snprintf(details, sizeof(details), " (timestamp=%u which=%d)", (uint)event->jdevice.timestamp, (int)event->jdevice.which)
         SDL_EVENT_CASE(SDL_EVENT_JOYSTICK_ADDED)
         PRINT_JOYDEV_EVENT(event);
         break;
         SDL_EVENT_CASE(SDL_EVENT_JOYSTICK_REMOVED)
-        PRINT_JOYDEV_EVENT(event);
-        break;
-        SDL_EVENT_CASE(SDL_EVENT_JOYSTICK_UPDATE_COMPLETE)
         PRINT_JOYDEV_EVENT(event);
         break;
 #undef PRINT_JOYDEV_EVENT
@@ -476,9 +433,6 @@ static void SDL_LogEvent(const SDL_Event *event)
         PRINT_GAMEPADDEV_EVENT(event);
         break;
         SDL_EVENT_CASE(SDL_EVENT_GAMEPAD_REMAPPED)
-        PRINT_GAMEPADDEV_EVENT(event);
-        break;
-        SDL_EVENT_CASE(SDL_EVENT_GAMEPAD_UPDATE_COMPLETE)
         PRINT_GAMEPADDEV_EVENT(event);
         break;
         SDL_EVENT_CASE(SDL_EVENT_GAMEPAD_STEAM_HANDLE_UPDATED)
@@ -589,7 +543,7 @@ static void SDL_LogEvent(const SDL_Event *event)
         break;
 #undef PRINT_DROP_EVENT
 
-#define PRINT_AUDIODEV_EVENT(event) (void)SDL_snprintf(details, sizeof(details), " (timestamp=%u which=%u recording=%s)", (uint)event->adevice.timestamp, (uint)event->adevice.which, event->adevice.recording ? "true" : "false")
+#define PRINT_AUDIODEV_EVENT(event) (void)SDL_snprintf(details, sizeof(details), " (timestamp=%u which=%u iscapture=%s)", (uint)event->adevice.timestamp, (uint)event->adevice.which, event->adevice.iscapture ? "true" : "false")
         SDL_EVENT_CASE(SDL_EVENT_AUDIO_DEVICE_ADDED)
         PRINT_AUDIODEV_EVENT(event);
         break;
@@ -631,12 +585,8 @@ static void SDL_LogEvent(const SDL_Event *event)
 
     default:
         if (!name[0]) {
-            if (event->type >= SDL_EVENT_USER) {
-                SDL_strlcpy(name, "USER", sizeof(name));
-            } else {
-                SDL_strlcpy(name, "UNKNOWN", sizeof(name));
-            }
-            (void)SDL_snprintf(details, sizeof(details), " 0x%x", (uint)event->type);
+            SDL_strlcpy(name, "UNKNOWN", sizeof(name));
+            (void)SDL_snprintf(details, sizeof(details), " #%u! (Bug? FIXME?)", (uint)event->type);
         }
         break;
     }
@@ -749,6 +699,14 @@ int SDL_StartEventLoop(void)
     }
 #endif /* !SDL_THREADS_DISABLED */
 
+    /* Process most event types */
+    SDL_SetEventEnabled(SDL_EVENT_TEXT_INPUT, SDL_FALSE);
+    SDL_SetEventEnabled(SDL_EVENT_TEXT_EDITING, SDL_FALSE);
+#if 0 /* Leave these events enabled so apps can respond to items being dragged onto them at startup */
+    SDL_SetEventEnabled(SDL_EVENT_DROP_FILE, SDL_FALSE);
+    SDL_SetEventEnabled(SDL_EVENT_DROP_TEXT, SDL_FALSE);
+#endif
+
     SDL_EventQ.active = SDL_TRUE;
     SDL_UnlockMutex(SDL_EventQ.lock);
     return 0;
@@ -859,7 +817,7 @@ static int SDL_SendWakeupEvent(void)
 }
 
 /* Lock the event queue, take a peep at it, and unlock it */
-static int SDL_PeepEventsInternal(SDL_Event *events, int numevents, SDL_EventAction action,
+static int SDL_PeepEventsInternal(SDL_Event *events, int numevents, SDL_eventaction action,
                                   Uint32 minType, Uint32 maxType, SDL_bool include_sentinel)
 {
     int i, used, sentinels_expected = 0;
@@ -879,10 +837,6 @@ static int SDL_PeepEventsInternal(SDL_Event *events, int numevents, SDL_EventAct
             return -1;
         }
         if (action == SDL_ADDEVENT) {
-            if (!events) {
-                SDL_UnlockMutex(SDL_EventQ.lock);
-                return SDL_InvalidParamError("events");
-            }
             for (i = 0; i < numevents; ++i) {
                 used += SDL_AddEvent(&events[i]);
             }
@@ -928,7 +882,7 @@ static int SDL_PeepEventsInternal(SDL_Event *events, int numevents, SDL_EventAct
 
     return used;
 }
-int SDL_PeepEvents(SDL_Event *events, int numevents, SDL_EventAction action,
+int SDL_PeepEvents(SDL_Event *events, int numevents, SDL_eventaction action,
                    Uint32 minType, Uint32 maxType)
 {
     return SDL_PeepEventsInternal(events, numevents, action, minType, maxType, SDL_FALSE);
@@ -1050,36 +1004,21 @@ SDL_bool SDL_PollEvent(SDL_Event *event)
     return SDL_WaitEventTimeoutNS(event, 0);
 }
 
-static Sint64 SDL_events_get_polling_interval(void)
+static SDL_bool SDL_events_need_periodic_poll(void)
 {
-    Sint64 poll_intervalNS = SDL_MAX_SINT64;
+    SDL_bool need_periodic_poll = SDL_FALSE;
 
 #ifndef SDL_JOYSTICK_DISABLED
-    if (SDL_WasInit(SDL_INIT_JOYSTICK) && SDL_update_joysticks) {
-        if (SDL_JoysticksOpened()) {
-            /* If we have joysticks open, we need to poll rapidly for events */
-            poll_intervalNS = SDL_min(poll_intervalNS, EVENT_POLL_INTERVAL_NS);
-        } else {
-            /* If not, just poll every few seconds to enumerate new joysticks */
-            poll_intervalNS = SDL_min(poll_intervalNS, ENUMERATION_POLL_INTERVAL_NS);
-        }
-    }
+    need_periodic_poll = SDL_WasInit(SDL_INIT_JOYSTICK) && SDL_update_joysticks;
 #endif
 
-#ifndef SDL_SENSOR_DISABLED
-    if (SDL_WasInit(SDL_INIT_SENSOR) && SDL_update_sensors && SDL_SensorsOpened()) {
-        /* If we have sensors open, we need to poll rapidly for events */
-        poll_intervalNS = SDL_min(poll_intervalNS, EVENT_POLL_INTERVAL_NS);
-    }
-#endif
-
-    return poll_intervalNS;
+    return need_periodic_poll;
 }
 
 static int SDL_WaitEventTimeout_Device(SDL_VideoDevice *_this, SDL_Window *wakeup_window, SDL_Event *event, Uint64 start, Sint64 timeoutNS)
 {
     Sint64 loop_timeoutNS = timeoutNS;
-    Sint64 poll_intervalNS = SDL_events_get_polling_interval();
+    SDL_bool need_periodic_poll = SDL_events_need_periodic_poll();
 
     for (;;) {
         int status;
@@ -1121,18 +1060,17 @@ static int SDL_WaitEventTimeout_Device(SDL_VideoDevice *_this, SDL_Window *wakeu
             }
             loop_timeoutNS = (timeoutNS - elapsed);
         }
-        /* Adjust the timeout for any polling requirements we currently have. */
-        if (poll_intervalNS != SDL_MAX_SINT64) {
+        if (need_periodic_poll) {
             if (loop_timeoutNS >= 0) {
-                loop_timeoutNS = SDL_min(loop_timeoutNS, poll_intervalNS);
+                loop_timeoutNS = SDL_min(loop_timeoutNS, PERIODIC_POLL_INTERVAL_NS);
             } else {
-                loop_timeoutNS = poll_intervalNS;
+                loop_timeoutNS = PERIODIC_POLL_INTERVAL_NS;
             }
         }
         status = _this->WaitEventTimeout(_this, loop_timeoutNS);
         /* Set wakeup_window to NULL without holding the lock. */
         _this->wakeup_window = NULL;
-        if (status == 0 && poll_intervalNS != SDL_MAX_SINT64 && loop_timeoutNS == poll_intervalNS) {
+        if (status == 0 && need_periodic_poll && loop_timeoutNS == PERIODIC_POLL_INTERVAL_NS) {
             /* We may have woken up to poll. Try again */
             continue;
         } else if (status <= 0) {
@@ -1143,6 +1081,22 @@ static int SDL_WaitEventTimeout_Device(SDL_VideoDevice *_this, SDL_Window *wakeu
           to let SDL_PeepEvents pick it up .*/
     }
     return 0;
+}
+
+static SDL_bool SDL_events_need_polling(void)
+{
+    SDL_bool need_polling = SDL_FALSE;
+
+#ifndef SDL_JOYSTICK_DISABLED
+    need_polling = SDL_WasInit(SDL_INIT_JOYSTICK) && SDL_update_joysticks && SDL_JoysticksOpened();
+#endif
+
+#ifndef SDL_SENSOR_DISABLED
+    need_polling = need_polling ||
+                   (SDL_WasInit(SDL_INIT_SENSOR) && SDL_update_sensors && SDL_SensorsOpened());
+#endif
+
+    return need_polling;
 }
 
 static SDL_Window *SDL_find_active_window(SDL_VideoDevice *_this)
@@ -1229,7 +1183,7 @@ SDL_bool SDL_WaitEventTimeoutNS(SDL_Event *event, Sint64 timeoutNS)
     /* We should have completely handled timeoutNS == 0 above */
     SDL_assert(timeoutNS != 0);
 
-    if (_this && _this->WaitEventTimeout && _this->SendWakeupEvent) {
+    if (_this && _this->WaitEventTimeout && _this->SendWakeupEvent && !SDL_events_need_polling()) {
         /* Look if a shown window is available to send the wakeup event. */
         wakeup_window = SDL_find_active_window(_this);
         if (wakeup_window) {
@@ -1253,7 +1207,7 @@ SDL_bool SDL_WaitEventTimeoutNS(SDL_Event *event, Sint64 timeoutNS)
             return SDL_TRUE;
         }
 
-        Uint64 delay = EVENT_POLL_INTERVAL_NS;
+        Uint64 delay = SDL_MS_TO_NS(1);
         if (timeoutNS > 0) {
             Uint64 now = SDL_GetTicksNS();
             if (now >= expiration) {
@@ -1272,8 +1226,7 @@ int SDL_PushEvent(SDL_Event *event)
         event->common.timestamp = SDL_GetTicksNS();
     }
 
-    if ((SDL_EventOK.callback || SDL_event_watchers_count > 0) &&
-        (event->common.type != SDL_EVENT_POLL_SENTINEL)) {
+    if (SDL_EventOK.callback || SDL_event_watchers_count > 0) {
         SDL_LockMutex(SDL_event_watchers_lock);
         {
             if (SDL_EventOK.callback && !SDL_EventOK.callback(SDL_EventOK.userdata, event)) {
@@ -1318,25 +1271,12 @@ int SDL_PushEvent(SDL_Event *event)
 
 void SDL_SetEventFilter(SDL_EventFilter filter, void *userdata)
 {
-    SDL_EventEntry *event, *next;
     SDL_LockMutex(SDL_event_watchers_lock);
     {
         /* Set filter and discard pending events */
         SDL_EventOK.callback = filter;
         SDL_EventOK.userdata = userdata;
-        if (filter) {
-            /* Cut all events not accepted by the filter */
-            SDL_LockMutex(SDL_EventQ.lock);
-            {
-                for (event = SDL_EventQ.head; event; event = next) {
-                    next = event->next;
-                    if (!filter(userdata, &event->event)) {
-                        SDL_CutEvent(event);
-                    }
-                }
-            }
-            SDL_UnlockMutex(SDL_EventQ.lock);
-        }
+        SDL_FlushEvents(SDL_EVENT_FIRST, SDL_EVENT_LAST);
     }
     SDL_UnlockMutex(SDL_event_watchers_lock);
 }
@@ -1368,7 +1308,7 @@ int SDL_AddEventWatch(SDL_EventFilter filter, void *userdata)
     {
         SDL_EventWatcher *event_watchers;
 
-        event_watchers = (SDL_EventWatcher *)SDL_realloc(SDL_event_watchers, (SDL_event_watchers_count + 1) * sizeof(*event_watchers));
+        event_watchers = SDL_realloc(SDL_event_watchers, (SDL_event_watchers_count + 1) * sizeof(*event_watchers));
         if (event_watchers) {
             SDL_EventWatcher *watcher;
 
@@ -1432,8 +1372,6 @@ void SDL_SetEventEnabled(Uint32 type, SDL_bool enabled)
     Uint8 hi = ((type >> 8) & 0xff);
     Uint8 lo = (type & 0xff);
 
-    enabled = !!enabled;  // make sure this is definitely either SDL_TRUE or SDL_FALSE.
-
     if (SDL_disabled_events[hi] &&
         (SDL_disabled_events[hi]->bits[lo / 32] & (1 << (lo & 31)))) {
         current_state = SDL_FALSE;
@@ -1443,8 +1381,14 @@ void SDL_SetEventEnabled(Uint32 type, SDL_bool enabled)
 
     if (enabled != current_state) {
         if (enabled) {
-            SDL_assert(SDL_disabled_events[hi] != NULL);
+#ifdef _MSC_VER /* Visual Studio analyzer can't tell that SDL_disabled_events[hi] isn't NULL if enabled is true */
+#pragma warning(push)
+#pragma warning(disable : 6011)
+#endif
             SDL_disabled_events[hi]->bits[lo / 32] &= ~(1 << (lo & 31));
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
             /* Gamepad events depend on joystick events */
             switch (type) {
@@ -1503,11 +1447,13 @@ SDL_bool SDL_EventEnabled(Uint32 type)
 
 Uint32 SDL_RegisterEvents(int numevents)
 {
-    Uint32 event_base = 0;
+    Uint32 event_base;
 
     if ((numevents > 0) && (SDL_userevents + numevents <= SDL_EVENT_LAST)) {
         event_base = SDL_userevents;
         SDL_userevents += numevents;
+    } else {
+        event_base = (Uint32)-1;
     }
     return event_base;
 }

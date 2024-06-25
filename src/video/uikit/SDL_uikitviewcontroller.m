@@ -425,7 +425,7 @@ static void SDLCALL SDL_HideHomeIndicatorHintChanged(void *userdata, const char 
 {
     BOOL shouldStartTextInput = NO;
 
-    if (!SDL_TextInputActive(window) && !hidingKeyboard && !rotatingOrientation) {
+    if (!SDL_TextInputActive() && !hidingKeyboard && !rotatingOrientation) {
         shouldStartTextInput = YES;
     }
 
@@ -441,7 +441,7 @@ static void SDLCALL SDL_HideHomeIndicatorHintChanged(void *userdata, const char 
 #endif
 
     if (shouldStartTextInput) {
-        SDL_StartTextInput(window);
+        SDL_StartTextInput();
     }
 }
 
@@ -454,7 +454,7 @@ static void SDLCALL SDL_HideHomeIndicatorHintChanged(void *userdata, const char 
 {
     BOOL shouldStopTextInput = NO;
 
-    if (SDL_TextInputActive(window) && !showingKeyboard && !rotatingOrientation) {
+    if (SDL_TextInputActive() && !showingKeyboard && !rotatingOrientation) {
         shouldStopTextInput = YES;
     }
 
@@ -462,7 +462,7 @@ static void SDLCALL SDL_HideHomeIndicatorHintChanged(void *userdata, const char 
     [self setKeyboardHeight:0];
 
     if (shouldStopTextInput) {
-        SDL_StopTextInput(window);
+        SDL_StopTextInput();
     }
 }
 
@@ -522,8 +522,8 @@ static void SDLCALL SDL_HideHomeIndicatorHintChanged(void *userdata, const char 
 #endif
 
     if (self.keyboardHeight) {
-        int rectbottom = (int)(self.textInputRect.y + self.textInputRect.h);
-        int keybottom = (int)(self.view.bounds.size.height - self.keyboardHeight);
+        int rectbottom = self.textInputRect.y + self.textInputRect.h;
+        int keybottom = self.view.bounds.size.height - self.keyboardHeight;
         if (keybottom < rectbottom) {
             offset.y = keybottom - rectbottom;
         }
@@ -567,7 +567,7 @@ static void SDLCALL SDL_HideHomeIndicatorHintChanged(void *userdata, const char 
     SDL_SendKeyboardKeyAutoRelease(0, SDL_SCANCODE_RETURN);
     if (keyboardVisible &&
         SDL_GetHintBoolean(SDL_HINT_RETURN_KEY_HIDES_IME, SDL_FALSE)) {
-        SDL_StopTextInput(window);
+        SDL_StopTextInput();
     }
     return YES;
 }
@@ -623,12 +623,12 @@ SDL_bool UIKit_IsScreenKeyboardShown(SDL_VideoDevice *_this, SDL_Window *window)
     }
 }
 
-int UIKit_UpdateTextInputRect(SDL_VideoDevice *_this, SDL_Window *window)
+int UIKit_SetTextInputRect(SDL_VideoDevice *_this, const SDL_Rect *rect)
 {
     @autoreleasepool {
-        SDL_uikitviewcontroller *vc = GetWindowViewController(window);
+        SDL_uikitviewcontroller *vc = GetWindowViewController(SDL_GetKeyboardFocus());
         if (vc != nil) {
-            vc.textInputRect = window->text_input_rect;
+            vc.textInputRect = *rect;
 
             if (vc.keyboardVisible) {
                 [vc updateKeyboard];

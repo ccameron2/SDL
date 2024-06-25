@@ -275,16 +275,13 @@ static void loop(void)
             }
             break;
         case SDL_EVENT_KEY_DOWN:
-            if (event.key.key == SDLK_SPACE) {
+            if (event.key.keysym.sym == SDLK_SPACE) {
                 paused = !paused;
                 break;
             }
-            if (event.key.key != SDLK_ESCAPE) {
+            if (event.key.keysym.sym != SDLK_ESCAPE) {
                 break;
             }
-            break;
-        default:
-            break;
         }
     }
 
@@ -319,7 +316,7 @@ static void loop(void)
 
 int main(int argc, char **argv)
 {
-    SDL_IOStream *handle;
+    SDL_RWops *handle;
     int i;
     int j;
     int fps = 12;
@@ -444,16 +441,16 @@ int main(int argc, char **argv)
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Out of memory\n");
         quit(2);
     }
-    handle = SDL_IOFromFile(filename, "rb");
+    handle = SDL_RWFromFile(filename, "rb");
     SDL_free(filename);
     if (!handle) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Can't find the file moose.dat !\n");
         quit(2);
     }
 
-    SDL_ReadIO(handle, RawMooseData, MOOSEFRAME_SIZE * MOOSEFRAMES_COUNT);
+    SDL_RWread(handle, RawMooseData, MOOSEFRAME_SIZE * MOOSEFRAMES_COUNT);
 
-    SDL_CloseIO(handle);
+    SDL_RWclose(handle);
 
     /* Create the window and renderer */
     window_w = MOOSEPIC_W * scale;

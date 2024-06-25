@@ -64,24 +64,30 @@ static const unsigned int ext_button_map[] = {
 
 static int analog_map[256]; /* Map analog inputs to -32768 -> 32767 */
 
+typedef struct
+{
+    int x;
+    int y;
+} point;
+
 /* 4 points define the bezier-curve. */
 /* The Vita has a good amount of analog travel, so use a linear curve */
-static SDL_Point a = { 0, 0 };
-static SDL_Point b = { 0, 0 };
-static SDL_Point c = { 128, 32767 };
-static SDL_Point d = { 128, 32767 };
+static point a = { 0, 0 };
+static point b = { 0, 0 };
+static point c = { 128, 32767 };
+static point d = { 128, 32767 };
 
 /* simple linear interpolation between two points */
-static SDL_INLINE void lerp(SDL_Point *dest, const SDL_Point *first, const SDL_Point *second, float t)
+static SDL_INLINE void lerp(point *dest, point *first, point *second, float t)
 {
-    dest->x = first->x + (int)((second->x - first->x) * t);
-    dest->y = first->y + (int)((second->y - first->y) * t);
+    dest->x = first->x + (second->x - first->x) * t;
+    dest->y = first->y + (second->y - first->y) * t;
 }
 
 /* evaluate a point on a bezier-curve. t goes from 0 to 1.0 */
 static int calc_bezier_y(float t)
 {
-    SDL_Point ab, bc, cd, abbc, bccd, dest;
+    point ab, bc, cd, abbc, bccd, dest;
     lerp(&ab, &a, &b, t);         /* point between a and b */
     lerp(&bc, &b, &c, t);         /* point between b and c */
     lerp(&cd, &c, &d, t);         /* point between c and d */
@@ -118,8 +124,7 @@ static int VITA_JoystickInit(void)
     // after the app has already started.
 
     SDL_numjoysticks = 1;
-    SDL_PrivateJoystickAdded(SDL_numjoysticks);
-
+    SDL_PrivateJoystickAdded(0);
     // How many additional paired controllers are there?
     sceCtrlGetControllerPortInfo(&myPortInfo);
 
@@ -127,8 +132,8 @@ static int VITA_JoystickInit(void)
     // and that is the first one, so start at port 2
     for (i = 2; i <= 4; i++) {
         if (myPortInfo.port[i] != SCE_CTRL_TYPE_UNPAIRED) {
-            ++SDL_numjoysticks;
             SDL_PrivateJoystickAdded(SDL_numjoysticks);
+            SDL_numjoysticks++;
         }
     }
     return SDL_numjoysticks;
@@ -206,6 +211,7 @@ static int VITA_JoystickOpen(SDL_Joystick *joystick, int device_index)
     joystick->nbuttons = SDL_arraysize(ext_button_map);
     joystick->naxes = 6;
     joystick->nhats = 0;
+    joystick->instance_id = device_index;
 
     SDL_SetBooleanProperty(SDL_GetJoystickProperties(joystick), SDL_PROP_JOYSTICK_CAP_RGB_LED_BOOLEAN, SDL_TRUE);
     SDL_SetBooleanProperty(SDL_GetJoystickProperties(joystick), SDL_PROP_JOYSTICK_CAP_RUMBLE_BOOLEAN, SDL_TRUE);

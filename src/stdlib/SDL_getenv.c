@@ -20,8 +20,6 @@
 */
 #include "SDL_internal.h"
 
-#include "SDL_getenv_c.h"
-
 #if defined(SDL_PLATFORM_WIN32) || defined(SDL_PLATFORM_WINGDK)
 #include "../core/windows/SDL_windows.h"
 #endif
@@ -32,21 +30,8 @@
 
 #if (defined(SDL_PLATFORM_WIN32) || defined(SDL_PLATFORM_WINGDK)) && (!defined(HAVE_SETENV) || !defined(HAVE_GETENV))
 /* Note this isn't thread-safe! */
-static char *SDL_envmem = NULL;
+static char *SDL_envmem = NULL; /* Ugh, memory leak */
 static size_t SDL_envmemlen = 0;
-
-void SDL_FreeEnvironmentMemory(void)
-{
-    if (SDL_envmem) {
-        SDL_free(SDL_envmem);
-        SDL_envmem = NULL;
-        SDL_envmemlen = 0;
-    }
-}
-#else
-void SDL_FreeEnvironmentMemory(void)
-{
-}
 #endif
 
 /* Put a variable into the environment */

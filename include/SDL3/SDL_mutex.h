@@ -23,9 +23,9 @@
 #define SDL_mutex_h_
 
 /**
- * # CategoryMutex
+ *  \file SDL_mutex.h
  *
- * Functions to provide thread synchronization primitives.
+ *  Functions to provide thread synchronization primitives.
  */
 
 #include <SDL3/SDL_stdinc.h>
@@ -116,11 +116,8 @@ extern "C" {
 #endif
 
 /**
- * Synchronization functions return this value if they time out.
- *
- * Not all functions _can_ time out; some will block indefinitely.
- *
- * \since This macro is available since SDL 3.0.0.
+ *  Synchronization functions which can time out return this value
+ *  if they time out.
  */
 #define SDL_MUTEX_TIMEDOUT  1
 
@@ -130,18 +127,8 @@ extern "C" {
  */
 /* @{ */
 
-/**
- * A means to serialize access to a resource between threads.
- *
- * Mutexes (short for "mutual exclusion") are a synchronization primitive that
- * allows exactly one thread to proceed at a time.
- *
- * Wikipedia has a thorough explanation of the concept:
- *
- * https://en.wikipedia.org/wiki/Mutex
- *
- * \since This struct is available since SDL 3.0.0.
- */
+/* The SDL mutex structure, defined in SDL_sysmutex.c */
+struct SDL_Mutex;
 typedef struct SDL_Mutex SDL_Mutex;
 
 /**
@@ -164,7 +151,7 @@ typedef struct SDL_Mutex SDL_Mutex;
  * \sa SDL_TryLockMutex
  * \sa SDL_UnlockMutex
  */
-extern SDL_DECLSPEC SDL_Mutex *SDLCALL SDL_CreateMutex(void);
+extern DECLSPEC SDL_Mutex *SDLCALL SDL_CreateMutex(void);
 
 /**
  * Lock the mutex.
@@ -181,14 +168,11 @@ extern SDL_DECLSPEC SDL_Mutex *SDLCALL SDL_CreateMutex(void);
  * having locked nothing. If the mutex is valid, this function will always
  * block until it can lock the mutex, and return with it locked.
  *
- * \param mutex the mutex to lock.
+ * \param mutex the mutex to lock
  *
  * \since This function is available since SDL 3.0.0.
- *
- * \sa SDL_TryLockMutex
- * \sa SDL_UnlockMutex
  */
-extern SDL_DECLSPEC void SDLCALL SDL_LockMutex(SDL_Mutex *mutex) SDL_ACQUIRE(mutex);
+extern DECLSPEC void SDLCALL SDL_LockMutex(SDL_Mutex *mutex) SDL_ACQUIRE(mutex);
 
 /**
  * Try to lock a mutex without blocking.
@@ -204,15 +188,17 @@ extern SDL_DECLSPEC void SDLCALL SDL_LockMutex(SDL_Mutex *mutex) SDL_ACQUIRE(mut
  * either lock the mutex and return 0, or return SDL_MUTEX_TIMEOUT and lock
  * nothing.
  *
- * \param mutex the mutex to try to lock.
- * \returns 0 or `SDL_MUTEX_TIMEDOUT`.
+ * \param mutex the mutex to try to lock
+ * \returns 0 or `SDL_MUTEX_TIMEDOUT`
  *
  * \since This function is available since SDL 3.0.0.
  *
+ * \sa SDL_CreateMutex
+ * \sa SDL_DestroyMutex
  * \sa SDL_LockMutex
  * \sa SDL_UnlockMutex
  */
-extern SDL_DECLSPEC int SDLCALL SDL_TryLockMutex(SDL_Mutex *mutex) SDL_TRY_ACQUIRE(0, mutex);
+extern DECLSPEC int SDLCALL SDL_TryLockMutex(SDL_Mutex *mutex) SDL_TRY_ACQUIRE(0, mutex);
 
 /**
  * Unlock the mutex.
@@ -227,11 +213,8 @@ extern SDL_DECLSPEC int SDLCALL SDL_TryLockMutex(SDL_Mutex *mutex) SDL_TRY_ACQUI
  * \param mutex the mutex to unlock.
  *
  * \since This function is available since SDL 3.0.0.
- *
- * \sa SDL_LockMutex
- * \sa SDL_TryLockMutex
  */
-extern SDL_DECLSPEC void SDLCALL SDL_UnlockMutex(SDL_Mutex *mutex) SDL_RELEASE(mutex);
+extern DECLSPEC void SDLCALL SDL_UnlockMutex(SDL_Mutex *mutex) SDL_RELEASE(mutex);
 
 /**
  * Destroy a mutex created with SDL_CreateMutex().
@@ -242,13 +225,16 @@ extern SDL_DECLSPEC void SDLCALL SDL_UnlockMutex(SDL_Mutex *mutex) SDL_RELEASE(m
  * to destroy a locked mutex, and may result in undefined behavior depending
  * on the platform.
  *
- * \param mutex the mutex to destroy.
+ * \param mutex the mutex to destroy
  *
  * \since This function is available since SDL 3.0.0.
  *
  * \sa SDL_CreateMutex
+ * \sa SDL_LockMutex
+ * \sa SDL_TryLockMutex
+ * \sa SDL_UnlockMutex
  */
-extern SDL_DECLSPEC void SDLCALL SDL_DestroyMutex(SDL_Mutex *mutex);
+extern DECLSPEC void SDLCALL SDL_DestroyMutex(SDL_Mutex *mutex);
 
 /* @} *//* Mutex functions */
 
@@ -258,35 +244,13 @@ extern SDL_DECLSPEC void SDLCALL SDL_DestroyMutex(SDL_Mutex *mutex);
  */
 /* @{ */
 
-/**
- * A mutex that allows read-only threads to run in parallel.
- *
- * A rwlock is roughly the same concept as SDL_Mutex, but allows threads that
- * request read-only access to all hold the lock at the same time. If a thread
- * requests write access, it will block until all read-only threads have
- * released the lock, and no one else can hold the thread (for reading or
- * writing) at the same time as the writing thread.
- *
- * This can be more efficient in cases where several threads need to access
- * data frequently, but changes to that data are rare.
- *
- * There are other rules that apply to rwlocks that don't apply to mutexes,
- * about how threads are scheduled and when they can be recursively locked.
- * These are documented in the other rwlock functions.
- *
- * \since This struct is available since SDL 3.0.0.
- */
+/* The SDL read/write lock structure, defined in SDL_sysrwlock.c */
+struct SDL_RWLock;
 typedef struct SDL_RWLock SDL_RWLock;
 
 /*
- * Synchronization functions return this value if they time out.
- *
- * Not all functions _can_ time out; some will block indefinitely.
- *
- * This symbol is just for clarity when dealing with SDL_RWLock
- * functions; its value is equivalent to SDL_MUTEX_TIMEOUT.
- *
- * \since This macro is available since SDL 3.0.0.
+ *  Synchronization functions which can time out return this value
+ *  if they time out.
  */
 #define SDL_RWLOCK_TIMEDOUT SDL_MUTEX_TIMEDOUT
 
@@ -326,12 +290,12 @@ typedef struct SDL_RWLock SDL_RWLock;
  *
  * \sa SDL_DestroyRWLock
  * \sa SDL_LockRWLockForReading
- * \sa SDL_LockRWLockForWriting
  * \sa SDL_TryLockRWLockForReading
+ * \sa SDL_LockRWLockForWriting
  * \sa SDL_TryLockRWLockForWriting
  * \sa SDL_UnlockRWLock
  */
-extern SDL_DECLSPEC SDL_RWLock *SDLCALL SDL_CreateRWLock(void);
+extern DECLSPEC SDL_RWLock *SDLCALL SDL_CreateRWLock(void);
 
 /**
  * Lock the read/write lock for _read only_ operations.
@@ -360,15 +324,13 @@ extern SDL_DECLSPEC SDL_RWLock *SDLCALL SDL_CreateRWLock(void);
  * having locked nothing. If the rwlock is valid, this function will always
  * block until it can lock the mutex, and return with it locked.
  *
- * \param rwlock the read/write lock to lock.
+ * \param rwlock the read/write lock to lock
  *
  * \since This function is available since SDL 3.0.0.
  *
- * \sa SDL_LockRWLockForWriting
- * \sa SDL_TryLockRWLockForReading
  * \sa SDL_UnlockRWLock
  */
-extern SDL_DECLSPEC void SDLCALL SDL_LockRWLockForReading(SDL_RWLock *rwlock) SDL_ACQUIRE_SHARED(rwlock);
+extern DECLSPEC void SDLCALL SDL_LockRWLockForReading(SDL_RWLock *rwlock) SDL_ACQUIRE_SHARED(rwlock);
 
 /**
  * Lock the read/write lock for _write_ operations.
@@ -391,15 +353,13 @@ extern SDL_DECLSPEC void SDLCALL SDL_LockRWLockForReading(SDL_RWLock *rwlock) SD
  * having locked nothing. If the rwlock is valid, this function will always
  * block until it can lock the mutex, and return with it locked.
  *
- * \param rwlock the read/write lock to lock.
+ * \param rwlock the read/write lock to lock
  *
  * \since This function is available since SDL 3.0.0.
  *
- * \sa SDL_LockRWLockForReading
- * \sa SDL_TryLockRWLockForWriting
  * \sa SDL_UnlockRWLock
  */
-extern SDL_DECLSPEC void SDLCALL SDL_LockRWLockForWriting(SDL_RWLock *rwlock) SDL_ACQUIRE(rwlock);
+extern DECLSPEC void SDLCALL SDL_LockRWLockForWriting(SDL_RWLock *rwlock) SDL_ACQUIRE(rwlock);
 
 /**
  * Try to lock a read/write lock _for reading_ without blocking.
@@ -418,16 +378,17 @@ extern SDL_DECLSPEC void SDLCALL SDL_LockRWLockForWriting(SDL_RWLock *rwlock) SD
  * always either lock the rwlock and return 0, or return SDL_RWLOCK_TIMEOUT
  * and lock nothing.
  *
- * \param rwlock the rwlock to try to lock.
- * \returns 0 or `SDL_RWLOCK_TIMEDOUT`.
+ * \param rwlock the rwlock to try to lock
+ * \returns 0 or `SDL_RWLOCK_TIMEDOUT`
  *
  * \since This function is available since SDL 3.0.0.
  *
- * \sa SDL_LockRWLockForReading
- * \sa SDL_TryLockRWLockForWriting
+ * \sa SDL_CreateRWLock
+ * \sa SDL_DestroyRWLock
+ * \sa SDL_TryLockRWLockForReading
  * \sa SDL_UnlockRWLock
  */
-extern SDL_DECLSPEC int SDLCALL SDL_TryLockRWLockForReading(SDL_RWLock *rwlock) SDL_TRY_ACQUIRE_SHARED(0, rwlock);
+extern DECLSPEC int SDLCALL SDL_TryLockRWLockForReading(SDL_RWLock *rwlock) SDL_TRY_ACQUIRE_SHARED(0, rwlock);
 
 /**
  * Try to lock a read/write lock _for writing_ without blocking.
@@ -451,16 +412,17 @@ extern SDL_DECLSPEC int SDLCALL SDL_TryLockRWLockForReading(SDL_RWLock *rwlock) 
  * always either lock the rwlock and return 0, or return SDL_RWLOCK_TIMEOUT
  * and lock nothing.
  *
- * \param rwlock the rwlock to try to lock.
- * \returns 0 or `SDL_RWLOCK_TIMEDOUT`.
+ * \param rwlock the rwlock to try to lock
+ * \returns 0 or `SDL_RWLOCK_TIMEDOUT`
  *
  * \since This function is available since SDL 3.0.0.
  *
- * \sa SDL_LockRWLockForWriting
- * \sa SDL_TryLockRWLockForReading
+ * \sa SDL_CreateRWLock
+ * \sa SDL_DestroyRWLock
+ * \sa SDL_TryLockRWLockForWriting
  * \sa SDL_UnlockRWLock
  */
-extern SDL_DECLSPEC int SDLCALL SDL_TryLockRWLockForWriting(SDL_RWLock *rwlock) SDL_TRY_ACQUIRE(0, rwlock);
+extern DECLSPEC int SDLCALL SDL_TryLockRWLockForWriting(SDL_RWLock *rwlock) SDL_TRY_ACQUIRE(0, rwlock);
 
 /**
  * Unlock the read/write lock.
@@ -479,13 +441,8 @@ extern SDL_DECLSPEC int SDLCALL SDL_TryLockRWLockForWriting(SDL_RWLock *rwlock) 
  * \param rwlock the rwlock to unlock.
  *
  * \since This function is available since SDL 3.0.0.
- *
- * \sa SDL_LockRWLockForReading
- * \sa SDL_LockRWLockForWriting
- * \sa SDL_TryLockRWLockForReading
- * \sa SDL_TryLockRWLockForWriting
  */
-extern SDL_DECLSPEC void SDLCALL SDL_UnlockRWLock(SDL_RWLock *rwlock) SDL_RELEASE_GENERIC(rwlock);
+extern DECLSPEC void SDLCALL SDL_UnlockRWLock(SDL_RWLock *rwlock) SDL_RELEASE_GENERIC(rwlock);
 
 /**
  * Destroy a read/write lock created with SDL_CreateRWLock().
@@ -496,13 +453,18 @@ extern SDL_DECLSPEC void SDLCALL SDL_UnlockRWLock(SDL_RWLock *rwlock) SDL_RELEAS
  * is not safe to attempt to destroy a locked rwlock, and may result in
  * undefined behavior depending on the platform.
  *
- * \param rwlock the rwlock to destroy.
+ * \param rwlock the rwlock to destroy
  *
  * \since This function is available since SDL 3.0.0.
  *
  * \sa SDL_CreateRWLock
+ * \sa SDL_LockRWLockForReading
+ * \sa SDL_LockRWLockForWriting
+ * \sa SDL_TryLockRWLockForReading
+ * \sa SDL_TryLockRWLockForWriting
+ * \sa SDL_UnlockRWLock
  */
-extern SDL_DECLSPEC void SDLCALL SDL_DestroyRWLock(SDL_RWLock *rwlock);
+extern DECLSPEC void SDLCALL SDL_DestroyRWLock(SDL_RWLock *rwlock);
 
 /* @} *//* Read/write lock functions */
 
@@ -512,20 +474,8 @@ extern SDL_DECLSPEC void SDLCALL SDL_DestroyRWLock(SDL_RWLock *rwlock);
  */
 /* @{ */
 
-/**
- * A means to manage access to a resource, by count, between threads.
- *
- * Semaphores (specifically, "counting semaphores"), let X number of threads
- * request access at the same time, each thread granted access decrementing a
- * counter. When the counter reaches zero, future requests block until a prior
- * thread releases their request, incrementing the counter again.
- *
- * Wikipedia has a thorough explanation of the concept:
- *
- * https://en.wikipedia.org/wiki/Semaphore_(programming)
- *
- * \since This struct is available since SDL 3.0.0.
- */
+/* The SDL semaphore structure, defined in SDL_syssem.c */
+struct SDL_Semaphore;
 typedef struct SDL_Semaphore SDL_Semaphore;
 
 /**
@@ -537,7 +487,7 @@ typedef struct SDL_Semaphore SDL_Semaphore;
  * is 0. Each post operation will atomically increment the semaphore value and
  * wake waiting threads and allow them to retry the wait operation.
  *
- * \param initial_value the starting value of the semaphore.
+ * \param initial_value the starting value of the semaphore
  * \returns a new semaphore or NULL on failure; call SDL_GetError() for more
  *          information.
  *
@@ -550,7 +500,7 @@ typedef struct SDL_Semaphore SDL_Semaphore;
  * \sa SDL_WaitSemaphore
  * \sa SDL_WaitSemaphoreTimeout
  */
-extern SDL_DECLSPEC SDL_Semaphore *SDLCALL SDL_CreateSemaphore(Uint32 initial_value);
+extern DECLSPEC SDL_Semaphore *SDLCALL SDL_CreateSemaphore(Uint32 initial_value);
 
 /**
  * Destroy a semaphore.
@@ -558,13 +508,18 @@ extern SDL_DECLSPEC SDL_Semaphore *SDLCALL SDL_CreateSemaphore(Uint32 initial_va
  * It is not safe to destroy a semaphore if there are threads currently
  * waiting on it.
  *
- * \param sem the semaphore to destroy.
+ * \param sem the semaphore to destroy
  *
  * \since This function is available since SDL 3.0.0.
  *
  * \sa SDL_CreateSemaphore
+ * \sa SDL_PostSemaphore
+ * \sa SDL_TryWaitSemaphore
+ * \sa SDL_GetSemaphoreValue
+ * \sa SDL_WaitSemaphore
+ * \sa SDL_WaitSemaphoreTimeout
  */
-extern SDL_DECLSPEC void SDLCALL SDL_DestroySemaphore(SDL_Semaphore *sem);
+extern DECLSPEC void SDLCALL SDL_DestroySemaphore(SDL_Semaphore *sem);
 
 /**
  * Wait until a semaphore has a positive value and then decrements it.
@@ -577,17 +532,21 @@ extern SDL_DECLSPEC void SDLCALL SDL_DestroySemaphore(SDL_Semaphore *sem);
  * This function is the equivalent of calling SDL_WaitSemaphoreTimeout() with
  * a time length of -1.
  *
- * \param sem the semaphore wait on.
+ * \param sem the semaphore wait on
  * \returns 0 on success or a negative error code on failure; call
  *          SDL_GetError() for more information.
  *
  * \since This function is available since SDL 3.0.0.
  *
+ * \sa SDL_CreateSemaphore
+ * \sa SDL_DestroySemaphore
  * \sa SDL_PostSemaphore
  * \sa SDL_TryWaitSemaphore
+ * \sa SDL_GetSemaphoreValue
+ * \sa SDL_WaitSemaphore
  * \sa SDL_WaitSemaphoreTimeout
  */
-extern SDL_DECLSPEC int SDLCALL SDL_WaitSemaphore(SDL_Semaphore *sem);
+extern DECLSPEC int SDLCALL SDL_WaitSemaphore(SDL_Semaphore *sem);
 
 /**
  * See if a semaphore has a positive value and decrement it if it does.
@@ -597,18 +556,21 @@ extern SDL_DECLSPEC int SDLCALL SDL_WaitSemaphore(SDL_Semaphore *sem);
  * the semaphore doesn't have a positive value, the function immediately
  * returns SDL_MUTEX_TIMEDOUT.
  *
- * \param sem the semaphore to wait on.
+ * \param sem the semaphore to wait on
  * \returns 0 if the wait succeeds, `SDL_MUTEX_TIMEDOUT` if the wait would
  *          block, or a negative error code on failure; call SDL_GetError()
  *          for more information.
  *
  * \since This function is available since SDL 3.0.0.
  *
+ * \sa SDL_CreateSemaphore
+ * \sa SDL_DestroySemaphore
  * \sa SDL_PostSemaphore
+ * \sa SDL_GetSemaphoreValue
  * \sa SDL_WaitSemaphore
  * \sa SDL_WaitSemaphoreTimeout
  */
-extern SDL_DECLSPEC int SDLCALL SDL_TryWaitSemaphore(SDL_Semaphore *sem);
+extern DECLSPEC int SDLCALL SDL_TryWaitSemaphore(SDL_Semaphore *sem);
 
 /**
  * Wait until a semaphore has a positive value and then decrements it.
@@ -618,44 +580,52 @@ extern SDL_DECLSPEC int SDLCALL SDL_TryWaitSemaphore(SDL_Semaphore *sem);
  * signal or error, or the specified time has elapsed. If the call is
  * successful it will atomically decrement the semaphore value.
  *
- * \param sem the semaphore to wait on.
- * \param timeoutMS the length of the timeout, in milliseconds.
+ * \param sem the semaphore to wait on
+ * \param timeoutMS the length of the timeout, in milliseconds
  * \returns 0 if the wait succeeds, `SDL_MUTEX_TIMEDOUT` if the wait does not
  *          succeed in the allotted time, or a negative error code on failure;
  *          call SDL_GetError() for more information.
  *
  * \since This function is available since SDL 3.0.0.
  *
+ * \sa SDL_CreateSemaphore
+ * \sa SDL_DestroySemaphore
  * \sa SDL_PostSemaphore
  * \sa SDL_TryWaitSemaphore
+ * \sa SDL_GetSemaphoreValue
  * \sa SDL_WaitSemaphore
  */
-extern SDL_DECLSPEC int SDLCALL SDL_WaitSemaphoreTimeout(SDL_Semaphore *sem, Sint32 timeoutMS);
+extern DECLSPEC int SDLCALL SDL_WaitSemaphoreTimeout(SDL_Semaphore *sem, Sint32 timeoutMS);
 
 /**
  * Atomically increment a semaphore's value and wake waiting threads.
  *
- * \param sem the semaphore to increment.
+ * \param sem the semaphore to increment
  * \returns 0 on success or a negative error code on failure; call
  *          SDL_GetError() for more information.
  *
  * \since This function is available since SDL 3.0.0.
  *
+ * \sa SDL_CreateSemaphore
+ * \sa SDL_DestroySemaphore
  * \sa SDL_TryWaitSemaphore
+ * \sa SDL_GetSemaphoreValue
  * \sa SDL_WaitSemaphore
  * \sa SDL_WaitSemaphoreTimeout
  */
-extern SDL_DECLSPEC int SDLCALL SDL_PostSemaphore(SDL_Semaphore *sem);
+extern DECLSPEC int SDLCALL SDL_PostSemaphore(SDL_Semaphore *sem);
 
 /**
  * Get the current value of a semaphore.
  *
- * \param sem the semaphore to query.
+ * \param sem the semaphore to query
  * \returns the current value of the semaphore.
  *
  * \since This function is available since SDL 3.0.0.
+ *
+ * \sa SDL_CreateSemaphore
  */
-extern SDL_DECLSPEC Uint32 SDLCALL SDL_GetSemaphoreValue(SDL_Semaphore *sem);
+extern DECLSPEC Uint32 SDLCALL SDL_GetSemaphoreValue(SDL_Semaphore *sem);
 
 /* @} *//* Semaphore functions */
 
@@ -665,19 +635,8 @@ extern SDL_DECLSPEC Uint32 SDLCALL SDL_GetSemaphoreValue(SDL_Semaphore *sem);
  */
 /* @{ */
 
-/**
- * A means to block multiple threads until a condition is satisfied.
- *
- * Condition variables, paired with an SDL_Mutex, let an app halt multiple
- * threads until a condition has occurred, at which time the app can release
- * one or all waiting threads.
- *
- * Wikipedia has a thorough explanation of the concept:
- *
- * https://en.wikipedia.org/wiki/Condition_variable
- *
- * \since This struct is available since SDL 3.0.0.
- */
+/* The SDL condition variable structure, defined in SDL_syscond.c */
+struct SDL_Condition;
 typedef struct SDL_Condition SDL_Condition;
 
 /**
@@ -694,52 +653,56 @@ typedef struct SDL_Condition SDL_Condition;
  * \sa SDL_WaitConditionTimeout
  * \sa SDL_DestroyCondition
  */
-extern SDL_DECLSPEC SDL_Condition *SDLCALL SDL_CreateCondition(void);
+extern DECLSPEC SDL_Condition *SDLCALL SDL_CreateCondition(void);
 
 /**
  * Destroy a condition variable.
  *
- * \param cond the condition variable to destroy.
+ * \param cond the condition variable to destroy
  *
  * \since This function is available since SDL 3.0.0.
  *
+ * \sa SDL_BroadcastCondition
+ * \sa SDL_SignalCondition
+ * \sa SDL_WaitCondition
+ * \sa SDL_WaitConditionTimeout
  * \sa SDL_CreateCondition
  */
-extern SDL_DECLSPEC void SDLCALL SDL_DestroyCondition(SDL_Condition *cond);
+extern DECLSPEC void SDLCALL SDL_DestroyCondition(SDL_Condition *cond);
 
 /**
  * Restart one of the threads that are waiting on the condition variable.
  *
- * \param cond the condition variable to signal.
+ * \param cond the condition variable to signal
  * \returns 0 on success or a negative error code on failure; call
  *          SDL_GetError() for more information.
- *
- * \threadsafety It is safe to call this function from any thread.
  *
  * \since This function is available since SDL 3.0.0.
  *
  * \sa SDL_BroadcastCondition
  * \sa SDL_WaitCondition
  * \sa SDL_WaitConditionTimeout
+ * \sa SDL_CreateCondition
+ * \sa SDL_DestroyCondition
  */
-extern SDL_DECLSPEC int SDLCALL SDL_SignalCondition(SDL_Condition *cond);
+extern DECLSPEC int SDLCALL SDL_SignalCondition(SDL_Condition *cond);
 
 /**
  * Restart all threads that are waiting on the condition variable.
  *
- * \param cond the condition variable to signal.
+ * \param cond the condition variable to signal
  * \returns 0 on success or a negative error code on failure; call
  *          SDL_GetError() for more information.
- *
- * \threadsafety It is safe to call this function from any thread.
  *
  * \since This function is available since SDL 3.0.0.
  *
  * \sa SDL_SignalCondition
  * \sa SDL_WaitCondition
  * \sa SDL_WaitConditionTimeout
+ * \sa SDL_CreateCondition
+ * \sa SDL_DestroyCondition
  */
-extern SDL_DECLSPEC int SDLCALL SDL_BroadcastCondition(SDL_Condition *cond);
+extern DECLSPEC int SDLCALL SDL_BroadcastCondition(SDL_Condition *cond);
 
 /**
  * Wait until a condition variable is signaled.
@@ -756,20 +719,20 @@ extern SDL_DECLSPEC int SDLCALL SDL_BroadcastCondition(SDL_Condition *cond);
  * This function is the equivalent of calling SDL_WaitConditionTimeout() with
  * a time length of -1.
  *
- * \param cond the condition variable to wait on.
- * \param mutex the mutex used to coordinate thread access.
+ * \param cond the condition variable to wait on
+ * \param mutex the mutex used to coordinate thread access
  * \returns 0 when it is signaled or a negative error code on failure; call
  *          SDL_GetError() for more information.
- *
- * \threadsafety It is safe to call this function from any thread.
  *
  * \since This function is available since SDL 3.0.0.
  *
  * \sa SDL_BroadcastCondition
  * \sa SDL_SignalCondition
  * \sa SDL_WaitConditionTimeout
+ * \sa SDL_CreateCondition
+ * \sa SDL_DestroyCondition
  */
-extern SDL_DECLSPEC int SDLCALL SDL_WaitCondition(SDL_Condition *cond, SDL_Mutex *mutex);
+extern DECLSPEC int SDLCALL SDL_WaitCondition(SDL_Condition *cond, SDL_Mutex *mutex);
 
 /**
  * Wait until a condition variable is signaled or a certain time has passed.
@@ -784,23 +747,23 @@ extern SDL_DECLSPEC int SDLCALL SDL_WaitCondition(SDL_Condition *cond, SDL_Mutex
  * recursively (more than once) is not supported and leads to undefined
  * behavior.
  *
- * \param cond the condition variable to wait on.
- * \param mutex the mutex used to coordinate thread access.
+ * \param cond the condition variable to wait on
+ * \param mutex the mutex used to coordinate thread access
  * \param timeoutMS the maximum time to wait, in milliseconds, or -1 to wait
- *                  indefinitely.
+ *                  indefinitely
  * \returns 0 if the condition variable is signaled, `SDL_MUTEX_TIMEDOUT` if
  *          the condition is not signaled in the allotted time, or a negative
  *          error code on failure; call SDL_GetError() for more information.
- *
- * \threadsafety It is safe to call this function from any thread.
  *
  * \since This function is available since SDL 3.0.0.
  *
  * \sa SDL_BroadcastCondition
  * \sa SDL_SignalCondition
  * \sa SDL_WaitCondition
+ * \sa SDL_CreateCondition
+ * \sa SDL_DestroyCondition
  */
-extern SDL_DECLSPEC int SDLCALL SDL_WaitConditionTimeout(SDL_Condition *cond,
+extern DECLSPEC int SDLCALL SDL_WaitConditionTimeout(SDL_Condition *cond,
                                                 SDL_Mutex *mutex, Sint32 timeoutMS);
 
 /* @} *//* Condition variable functions */

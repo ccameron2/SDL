@@ -168,7 +168,6 @@ static int clipboard_testClipboardDataFunctions(void *arg)
         text && SDL_strcmp(text, expected_text) == 0,
         "Verify clipboard text, expected \"%s\", got \"%s\"",
         expected_text, text);
-    SDL_free(text);
 
     boolResult = SDL_HasClipboardData(test_mime_types[TEST_MIME_TYPE_TEXT]);
     SDLTest_AssertCheck(
@@ -270,7 +269,6 @@ static int clipboard_testClipboardDataFunctions(void *arg)
         text && SDL_strcmp(text, expected_text) == 0,
         "Verify clipboard text, expected \"%s\", got \"%s\"",
         expected_text, text);
-    SDL_free(text);
 
     boolResult = SDL_HasClipboardData(test_mime_types[TEST_MIME_TYPE_TEXT]);
     SDLTest_AssertCheck(

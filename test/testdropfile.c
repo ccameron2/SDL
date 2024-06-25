@@ -10,75 +10,28 @@
   freely.
 */
 
-#define SDL_MAIN_USE_CALLBACKS 1
 #include <SDL3/SDL_test_common.h>
 #include <SDL3/SDL_main.h>
 
-typedef struct {
-    SDLTest_CommonState *state;
-    SDL_bool is_hover;
-    float x;
-    float y;
-    unsigned int windowID;
-} dropfile_dialog;
+static SDLTest_CommonState *state;
 
-int SDL_AppEvent(void *appstate, const SDL_Event *event)
+int main(int argc, char *argv[])
 {
-    dropfile_dialog *dialog = appstate;
-    if (event->type == SDL_EVENT_DROP_BEGIN) {
-        SDL_Log("Drop beginning on window %u at (%f, %f)", (unsigned int)event->drop.windowID, event->drop.x, event->drop.y);
-    } else if (event->type == SDL_EVENT_DROP_COMPLETE) {
-        dialog->is_hover = SDL_FALSE;
-        SDL_Log("Drop complete on window %u at (%f, %f)", (unsigned int)event->drop.windowID, event->drop.x, event->drop.y);
-    } else if ((event->type == SDL_EVENT_DROP_FILE) || (event->type == SDL_EVENT_DROP_TEXT)) {
-        const char *typestr = (event->type == SDL_EVENT_DROP_FILE) ? "File" : "Text";
-        SDL_Log("%s dropped on window %u: %s at (%f, %f)", typestr, (unsigned int)event->drop.windowID, event->drop.data, event->drop.x, event->drop.y);
-    } else if (event->type == SDL_EVENT_DROP_POSITION) {
-        dialog->is_hover = SDL_TRUE;
-        dialog->x = event->drop.x;
-        dialog->y = event->drop.y;
-        dialog->windowID = event->drop.windowID;
-        SDL_Log("Drop position on window %u at (%f, %f) data = %s", (unsigned int)event->drop.windowID, event->drop.x, event->drop.y, event->drop.data);
-    }
-
-    return SDLTest_CommonEventMainCallbacks(dialog->state, event);
-}
-
-int SDL_AppIterate(void *appstate)
-{
-    dropfile_dialog *dialog = appstate;
-    int i;
-
-    for (i = 0; i < dialog->state->num_windows; ++i) {
-        SDL_Renderer *renderer = dialog->state->renderers[i];
-        SDL_SetRenderDrawColor(renderer, 0xA0, 0xA0, 0xA0, 0xFF);
-        SDL_RenderClear(renderer);
-        if (dialog->is_hover) {
-            if (dialog->windowID == SDL_GetWindowID(SDL_GetRenderWindow(renderer))) {
-                int len = 2000;
-                SDL_SetRenderDrawColor(renderer, 0x0A, 0x0A, 0x0A, 0xFF);
-                SDL_RenderLine(renderer, dialog->x, dialog->y - len, dialog->x, dialog->y + len);
-                SDL_RenderLine(renderer, dialog->x - len, dialog->y, dialog->x + len, dialog->y);
-            }
-        }
-        SDL_RenderPresent(renderer);
-    }
-    return SDL_APP_CONTINUE;
-}
-
-int SDL_AppInit(void **appstate, int argc, char *argv[]) {
-    int i;
-    dropfile_dialog *dialog;
-    SDLTest_CommonState *state;
+    int i, done;
+    SDL_Event event;
+    SDL_bool is_hover = SDL_FALSE;
+    float x = 0.0f, y = 0.0f;
+    unsigned int windowID = 0;
+    int return_code = -1;
 
     /* Initialize test framework */
     state = SDLTest_CommonCreateState(argv, SDL_INIT_VIDEO);
     if (!state) {
-        return SDL_APP_FAILURE;
+        return 1;
     }
 
     /* Enable standard application logging */
-    SDL_SetLogPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
+    SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
 
     for (i = 1; i < argc;) {
         int consumed;
@@ -93,32 +46,60 @@ int SDL_AppInit(void **appstate, int argc, char *argv[]) {
         }
         if (consumed < 0) {
             SDLTest_CommonLogUsage(state, argv[0], NULL);
-            goto onerror;
+            return_code = 1;
+            goto quit;
         }
         i += consumed;
     }
     if (!SDLTest_CommonInit(state)) {
-        goto onerror;
+        return_code = 1;
+        goto quit;
     }
-    dialog = SDL_calloc(sizeof(dropfile_dialog), 1);
-    if (!dialog) {
-        goto onerror;
-    }
-    *appstate = dialog;
 
-    dialog->state = state;
-    return SDL_APP_CONTINUE;
-onerror:
+    /* Main render loop */
+    done = 0;
+    while (!done) {
+        /* Check for events */
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_EVENT_DROP_BEGIN) {
+                SDL_Log("Drop beginning on window %u at (%f, %f)", (unsigned int)event.drop.windowID, event.drop.x, event.drop.y);
+            } else if (event.type == SDL_EVENT_DROP_COMPLETE) {
+                is_hover = SDL_FALSE;
+                SDL_Log("Drop complete on window %u at (%f, %f)", (unsigned int)event.drop.windowID, event.drop.x, event.drop.y);
+            } else if ((event.type == SDL_EVENT_DROP_FILE) || (event.type == SDL_EVENT_DROP_TEXT)) {
+                const char *typestr = (event.type == SDL_EVENT_DROP_FILE) ? "File" : "Text";
+                SDL_Log("%s dropped on window %u: %s at (%f, %f)", typestr, (unsigned int)event.drop.windowID, event.drop.data, event.drop.x, event.drop.y);
+            } else if (event.type == SDL_EVENT_DROP_POSITION) {
+                is_hover = SDL_TRUE;
+                x = event.drop.x;
+                y = event.drop.y;
+                windowID = event.drop.windowID;
+                SDL_Log("Drop position on window %u at (%f, %f) data = %s", (unsigned int)event.drop.windowID, event.drop.x, event.drop.y, event.drop.data);
+            }
+
+            SDLTest_CommonEvent(state, &event, &done);
+        }
+
+        for (i = 0; i < state->num_windows; ++i) {
+            SDL_Renderer *renderer = state->renderers[i];
+            SDL_SetRenderDrawColor(renderer, 0xA0, 0xA0, 0xA0, 0xFF);
+            SDL_RenderClear(renderer);
+            if (is_hover) {
+                if (windowID == SDL_GetWindowID(SDL_GetRenderWindow(renderer))) {
+                    int len = 2000;
+                    SDL_SetRenderDrawColor(renderer, 0x0A, 0x0A, 0x0A, 0xFF);
+                    SDL_RenderLine(renderer, x, y - len, x, y + len);
+                    SDL_RenderLine(renderer, x - len, y, x + len, y);
+                }
+            }
+            SDL_RenderPresent(renderer);
+        }
+
+        SDL_Delay(16);
+    }
+
+    return_code = 0;
+quit:
     SDLTest_CommonQuit(state);
-    return SDL_APP_FAILURE;
-}
-
-void SDL_AppQuit(void *appstate)
-{
-    dropfile_dialog *dialog = appstate;
-    if (dialog) {
-        SDLTest_CommonState *state = dialog->state;
-        SDL_free(dialog);
-        SDLTest_CommonQuit(state);
-    }
+    return return_code;
 }

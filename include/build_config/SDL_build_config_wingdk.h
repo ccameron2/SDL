@@ -37,7 +37,6 @@
 #define HAVE_DSOUND_H 1
 /* No SDK version checks needed for these because the SDK has to be new. */
 #define HAVE_DXGI_H 1
-#define HAVE_DXGI1_6_H 1
 #define HAVE_XINPUT_H 1
 #define HAVE_WINDOWS_GAMING_INPUT_H 1
 #define HAVE_D3D11_H 1
@@ -58,6 +57,7 @@
 #endif
 
 /* Useful headers */
+#define HAVE_CTYPE_H 1
 #define HAVE_FLOAT_H 1
 #define HAVE_LIMITS_H 1
 #define HAVE_MATH_H 1
@@ -100,6 +100,10 @@
 #define HAVE_ATOF 1
 #define HAVE_STRCMP 1
 #define HAVE_STRNCMP 1
+#define HAVE__STRICMP 1
+#define HAVE__STRNICMP 1
+#define HAVE__WCSICMP 1
+#define HAVE__WCSNICMP 1
 #define HAVE__WCSDUP 1
 #define HAVE_ACOS   1
 #define HAVE_ASIN   1
@@ -111,10 +115,6 @@
 #define HAVE_FABS   1
 #define HAVE_FLOOR  1
 #define HAVE_FMOD   1
-#define HAVE_ISINF  1
-#define HAVE_ISINF_FLOAT_MACRO 1
-#define HAVE_ISNAN  1
-#define HAVE_ISNAN_FLOAT_MACRO 1
 #define HAVE_LOG    1
 #define HAVE_LOG10  1
 #define HAVE_POW    1
@@ -199,9 +199,6 @@
 #define SDL_THREAD_GENERIC_RWLOCK_SUFFIX 1
 #define SDL_THREAD_WINDOWS  1
 
-/* Enable various time systems */
-#define SDL_TIME_WINDOWS   1
-
 /* Enable various timer systems */
 #define SDL_TIMER_WINDOWS   1
 
@@ -247,7 +244,6 @@
 
 /* Enable filesystem support */
 #define SDL_FILESYSTEM_WINDOWS  1
-#define SDL_FSOPS_WINDOWS 1
 
 /* Enable the camera driver (src/camera/dummy/\*.c) */  /* !!! FIXME */
 #define SDL_CAMERA_DRIVER_DUMMY  1

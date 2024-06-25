@@ -337,7 +337,7 @@ static void loop(void)
         switch (event.type) {
         case SDL_EVENT_KEY_DOWN:
         {
-            const int sym = event.key.key;
+            const int sym = event.key.keysym.sym;
 
             if (sym == SDLK_TAB) {
                 SDL_Log("Tab");
@@ -605,7 +605,11 @@ int main(int argc, char *argv[])
         SDL_SetSurfaceBlendMode(g_surf_sdf, SDL_BLENDMODE_BLEND);
     }
 
-    SDL_GL_SetSwapInterval(state->render_vsync);
+    if (state->render_flags & SDL_RENDERER_PRESENTVSYNC) {
+        SDL_GL_SetSwapInterval(1);
+    } else {
+        SDL_GL_SetSwapInterval(0);
+    }
 
     mode = SDL_GetCurrentDisplayMode(SDL_GetPrimaryDisplay());
     if (mode) {

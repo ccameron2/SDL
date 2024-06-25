@@ -39,10 +39,10 @@ static int fillerup(void)
     if (SDL_GetAudioStreamQueued(stream) < minimum) {
         SDL_PutAudioStreamData(stream, wave.sound, wave.soundlen);
     }
-    return SDL_APP_CONTINUE;
+    return 0;
 }
 
-int SDL_AppInit(void **appstate, int argc, char *argv[])
+int SDL_AppInit(int argc, char *argv[])
 {
     int i;
     char *filename = NULL;
@@ -53,11 +53,11 @@ int SDL_AppInit(void **appstate, int argc, char *argv[])
     /* Initialize test framework */
     state = SDLTest_CommonCreateState(argv, 0);
     if (!state) {
-        return SDL_APP_SUCCESS;
+        return 1;
     }
 
     /* Enable standard application logging */
-    SDL_SetLogPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
+    SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
 
     /* Parse commandline */
     for (i = 1; i < argc;) {
@@ -82,21 +82,21 @@ int SDL_AppInit(void **appstate, int argc, char *argv[])
     /* Load the SDL library */
     if (SDL_Init(SDL_INIT_AUDIO | SDL_INIT_EVENTS) < 0) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't initialize SDL: %s\n", SDL_GetError());
-        return SDL_APP_FAILURE;
+        return -1;
     }
 
     filename = GetResourceFilename(filename, "sample.wav");
 
     if (!filename) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "%s\n", SDL_GetError());
-        return SDL_APP_FAILURE;
+        return -1;
     }
 
     /* Load the wave file into memory */
     if (SDL_LoadWAV(filename, &wave.spec, &wave.sound, &wave.soundlen) == -1) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't load %s: %s\n", filename, SDL_GetError());
         SDL_free(filename);
-        return SDL_APP_FAILURE;
+        return -1;
     }
 
     SDL_free(filename);
@@ -109,27 +109,27 @@ int SDL_AppInit(void **appstate, int argc, char *argv[])
 
     SDL_Log("Using audio driver: %s\n", SDL_GetCurrentAudioDriver());
 
-    stream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &wave.spec, NULL, NULL);
+    stream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_OUTPUT, &wave.spec, NULL, NULL);
     if (!stream) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create audio stream: %s\n", SDL_GetError());
-        return SDL_APP_FAILURE;
+        return -1;
     }
     SDL_ResumeAudioDevice(SDL_GetAudioStreamDevice(stream));
 
-    return SDL_APP_CONTINUE;
+    return 0;
 }
 
-int SDL_AppEvent(void *appstate, const SDL_Event *event)
+int SDL_AppEvent(const SDL_Event *event)
 {
-    return (event->type == SDL_EVENT_QUIT) ? SDL_APP_SUCCESS : SDL_APP_CONTINUE;
+    return (event->type == SDL_EVENT_QUIT) ? 1 : 0;
 }
 
-int SDL_AppIterate(void *appstate)
+int SDL_AppIterate(void)
 {
     return fillerup();
 }
 
-void SDL_AppQuit(void *appstate)
+void SDL_AppQuit(void)
 {
     SDL_DestroyAudioStream(stream);
     SDL_free(wave.sound);

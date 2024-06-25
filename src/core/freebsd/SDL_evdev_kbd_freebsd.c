@@ -542,7 +542,6 @@ void SDL_EVDEV_kbd_keycode(SDL_EVDEV_keyboard_state *kbd, unsigned int keycode, 
                 if (down == 0) {
                     chg_vc_kbd_led(kbd, ALKED);
                 }
-                SDL_FALLTHROUGH;
             case LSH: /* left shift */
             case RSH: /* right shift */
                 k_shift(kbd, 0, down == 0);
@@ -552,7 +551,6 @@ void SDL_EVDEV_kbd_keycode(SDL_EVDEV_keyboard_state *kbd, unsigned int keycode, 
                 if (down == 0) {
                     chg_vc_kbd_led(kbd, ALKED);
                 }
-                SDL_FALLTHROUGH;
             case LCTR: /* left ctrl */
             case RCTR: /* right ctrl */
                 k_shift(kbd, 1, down == 0);
@@ -562,7 +560,6 @@ void SDL_EVDEV_kbd_keycode(SDL_EVDEV_keyboard_state *kbd, unsigned int keycode, 
                 if (down == 0) {
                     chg_vc_kbd_led(kbd, ALKED);
                 }
-                SDL_FALLTHROUGH;
             case LALT: /* left alt */
             case RALT: /* right alt */
                 k_shift(kbd, 2, down == 0);

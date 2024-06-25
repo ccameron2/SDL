@@ -39,10 +39,9 @@ encounter limitations or behavior that is different from other windowing systems
   unknown. In most cases, applications don't actually need the global cursor position and should use the window-relative
   coordinates as provided by the mouse movement event or from ```SDL_GetMouseState()``` instead.
 
-### Warping the mouse cursor to or from a point outside the window doesn't work
+### Warping the global mouse cursor position via ```SDL_WarpMouseGlobal()``` doesn't work
 
-- The cursor can be warped only within the window with mouse focus, provided that the `zwp_pointer_confinement_v1`
-  protocol is supported by the compositor.
+- For security reasons, Wayland does not allow warping the global mouse cursor position.
 
 ### The application icon can't be set via ```SDL_SetWindowIcon()```
 
@@ -186,7 +185,7 @@ int main(int argc, char *argv[])
     }
 
     /* Create a renderer */
-    sdlRenderer = SDL_CreateRenderer(sdlWindow, NULL);
+    sdlRenderer = SDL_CreateRenderer(sdlWindow, NULL, 0);
     if (!sdlRenderer) {
         goto exit;
     }

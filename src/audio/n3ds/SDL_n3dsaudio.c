@@ -269,10 +269,10 @@ static SDL_bool N3DSAUDIO_Init(SDL_AudioDriverImpl *impl)
     impl->GetDeviceBuf = N3DSAUDIO_GetDeviceBuf;
     impl->CloseDevice = N3DSAUDIO_CloseDevice;
     impl->ThreadInit = N3DSAUDIO_ThreadInit;
-    impl->OnlyHasDefaultPlaybackDevice = SDL_TRUE;
+    impl->OnlyHasDefaultOutputDevice = SDL_TRUE;
 
     // Should be possible, but micInit would fail
-    impl->HasRecordingSupport = SDL_FALSE;
+    impl->HasCaptureSupport = SDL_FALSE;
 
     return SDL_TRUE;
 }

@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
     SDL_Renderer *renderer = NULL;
     SDL_Surface *shape = NULL;
     SDL_bool resizable = SDL_FALSE;
-    SDL_WindowFlags flags;
+    Uint32 flags;
     SDL_bool done = SDL_FALSE;
     SDL_Event event;
     int i;
@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
             goto quit;
         }
     } else {
-        shape = SDL_LoadBMP_IO(SDL_IOFromConstMem(glass_bmp, sizeof(glass_bmp)), SDL_TRUE);
+        shape = SDL_LoadBMP_RW(SDL_RWFromConstMem(glass_bmp, sizeof(glass_bmp)), SDL_TRUE);
         if (!shape) {
             SDL_Log("Couldn't load glass.bmp: %s\n", SDL_GetError());
             goto quit;
@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
         goto quit;
     }
 
-    renderer = SDL_CreateRenderer(window, NULL);
+    renderer = SDL_CreateRenderer(window, NULL, 0);
     if (!renderer) {
         SDL_Log("Couldn't create renderer: %s\n", SDL_GetError());
         goto quit;
@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
         while (SDL_PollEvent(&event)) {
             switch (event.type) {
             case SDL_EVENT_KEY_DOWN:
-                if (event.key.key == SDLK_ESCAPE) {
+                if (event.key.keysym.sym == SDLK_ESCAPE) {
                     done = SDL_TRUE;
                 }
                 break;

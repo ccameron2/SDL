@@ -25,7 +25,8 @@
 
 #include <3ds.h>
 
-int SDL_RunApp(int argc, char* argv[], SDL_main_func mainFunction, void * reserved)
+DECLSPEC int
+SDL_RunApp(int argc, char* argv[], SDL_main_func mainFunction, void * reserved)
 {
     int result;
     /* init */

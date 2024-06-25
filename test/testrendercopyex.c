@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
     }
 
     /* Enable standard application logging */
-    SDL_SetLogPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
+    SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
 
     if (!SDLTest_CommonDefaultArgs(state, argc, argv) || !SDLTest_CommonInit(state)) {
         SDLTest_CommonQuit(state);
@@ -135,6 +135,7 @@ int main(int argc, char *argv[])
     drawstates = SDL_stack_alloc(DrawState, state->num_windows);
     for (i = 0; i < state->num_windows; ++i) {
         DrawState *drawstate = &drawstates[i];
+        int w, h;
 
         drawstate->window = state->windows[i];
         drawstate->renderer = state->renderers[i];
@@ -143,7 +144,9 @@ int main(int argc, char *argv[])
         if (!drawstate->sprite || !drawstate->background) {
             quit(2);
         }
-        SDL_GetTextureSize(drawstate->sprite, &drawstate->sprite_rect.w, &drawstate->sprite_rect.h);
+        SDL_QueryTexture(drawstate->sprite, NULL, NULL, &w, &h);
+        drawstate->sprite_rect.w = (float)w;
+        drawstate->sprite_rect.h = (float)h;
         drawstate->scale_direction = 1;
     }
 

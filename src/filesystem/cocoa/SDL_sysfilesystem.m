@@ -146,10 +146,9 @@ char *SDL_GetUserFolder(SDL_Folder folder)
 
             if (!base) {
                 SDL_SetError("No $HOME environment variable available");
-                return NULL;
             }
 
-            goto append_slash;
+            return SDL_strdup(base);
 
         case SDL_FOLDER_DESKTOP:
             dir = NSDesktopDirectory;
@@ -210,15 +209,8 @@ char *SDL_GetUserFolder(SDL_Folder folder)
             return NULL;
         }
 
-append_slash:
-        retval = SDL_malloc(SDL_strlen(base) + 2);
+        retval = SDL_strdup(base);
         if (retval == NULL) {
-            return NULL;
-        }
-
-        if (SDL_snprintf(retval, SDL_strlen(base) + 2, "%s/", base) < 0) {
-            SDL_SetError("Couldn't snprintf folder path for Cocoa: %s", base);
-            SDL_free(retval);
             return NULL;
         }
 
@@ -229,6 +221,7 @@ append_slash:
                 *ptr = '/';
             }
         }
+        mkdir(retval, 0700);
 
         return retval;
 #endif /* SDL_PLATFORM_TVOS */

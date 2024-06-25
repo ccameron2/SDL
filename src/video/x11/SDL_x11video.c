@@ -25,8 +25,6 @@
 #include <unistd.h> /* For getpid() and readlink() */
 
 #include "../../core/linux/SDL_system_theme.h"
-#include "../../events/SDL_keyboard_c.h"
-#include "../../events/SDL_mouse_c.h"
 #include "../SDL_pixels_c.h"
 #include "../SDL_sysvideo.h"
 
@@ -99,12 +97,6 @@ static int X11_SafetyNetErrHandler(Display *d, XErrorEvent *e)
     }
 
     return 0;
-}
-
-static SDL_bool X11_IsXWayland(Display *d)
-{
-    int opcode, event, error;
-    return X11_XQueryExtension(d, "XWAYLAND", &opcode, &event, &error) == True;
 }
 
 static SDL_VideoDevice *X11_CreateDevice(void)
@@ -194,7 +186,6 @@ static SDL_VideoDevice *X11_CreateDevice(void)
     device->SetWindowSize = X11_SetWindowSize;
     device->SetWindowMinimumSize = X11_SetWindowMinimumSize;
     device->SetWindowMaximumSize = X11_SetWindowMaximumSize;
-    device->SetWindowAspectRatio = X11_SetWindowAspectRatio;
     device->GetWindowBordersSize = X11_GetWindowBordersSize;
     device->SetWindowOpacity = X11_SetWindowOpacity;
     device->SetWindowModalFor = X11_SetWindowModalFor;
@@ -267,7 +258,7 @@ static SDL_VideoDevice *X11_CreateDevice(void)
     device->HasPrimarySelectionText = X11_HasPrimarySelectionText;
     device->StartTextInput = X11_StartTextInput;
     device->StopTextInput = X11_StopTextInput;
-    device->UpdateTextInputRect = X11_UpdateTextInputRect;
+    device->SetTextInputRect = X11_SetTextInputRect;
     device->HasScreenKeyboardSupport = X11_HasScreenKeyboardSupport;
     device->ShowScreenKeyboard = X11_ShowScreenKeyboard;
     device->HideScreenKeyboard = X11_HideScreenKeyboard;
@@ -280,7 +271,6 @@ static SDL_VideoDevice *X11_CreateDevice(void)
     device->Vulkan_UnloadLibrary = X11_Vulkan_UnloadLibrary;
     device->Vulkan_GetInstanceExtensions = X11_Vulkan_GetInstanceExtensions;
     device->Vulkan_CreateSurface = X11_Vulkan_CreateSurface;
-    device->Vulkan_DestroySurface = X11_Vulkan_DestroySurface;
 #endif
 
 #ifdef SDL_USE_LIBDBUS
@@ -290,12 +280,6 @@ static SDL_VideoDevice *X11_CreateDevice(void)
 
     device->device_caps = VIDEO_DEVICE_CAPS_HAS_POPUP_WINDOW_SUPPORT |
                           VIDEO_DEVICE_CAPS_SENDS_FULLSCREEN_DIMENSIONS;
-
-    data->is_xwayland = X11_IsXWayland(x11_display);
-    if (data->is_xwayland) {
-        device->device_caps |= VIDEO_DEVICE_CAPS_MODE_SWITCHING_EMULATED |
-                               VIDEO_DEVICE_CAPS_DISABLE_MOUSE_WARP_ON_FULLSCREEN_TRANSITIONS;
-    }
 
     return device;
 }
@@ -392,7 +376,6 @@ int X11_VideoInit(SDL_VideoDevice *_this)
     GET_ATOM(WM_DELETE_WINDOW);
     GET_ATOM(WM_TAKE_FOCUS);
     GET_ATOM(WM_NAME);
-    GET_ATOM(WM_TRANSIENT_FOR);
     GET_ATOM(_NET_WM_STATE);
     GET_ATOM(_NET_WM_STATE_HIDDEN);
     GET_ATOM(_NET_WM_STATE_FOCUSED);
@@ -402,7 +385,6 @@ int X11_VideoInit(SDL_VideoDevice *_this)
     GET_ATOM(_NET_WM_STATE_ABOVE);
     GET_ATOM(_NET_WM_STATE_SKIP_TASKBAR);
     GET_ATOM(_NET_WM_STATE_SKIP_PAGER);
-    GET_ATOM(_NET_WM_STATE_MODAL);
     GET_ATOM(_NET_WM_ALLOWED_ACTIONS);
     GET_ATOM(_NET_WM_ACTION_FULLSCREEN);
     GET_ATOM(_NET_WM_NAME);
@@ -433,17 +415,11 @@ int X11_VideoInit(SDL_VideoDevice *_this)
         return -1;
     }
 
-    if (!X11_InitXinput2(_this)) {
-        /* Assume a mouse and keyboard are attached */
-        SDL_AddKeyboard(SDL_DEFAULT_KEYBOARD_ID, NULL, SDL_FALSE);
-        SDL_AddMouse(SDL_DEFAULT_MOUSE_ID, NULL, SDL_FALSE);
-    }
+    X11_InitXinput2(_this);
 
 #ifdef SDL_VIDEO_DRIVER_X11_XFIXES
     X11_InitXfixes(_this);
 #endif /* SDL_VIDEO_DRIVER_X11_XFIXES */
-
-    X11_InitXsettings(_this);
 
 #ifndef X_HAVE_UTF8_STRING
 #warning X server does not support UTF8_STRING, a feature introduced in 2000! This is likely to become a hard error in a future libSDL3.
@@ -471,10 +447,6 @@ void X11_VideoQuit(SDL_VideoDevice *_this)
         X11_XDestroyWindow(data->display, data->clipboard_window);
     }
 
-    if (data->xsettings_window) {
-        X11_XDestroyWindow(data->display, data->xsettings_window);
-    }
-
 #ifdef X_HAVE_UTF8_STRING
     if (data->im) {
         X11_XCloseIM(data->im);
@@ -486,7 +458,6 @@ void X11_VideoQuit(SDL_VideoDevice *_this)
     X11_QuitMouse(_this);
     X11_QuitTouch(_this);
     X11_QuitClipboard(_this);
-    X11_QuitXsettings(_this);
 }
 
 SDL_bool X11_UseDirectColorVisuals(void)

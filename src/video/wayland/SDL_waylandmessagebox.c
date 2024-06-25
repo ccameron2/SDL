@@ -166,7 +166,7 @@ int Wayland_ShowMessageBox(const SDL_MessageBoxData *messageboxdata, int *button
      * We need to handle it gracefully, otherwise no message box will be shown.
      */
     argv[argc++] = zenity_major > 3 || (zenity_major == 3 && zenity_minor >= 90) ? "--icon" : "--icon-name";
-    switch (messageboxdata->flags & (SDL_MESSAGEBOX_ERROR | SDL_MESSAGEBOX_WARNING | SDL_MESSAGEBOX_INFORMATION)) {
+    switch (messageboxdata->flags) {
     case SDL_MESSAGEBOX_ERROR:
         argv[argc++] = "dialog-error";
         break;
@@ -212,7 +212,6 @@ int Wayland_ShowMessageBox(const SDL_MessageBoxData *messageboxdata, int *button
         FILE *outputfp = NULL;
         char *output = NULL;
         char *tmp = NULL;
-        close(fd_pipe[1]);
 
         if (!buttonID) {
             /* if we don't need buttonID, we can return immediately */

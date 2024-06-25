@@ -11,6 +11,9 @@
 */
 /* Simple program:  Move N sprites around on the screen as fast as possible */
 
+#include <stdlib.h>
+#include <time.h>
+
 #define SDL_MAIN_USE_CALLBACKS 1
 #include <SDL3/SDL_test.h>
 #include <SDL3/SDL_test_common.h>
@@ -42,7 +45,7 @@ static SDL_bool suspend_when_occluded;
 /* -1: infinite random moves (default); >=0: enables N deterministic moves */
 static int iterations = -1;
 
-void SDL_AppQuit(void *appstate)
+void SDL_AppQuit(void)
 {
     SDL_free(sprites);
     SDL_free(positions);
@@ -383,12 +386,12 @@ static void MoveSprites(SDL_Renderer *renderer, SDL_Texture *sprite)
     SDL_RenderPresent(renderer);
 }
 
-int SDL_AppEvent(void *appstate, const SDL_Event *event)
+int SDL_AppEvent(const SDL_Event *event)
 {
     return SDLTest_CommonEventMainCallbacks(state, event);
 }
 
-int SDL_AppIterate(void *appstate)
+int SDL_AppIterate(void)
 {
     Uint64 now;
     int i;
@@ -419,10 +422,10 @@ int SDL_AppIterate(void *appstate)
         frames = 0;
     }
 
-    return SDL_APP_CONTINUE;
+    return 0;  /* keep going */
 }
 
-int SDL_AppInit(void **appstate, int argc, char *argv[])
+int SDL_AppInit(int argc, char *argv[])
 {
     int i;
     Uint64 seed;
@@ -434,7 +437,7 @@ int SDL_AppInit(void **appstate, int argc, char *argv[])
     /* Initialize test framework */
     state = SDLTest_CommonCreateState(argv, SDL_INIT_VIDEO);
     if (!state) {
-        return SDL_APP_FAILURE;
+        return -1;
     }
 
     for (i = 1; i < argc;) {
@@ -492,7 +495,7 @@ int SDL_AppInit(void **appstate, int argc, char *argv[])
                          * Use an 'indices' array */
                         use_rendergeometry = 2;
                     } else {
-                        return SDL_APP_FAILURE;
+                        return -1;
                     }
                 }
                 consumed = 2;
@@ -517,12 +520,12 @@ int SDL_AppInit(void **appstate, int argc, char *argv[])
                 NULL
             };
             SDLTest_CommonLogUsage(state, argv[0], options);
-            return SDL_APP_FAILURE;
+            return -1;
         }
         i += consumed;
     }
     if (!SDLTest_CommonInit(state)) {
-        return SDL_APP_FAILURE;
+        return -1;
     }
 
     /* Create the windows, initialize the renderers, and load the textures */
@@ -530,7 +533,7 @@ int SDL_AppInit(void **appstate, int argc, char *argv[])
         (SDL_Texture **)SDL_malloc(state->num_windows * sizeof(*sprites));
     if (!sprites) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Out of memory!\n");
-        return SDL_APP_FAILURE;
+        return -1;
     }
     for (i = 0; i < state->num_windows; ++i) {
         SDL_Renderer *renderer = state->renderers[i];
@@ -538,7 +541,7 @@ int SDL_AppInit(void **appstate, int argc, char *argv[])
         SDL_RenderClear(renderer);
     }
     if (LoadSprite(icon) < 0) {
-        return SDL_APP_FAILURE;
+        return -1;
     }
 
     /* Allocate memory for the sprite info */
@@ -546,7 +549,7 @@ int SDL_AppInit(void **appstate, int argc, char *argv[])
     velocities = (SDL_FRect *)SDL_malloc(num_sprites * sizeof(*velocities));
     if (!positions || !velocities) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Out of memory!\n");
-        return SDL_APP_FAILURE;
+        return -1;
     }
 
     /* Position sprites and set their velocities using the fuzzer */
@@ -555,7 +558,7 @@ int SDL_AppInit(void **appstate, int argc, char *argv[])
         seed = (Uint64)iterations;
     } else {
         /* Pseudo-random seed generated from the time */
-        seed = SDL_GetPerformanceCounter();
+        seed = (Uint64)time(NULL);
     }
     SDLTest_FuzzerInit(seed);
     for (i = 0; i < num_sprites; ++i) {
@@ -565,7 +568,7 @@ int SDL_AppInit(void **appstate, int argc, char *argv[])
         positions[i].h = sprite_h;
         velocities[i].x = 0;
         velocities[i].y = 0;
-        while (velocities[i].x == 0.f && velocities[i].y == 0.f) {
+        while (!velocities[i].x && !velocities[i].y) {
             velocities[i].x = (float)SDLTest_RandomIntegerInRange(-MAX_SPEED, MAX_SPEED);
             velocities[i].y = (float)SDLTest_RandomIntegerInRange(-MAX_SPEED, MAX_SPEED);
         }
@@ -575,6 +578,6 @@ int SDL_AppInit(void **appstate, int argc, char *argv[])
     frames = 0;
     next_fps_check = SDL_GetTicks() + fps_check_delay;
 
-    return SDL_APP_CONTINUE;
+    return 0;
 }
 

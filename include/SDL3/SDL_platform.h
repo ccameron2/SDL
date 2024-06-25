@@ -20,10 +20,9 @@
 */
 
 /**
- * # CategoryPlatform
+ *  \file SDL_platform.h
  *
- * SDL provides a means to identify the app's platform, both at compile time
- * and runtime.
+ *  Header file for platform functions.
  */
 
 #ifndef SDL_platform_h_
@@ -48,14 +47,12 @@ extern "C" {
  * - "iOS"
  * - "Android"
  *
- * The returned string follows the SDL_GetStringRule.
- *
  * \returns the name of the platform. If the correct platform name is not
  *          available, returns a string beginning with the text "Unknown".
  *
  * \since This function is available since SDL 3.0.0.
  */
-extern SDL_DECLSPEC const char * SDLCALL SDL_GetPlatform(void);
+extern DECLSPEC const char * SDLCALL SDL_GetPlatform (void);
 
 /* Ends C function definitions when using C++ */
 #ifdef __cplusplus

@@ -64,7 +64,8 @@ static void deinit_drivers()
 	deinit_ps2_filesystem_driver();
 }
 
-int SDL_RunApp(int argc, char* argv[], SDL_main_func mainFunction, void * reserved)
+DECLSPEC int
+SDL_RunApp(int argc, char* argv[], SDL_main_func mainFunction, void * reserved)
 {
     int res;
     (void)reserved;

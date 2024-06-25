@@ -232,13 +232,13 @@ typedef struct
 typedef struct
 {
     DLGTEMPLATEEX *lpDialog;
-    void *data;
+    Uint8 *data;
     size_t size;
     size_t used;
     WORD numbuttons;
 } WIN_DialogData;
 
-static SDL_bool GetButtonIndex(const SDL_MessageBoxData *messageboxdata, SDL_MessageBoxButtonFlags flags, size_t *i)
+static SDL_bool GetButtonIndex(const SDL_MessageBoxData *messageboxdata, Uint32 flags, size_t *i)
 {
     for (*i = 0; *i < (size_t)messageboxdata->numbuttons; ++*i) {
         if (messageboxdata->buttons[*i].flags & flags) {
@@ -373,7 +373,7 @@ static SDL_bool AddDialogData(WIN_DialogData *dialog, const void *data, size_t s
         return SDL_FALSE;
     }
 
-    SDL_memcpy((Uint8 *)dialog->data + dialog->used, data, size);
+    SDL_memcpy(dialog->data + dialog->used, data, size);
     dialog->used += size;
 
     return SDL_TRUE;
@@ -650,7 +650,7 @@ static const char *EscapeAmpersands(char **dst, size_t *dstlen, const char *src)
         *dstlen = srclen + ampcount + extraspace;
         SDL_free(*dst);
         *dst = NULL;
-        newdst = (char *)SDL_malloc(*dstlen);
+        newdst = SDL_malloc(*dstlen);
         if (!newdst) {
             return NULL;
         }
@@ -701,7 +701,7 @@ static int WIN_ShowOldMessageBox(const SDL_MessageBoxData *messageboxdata, int *
         return SDL_SetError("Number of buttons exceeds limit of %d", MAX_BUTTONS);
     }
 
-    switch (messageboxdata->flags & (SDL_MESSAGEBOX_ERROR | SDL_MESSAGEBOX_WARNING | SDL_MESSAGEBOX_INFORMATION)) {
+    switch (messageboxdata->flags) {
     case SDL_MESSAGEBOX_ERROR:
         icon = (Uint16)(size_t)IDI_ERROR;
         break;
@@ -974,7 +974,7 @@ int WIN_ShowMessageBox(const SDL_MessageBoxData *messageboxdata, int *buttonID)
 
     TaskConfig.pszContent = wmessage;
     TaskConfig.cButtons = messageboxdata->numbuttons;
-    pButtons = (TASKDIALOG_BUTTON *)SDL_malloc(sizeof(TASKDIALOG_BUTTON) * messageboxdata->numbuttons);
+    pButtons = SDL_malloc(sizeof(TASKDIALOG_BUTTON) * messageboxdata->numbuttons);
     TaskConfig.nDefaultButton = 0;
     nCancelButton = 0;
     for (i = 0; i < messageboxdata->numbuttons; i++) {

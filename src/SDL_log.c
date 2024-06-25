@@ -117,14 +117,14 @@ void SDL_InitLog(void)
 
 void SDL_QuitLog(void)
 {
-    SDL_ResetLogPriorities();
+    SDL_LogResetPriorities();
     if (log_function_mutex) {
         SDL_DestroyMutex(log_function_mutex);
         log_function_mutex = NULL;
     }
 }
 
-void SDL_SetLogPriorities(SDL_LogPriority priority)
+void SDL_LogSetAllPriority(SDL_LogPriority priority)
 {
     SDL_LogLevel *entry;
 
@@ -136,7 +136,7 @@ void SDL_SetLogPriorities(SDL_LogPriority priority)
     SDL_forced_priority_level = priority;
 }
 
-void SDL_SetLogPriority(int category, SDL_LogPriority priority)
+void SDL_LogSetPriority(int category, SDL_LogPriority priority)
 {
     SDL_LogLevel *entry;
 
@@ -273,7 +273,7 @@ static SDL_LogPriority SDL_GetDefaultLogPriority(int category)
     }
 }
 
-SDL_LogPriority SDL_GetLogPriority(int category)
+SDL_LogPriority SDL_LogGetPriority(int category)
 {
     SDL_LogLevel *entry;
 
@@ -290,7 +290,7 @@ SDL_LogPriority SDL_GetLogPriority(int category)
     return SDL_GetDefaultLogPriority(category);
 }
 
-void SDL_ResetLogPriorities(void)
+void SDL_LogResetPriorities(void)
 {
     SDL_LogLevel *entry;
 
@@ -406,7 +406,7 @@ void SDL_LogMessageV(int category, SDL_LogPriority priority, SDL_PRINTF_FORMAT_S
     }
 
     /* See if we want to do anything with this message */
-    if (priority < SDL_GetLogPriority(category)) {
+    if (priority < SDL_LogGetPriority(category)) {
         return;
     }
 
@@ -594,7 +594,7 @@ static void SDLCALL SDL_LogOutput(void *userdata, int category, SDL_LogPriority 
 #endif
 }
 
-void SDL_GetLogOutputFunction(SDL_LogOutputFunction *callback, void **userdata)
+void SDL_LogGetOutputFunction(SDL_LogOutputFunction *callback, void **userdata)
 {
     if (callback) {
         *callback = SDL_log_function;
@@ -604,7 +604,7 @@ void SDL_GetLogOutputFunction(SDL_LogOutputFunction *callback, void **userdata)
     }
 }
 
-void SDL_SetLogOutputFunction(SDL_LogOutputFunction callback, void *userdata)
+void SDL_LogSetOutputFunction(SDL_LogOutputFunction callback, void *userdata)
 {
     SDL_log_function = callback;
     SDL_log_userdata = userdata;

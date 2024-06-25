@@ -29,7 +29,7 @@ GetNearbyFilename(const char *file)
     base = SDL_GetBasePath();
 
     if (base) {
-        SDL_IOStream *rw;
+        SDL_RWops *rw;
         size_t len = SDL_strlen(base) + SDL_strlen(file) + 1;
 
         path = SDL_malloc(len);
@@ -42,9 +42,9 @@ GetNearbyFilename(const char *file)
         (void)SDL_snprintf(path, len, "%s%s", base, file);
         SDL_free(base);
 
-        rw = SDL_IOFromFile(path, "rb");
+        rw = SDL_RWFromFile(path, "rb");
         if (rw) {
-            SDL_CloseIO(rw);
+            SDL_RWclose(rw);
             return path;
         }
 

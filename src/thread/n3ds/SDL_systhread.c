@@ -42,10 +42,11 @@ static void ThreadEntry(void *arg)
     threadExit(0);
 }
 
+#ifdef SDL_PASSED_BEGINTHREAD_ENDTHREAD
+#error "SDL_PASSED_BEGINTHREAD_ENDTHREAD is not supported on N3DS"
+#endif
 
-int SDL_SYS_CreateThread(SDL_Thread *thread,
-                         SDL_FunctionPointer pfnBeginThread,
-                         SDL_FunctionPointer pfnEndThread)
+int SDL_SYS_CreateThread(SDL_Thread *thread)
 {
     s32 priority = 0x30;
     int cpu = -1;

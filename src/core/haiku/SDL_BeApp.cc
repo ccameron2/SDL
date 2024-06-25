@@ -107,7 +107,7 @@ static int StartBeApp(void *unused)
 static int StartBeLooper()
 {
     if (!be_app) {
-        SDL_AppThread = SDL_CreateThread(StartBeApp, "SDLApplication", NULL);
+        SDL_AppThread = SDL_CreateThreadInternal(StartBeApp, "SDLApplication", 0, NULL);
         if (!SDL_AppThread) {
             return SDL_SetError("Couldn't create BApplication thread");
         }

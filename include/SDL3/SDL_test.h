@@ -41,6 +41,7 @@
 #include <SDL3/SDL_test_log.h>
 #include <SDL3/SDL_test_md5.h>
 #include <SDL3/SDL_test_memory.h>
+#include <SDL3/SDL_test_random.h>
 
 #include <SDL3/SDL_begin_code.h>
 /* Set up for C function definitions, even when using C++ */

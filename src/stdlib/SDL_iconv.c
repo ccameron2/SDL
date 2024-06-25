@@ -813,7 +813,6 @@ char *SDL_iconv_string(const char *tocode, const char *fromcode, const char *inb
         switch (retCode) {
         case SDL_ICONV_E2BIG:
         {
-            const ptrdiff_t diff = (ptrdiff_t) (outbuf - string);
             char *oldstring = string;
             stringsize *= 2;
             string = (char *)SDL_realloc(string, stringsize + sizeof(Uint32));
@@ -822,8 +821,8 @@ char *SDL_iconv_string(const char *tocode, const char *fromcode, const char *inb
                 SDL_iconv_close(cd);
                 return NULL;
             }
-            outbuf = string + diff;
-            outbytesleft = stringsize - diff;
+            outbuf = string + (outbuf - oldstring);
+            outbytesleft = stringsize - (outbuf - string);
             SDL_memset(outbuf, 0, sizeof(Uint32));
             continue;
         }

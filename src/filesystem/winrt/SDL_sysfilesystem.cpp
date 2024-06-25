@@ -35,7 +35,8 @@ extern "C" {
 using namespace std;
 using namespace Windows::Storage;
 
-static const wchar_t *SDL_WinRTGetFSPathUNICODE(SDL_WinRT_Path pathType)
+extern "C" const wchar_t *
+SDL_WinRTGetFSPathUNICODE(SDL_WinRT_Path pathType)
 {
     switch (pathType) {
     case SDL_WINRT_PATH_INSTALLED_LOCATION:
@@ -93,8 +94,8 @@ static const wchar_t *SDL_WinRTGetFSPathUNICODE(SDL_WinRT_Path pathType)
     return NULL;
 }
 
-// this caches a string until the process ends, so there's no need to use SDL_FreeLater.
-extern "C" const char *SDL_WinRTGetFSPath(SDL_WinRT_Path pathType)
+extern "C" const char *
+SDL_WinRTGetFSPathUTF8(SDL_WinRT_Path pathType)
 {
     typedef unordered_map<SDL_WinRT_Path, string> UTF8PathMap;
     static UTF8PathMap utf8Paths;
@@ -115,9 +116,10 @@ extern "C" const char *SDL_WinRTGetFSPath(SDL_WinRT_Path pathType)
     return utf8Paths[pathType].c_str();
 }
 
-extern "C" char *SDL_GetBasePath(void)
+extern "C" char *
+SDL_GetBasePath(void)
 {
-    const char *srcPath = SDL_WinRTGetFSPath(SDL_WINRT_PATH_INSTALLED_LOCATION);
+    const char *srcPath = SDL_WinRTGetFSPathUTF8(SDL_WINRT_PATH_INSTALLED_LOCATION);
     size_t destPathLen;
     char *destPath = NULL;
 
@@ -136,7 +138,8 @@ extern "C" char *SDL_GetBasePath(void)
     return destPath;
 }
 
-extern "C" char *SDL_GetPrefPath(const char *org, const char *app)
+extern "C" char *
+SDL_GetPrefPath(const char *org, const char *app)
 {
     /* WinRT note: The 'SHGetFolderPath' API that is used in Windows 7 and
      * earlier is not available on WinRT or Windows Phone.  WinRT provides
@@ -226,34 +229,11 @@ extern "C" char *SDL_GetPrefPath(const char *org, const char *app)
     return retval;
 }
 
+/* TODO */
 char *SDL_GetUserFolder(SDL_Folder folder)
 {
-    wstring wpath;
-
-    switch (folder) {
-        #define CASEPATH(sym, var) case sym: wpath = Windows::Storage::UserDataPaths::GetDefault()->var->Data(); break
-        CASEPATH(SDL_FOLDER_HOME, Profile);
-        CASEPATH(SDL_FOLDER_DESKTOP, Desktop);
-        CASEPATH(SDL_FOLDER_DOCUMENTS, Documents);
-        CASEPATH(SDL_FOLDER_DOWNLOADS, Downloads);
-        CASEPATH(SDL_FOLDER_MUSIC, Music);
-        CASEPATH(SDL_FOLDER_PICTURES, Pictures);
-        CASEPATH(SDL_FOLDER_SCREENSHOTS, Screenshots);
-        CASEPATH(SDL_FOLDER_TEMPLATES, Templates);
-        CASEPATH(SDL_FOLDER_VIDEOS, Videos);
-        #undef CASEPATH
-        #define UNSUPPPORTED_CASEPATH(sym) SDL_SetError("The %s folder is unsupported on WinRT", #sym); return NULL;
-        UNSUPPPORTED_CASEPATH(SDL_FOLDER_PUBLICSHARE);
-        UNSUPPPORTED_CASEPATH(SDL_FOLDER_SAVEDGAMES);
-        #undef UNSUPPPORTED_CASEPATH
-        default:
-            SDL_SetError("Invalid SDL_Folder: %d", (int)folder);
-            return NULL;
-    };
-
-    wpath += L"\\";
-
-    return WIN_StringToUTF8(wpath.c_str());
+    SDL_Unsupported();
+    return NULL;
 }
 
 #endif /* SDL_PLATFORM_WINRT */

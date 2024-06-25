@@ -35,6 +35,7 @@
 
 /* Useful headers */
 #define HAVE_ALLOCA_H 1
+#define HAVE_CTYPE_H 1
 #define HAVE_FLOAT_H 1
 #define HAVE_ICONV_H 1
 #define HAVE_INTTYPES_H 1
@@ -75,6 +76,8 @@
 #define HAVE_WCSSTR 1
 #define HAVE_WCSCMP 1
 #define HAVE_WCSNCMP 1
+#define HAVE_WCSCASECMP 1
+#define HAVE_WCSNCASECMP 1
 #define HAVE_STRLEN 1
 #define HAVE_STRLCPY 1
 #define HAVE_STRLCAT 1
@@ -91,6 +94,8 @@
 #define HAVE_ATOF 1
 #define HAVE_STRCMP 1
 #define HAVE_STRNCMP 1
+#define HAVE_STRCASECMP 1
+#define HAVE_STRNCASECMP 1
 #define HAVE_SSCANF 1
 #define HAVE_VSSCANF 1
 #define HAVE_VSNPRINTF 1
@@ -163,7 +168,6 @@
 
 /* Enable various input drivers */
 #define SDL_JOYSTICK_EMSCRIPTEN 1
-#define SDL_JOYSTICK_VIRTUAL    1
 
 /* Enable various sensor drivers */
 #define SDL_SENSOR_DUMMY 1
@@ -202,7 +206,6 @@
 
 /* Enable system filesystem support */
 #define SDL_FILESYSTEM_EMSCRIPTEN 1
-#define SDL_FSOPS_POSIX 1
 
 /* Enable the camera driver */
 #define SDL_CAMERA_DRIVER_EMSCRIPTEN  1

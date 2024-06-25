@@ -1,7 +1,7 @@
 Texture2D theTexture : register(t0);
 SamplerState theSampler : register(s0);
 
-#include "D3D11_PixelShader_Common.hlsli"
+#include "D3D11_PixelShader_Common.incl"
 
 float4 main(PixelShaderInput input) : SV_TARGET
 {

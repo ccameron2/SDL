@@ -49,7 +49,7 @@ static int isSupported(int code);
 static void InitCreateRenderer(void *arg)
 {
     int width = 320, height = 240;
-    const char *renderer_name = NULL;
+    int renderer_flags = SDL_RENDERER_ACCELERATED;
     renderer = NULL;
     window = SDL_CreateWindow("render_testCreateRenderer", width, height, 0);
     SDLTest_AssertPass("SDL_CreateWindow()");
@@ -59,10 +59,10 @@ static void InitCreateRenderer(void *arg)
     }
 
     if (SDL_strcmp(SDL_GetCurrentVideoDriver(), "dummy") == 0) {
-        renderer_name = SDL_SOFTWARE_RENDERER;
+        renderer_flags = 0;
     }
 
-    renderer = SDL_CreateRenderer(window, renderer_name);
+    renderer = SDL_CreateRenderer(window, NULL, renderer_flags);
     SDLTest_AssertPass("SDL_CreateRenderer()");
     SDLTest_AssertCheck(renderer != NULL, "Check SDL_CreateRenderer result: %s", renderer != NULL ? "success" : SDL_GetError());
     if (renderer == NULL) {
@@ -166,7 +166,7 @@ static int render_testPrimitives(void *arg)
 
     /* Draw some lines. */
     CHECK_FUNC(SDL_SetRenderDrawColor, (renderer, 0, 255, 0, SDL_ALPHA_OPAQUE))
-    CHECK_FUNC(SDL_RenderLine, (renderer, 0.0f, 30.0f, TESTRENDER_SCREEN_W, 30.0f))
+    CHECK_FUNC(SDL_RenderLine, (renderer, 0.0f, 30.0f, (float)TESTRENDER_SCREEN_W, 30.0f))
     CHECK_FUNC(SDL_SetRenderDrawColor, (renderer, 55, 55, 5, SDL_ALPHA_OPAQUE))
     CHECK_FUNC(SDL_RenderLine, (renderer, 40.0f, 30.0f, 40.0f, 60.0f))
     CHECK_FUNC(SDL_SetRenderDrawColor, (renderer, 5, 105, 105, SDL_ALPHA_OPAQUE))
@@ -388,8 +388,9 @@ static int render_testBlit(void *arg)
     SDL_FRect rect;
     SDL_Texture *tface;
     SDL_Surface *referenceSurface = NULL;
-    float tw, th;
-    float i, j, ni, nj;
+    Uint32 tformat;
+    int taccess, tw, th;
+    int i, j, ni, nj;
     int checkFailCount1;
 
     /* Clear surface. */
@@ -406,9 +407,9 @@ static int render_testBlit(void *arg)
     }
 
     /* Constant values. */
-    CHECK_FUNC(SDL_GetTextureSize, (tface, &tw, &th))
-    rect.w = tw;
-    rect.h = th;
+    CHECK_FUNC(SDL_QueryTexture, (tface, &tformat, &taccess, &tw, &th))
+    rect.w = (float)tw;
+    rect.h = (float)th;
     ni = TESTRENDER_SCREEN_W - tw;
     nj = TESTRENDER_SCREEN_H - th;
 
@@ -417,8 +418,8 @@ static int render_testBlit(void *arg)
     for (j = 0; j <= nj; j += 4) {
         for (i = 0; i <= ni; i += 4) {
             /* Blitting. */
-            rect.x = i;
-            rect.y = j;
+            rect.x = (float)i;
+            rect.y = (float)j;
             ret = SDL_RenderTexture(renderer, tface, NULL, &rect);
             if (ret != 0) {
                 checkFailCount1++;
@@ -455,7 +456,8 @@ static int render_testBlitColor(void *arg)
     SDL_FRect rect;
     SDL_Texture *tface;
     SDL_Surface *referenceSurface = NULL;
-    float tw, th;
+    Uint32 tformat;
+    int taccess, tw, th;
     int i, j, ni, nj;
     int checkFailCount1;
     int checkFailCount2;
@@ -471,11 +473,11 @@ static int render_testBlitColor(void *arg)
     }
 
     /* Constant values. */
-    CHECK_FUNC(SDL_GetTextureSize, (tface, &tw, &th))
-    rect.w = tw;
-    rect.h = th;
-    ni = TESTRENDER_SCREEN_W - (int)tw;
-    nj = TESTRENDER_SCREEN_H - (int)th;
+    CHECK_FUNC(SDL_QueryTexture, (tface, &tformat, &taccess, &tw, &th))
+    rect.w = (float)tw;
+    rect.h = (float)th;
+    ni = TESTRENDER_SCREEN_W - tw;
+    nj = TESTRENDER_SCREEN_H - th;
 
     /* Test blitting with color mod. */
     checkFailCount1 = 0;
@@ -528,8 +530,9 @@ static int render_testBlitAlpha(void *arg)
     SDL_FRect rect;
     SDL_Texture *tface;
     SDL_Surface *referenceSurface = NULL;
-    float tw, th;
-    float i, j, ni, nj;
+    Uint32 tformat;
+    int taccess, tw, th;
+    int i, j, ni, nj;
     int checkFailCount1;
     int checkFailCount2;
 
@@ -547,9 +550,9 @@ static int render_testBlitAlpha(void *arg)
     }
 
     /* Constant values. */
-    CHECK_FUNC(SDL_GetTextureSize, (tface, &tw, &th))
-    rect.w = tw;
-    rect.h = th;
+    CHECK_FUNC(SDL_QueryTexture, (tface, &tformat, &taccess, &tw, &th))
+    rect.w = (float)tw;
+    rect.h = (float)th;
     ni = TESTRENDER_SCREEN_W - tw;
     nj = TESTRENDER_SCREEN_H - th;
 
@@ -565,8 +568,8 @@ static int render_testBlitAlpha(void *arg)
             }
 
             /* Blitting. */
-            rect.x = i;
-            rect.y = j;
+            rect.x = (float)i;
+            rect.y = (float)j;
             ret = SDL_RenderTexture(renderer, tface, NULL, &rect);
             if (ret != 0) {
                 checkFailCount2++;
@@ -601,8 +604,9 @@ static void
 testBlitBlendMode(SDL_Texture *tface, int mode)
 {
     int ret;
-    float tw, th;
-    float i, j, ni, nj;
+    Uint32 tformat;
+    int taccess, tw, th;
+    int i, j, ni, nj;
     SDL_FRect rect;
     int checkFailCount1;
     int checkFailCount2;
@@ -611,9 +615,9 @@ testBlitBlendMode(SDL_Texture *tface, int mode)
     clearScreen();
 
     /* Constant values. */
-    CHECK_FUNC(SDL_GetTextureSize, (tface, &tw, &th))
-    rect.w = tw;
-    rect.h = th;
+    CHECK_FUNC(SDL_QueryTexture, (tface, &tformat, &taccess, &tw, &th))
+    rect.w = (float)tw;
+    rect.h = (float)th;
     ni = TESTRENDER_SCREEN_W - tw;
     nj = TESTRENDER_SCREEN_H - th;
 
@@ -629,8 +633,8 @@ testBlitBlendMode(SDL_Texture *tface, int mode)
             }
 
             /* Blitting. */
-            rect.x = i;
-            rect.y = j;
+            rect.x = (float)i;
+            rect.y = (float)j;
             ret = SDL_RenderTexture(renderer, tface, NULL, &rect);
             if (ret != 0) {
                 checkFailCount2++;
@@ -655,7 +659,8 @@ static int render_testBlitBlend(void *arg)
     SDL_FRect rect;
     SDL_Texture *tface;
     SDL_Surface *referenceSurface = NULL;
-    float tw, th;
+    Uint32 tformat;
+    int taccess, tw, th;
     int i, j, ni, nj;
     int mode;
     int checkFailCount1;
@@ -675,11 +680,11 @@ static int render_testBlitBlend(void *arg)
     }
 
     /* Constant values. */
-    CHECK_FUNC(SDL_GetTextureSize, (tface, &tw, &th))
-    rect.w = tw;
-    rect.h = th;
-    ni = TESTRENDER_SCREEN_W - (int)tw;
-    nj = TESTRENDER_SCREEN_H - (int)th;
+    CHECK_FUNC(SDL_QueryTexture, (tface, &tformat, &taccess, &tw, &th))
+    rect.w = (float)tw;
+    rect.h = (float)th;
+    ni = TESTRENDER_SCREEN_W - tw;
+    nj = TESTRENDER_SCREEN_H - th;
 
     /* Set alpha mod. */
     CHECK_FUNC(SDL_SetTextureAlphaMod, (tface, 100))
@@ -752,7 +757,7 @@ static int render_testBlitBlend(void *arg)
             }
 
             /* Crazy blending mode magic. */
-            mode = (int)(i / 4 * j / 4) % 4;
+            mode = (i / 4 * j / 4) % 4;
             if (mode == 0) {
                 mode = SDL_BLENDMODE_NONE;
             } else if (mode == 1) {

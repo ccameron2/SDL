@@ -130,14 +130,6 @@ typedef struct
 
 typedef struct
 {
-    Uint16 min;
-    Uint16 max;
-    Uint16 center;
-    Uint16 deadzone;
-} StickCalibrationData;
-
-typedef struct
-{
     SDL_HIDAPI_Device *device;
     SDL_Joystick *joystick;
     Uint64 timestamp;
@@ -155,7 +147,13 @@ typedef struct
     Uint64 m_ulNextMotionPlusCheck;
     SDL_bool m_bDisconnected;
 
-    StickCalibrationData m_StickCalibrationData[6];
+    struct StickCalibrationData
+    {
+        Uint16 min;
+        Uint16 max;
+        Uint16 center;
+        Uint16 deadzone;
+    } m_StickCalibrationData[6];
 } SDL_DriverWii_Context;
 
 static void HIDAPI_DriverWii_RegisterHints(SDL_HintCallback callback, void *userdata)
@@ -493,17 +491,15 @@ static void DeactivateMotionPlus(SDL_DriverWii_Context *ctx)
 
 static void UpdatePowerLevelWii(SDL_Joystick *joystick, Uint8 batteryLevelByte)
 {
-    int percent;
     if (batteryLevelByte > 178) {
-        percent = 100;
+        SDL_SendJoystickBatteryLevel(joystick, SDL_JOYSTICK_POWER_FULL);
     } else if (batteryLevelByte > 51) {
-        percent = 70;
+        SDL_SendJoystickBatteryLevel(joystick, SDL_JOYSTICK_POWER_MEDIUM);
     } else if (batteryLevelByte > 13) {
-        percent = 20;
+        SDL_SendJoystickBatteryLevel(joystick, SDL_JOYSTICK_POWER_LOW);
     } else {
-        percent = 5;
+        SDL_SendJoystickBatteryLevel(joystick, SDL_JOYSTICK_POWER_EMPTY);
     }
-    SDL_SendJoystickPowerInfo(joystick, SDL_POWERSTATE_ON_BATTERY, percent);
 }
 
 static void UpdatePowerLevelWiiU(SDL_Joystick *joystick, Uint8 extensionBatteryByte)
@@ -512,39 +508,23 @@ static void UpdatePowerLevelWiiU(SDL_Joystick *joystick, Uint8 extensionBatteryB
     SDL_bool pluggedIn = !(extensionBatteryByte & 0x04);
     Uint8 batteryLevel = extensionBatteryByte >> 4;
 
-    if (pluggedIn) {
-        joystick->connection_state = SDL_JOYSTICK_CONNECTION_WIRED;
-    } else {
-        joystick->connection_state = SDL_JOYSTICK_CONNECTION_WIRELESS;
-    }
-
     /* Not sure if all Wii U Pro controllers act like this, but on mine
      * 4, 3, and 2 are held for about 20 hours each
      * 1 is held for about 6 hours
      * 0 is held for about 2 hours
      * No value above 4 has been observed.
      */
-    SDL_PowerState state;
-    int percent;
-    if (charging) {
-        state = SDL_POWERSTATE_CHARGING;
-    } else if (pluggedIn) {
-        state = SDL_POWERSTATE_CHARGED;
-    } else {
-        state = SDL_POWERSTATE_ON_BATTERY;
-    }
-    if (batteryLevel >= 4) {
-        percent = 100;
-    } else if (batteryLevel == 3) {
-        percent = 70;
-    } else if (batteryLevel == 2) {
-        percent = 40;
+    if (pluggedIn && !charging) {
+        SDL_SendJoystickBatteryLevel(joystick, SDL_JOYSTICK_POWER_WIRED);
+    } else if (batteryLevel >= 4) {
+        SDL_SendJoystickBatteryLevel(joystick, SDL_JOYSTICK_POWER_FULL);
+    } else if (batteryLevel > 1) {
+        SDL_SendJoystickBatteryLevel(joystick, SDL_JOYSTICK_POWER_MEDIUM);
     } else if (batteryLevel == 1) {
-        percent = 10;
+        SDL_SendJoystickBatteryLevel(joystick, SDL_JOYSTICK_POWER_LOW);
     } else {
-        percent = 3;
+        SDL_SendJoystickBatteryLevel(joystick, SDL_JOYSTICK_POWER_EMPTY);
     }
-    SDL_SendJoystickPowerInfo(joystick, state, percent);
 }
 
 static EWiiInputReportIDs GetButtonPacketType(SDL_DriverWii_Context *ctx)
@@ -877,7 +857,7 @@ static int HIDAPI_DriverWii_SetJoystickSensorsEnabled(SDL_HIDAPI_Device *device,
     return 0;
 }
 
-static void PostStickCalibrated(Uint64 timestamp, SDL_Joystick *joystick, StickCalibrationData *calibration, Uint8 axis, Uint16 data)
+static void PostStickCalibrated(Uint64 timestamp, SDL_Joystick *joystick, struct StickCalibrationData *calibration, Uint8 axis, Uint16 data)
 {
     Sint16 value = 0;
     if (!calibration->center) {
@@ -1386,7 +1366,7 @@ static void HandleStatus(SDL_DriverWii_Context *ctx, SDL_Joystick *joystick)
 
 static void HandleResponse(SDL_DriverWii_Context *ctx, SDL_Joystick *joystick)
 {
-    EWiiInputReportIDs type = (EWiiInputReportIDs)ctx->m_rgucReadBuffer[0];
+    EWiiInputReportIDs type = ctx->m_rgucReadBuffer[0];
     WiiButtonData data;
     SDL_assert(type == k_eWiiInputReportIDs_Acknowledge || type == k_eWiiInputReportIDs_ReadMemory);
     SDL_zero(data);
@@ -1493,7 +1473,7 @@ static void HandleButtonPacket(SDL_DriverWii_Context *ctx, SDL_Joystick *joystic
 
 static void HandleInput(SDL_DriverWii_Context *ctx, SDL_Joystick *joystick)
 {
-    EWiiInputReportIDs type = (EWiiInputReportIDs)ctx->m_rgucReadBuffer[0];
+    EWiiInputReportIDs type = ctx->m_rgucReadBuffer[0];
 
     /* Set up for handling input */
     ctx->timestamp = SDL_GetTicksNS();

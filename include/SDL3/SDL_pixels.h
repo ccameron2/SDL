@@ -20,16 +20,51 @@
 */
 
 /**
- * # CategoryPixels
+ *  \file SDL_pixels.h
  *
- * Pixel management.
+ *  Header for the enumerated pixel format definitions.
+ *
+ *  SDL's pixel formats have the following naming convention:
+ *
+ *      * Names with a list of components and a single bit count, such as
+ *        RGB24 and ABGR32, define a platform-independent encoding into
+ *        bytes in the order specified. For example, in RGB24 data, each
+ *        pixel is encoded in 3 bytes (red, green, blue) in that order,
+ *        and in ABGR32 data, each pixel is encoded in 4 bytes
+ *        (alpha, blue, green, red) in that order. Use these names if the
+ *        property of a format that is important to you is the order of
+ *        the bytes in memory or on disk.
+ *
+ *      * Names with a bit count per component, such as ARGB8888 and
+ *        XRGB1555, are "packed" into an appropriately-sized integer in
+ *        the platform's native endianness. For example, ARGB8888 is
+ *        a sequence of 32-bit integers; in each integer, the most
+ *        significant bits are alpha, and the least significant bits are
+ *        blue. On a little-endian CPU such as x86, the least significant
+ *        bits of each integer are arranged first in memory, but on a
+ *        big-endian CPU such as s390x, the most significant bits are
+ *        arranged first. Use these names if the property of a format that
+ *        is important to you is the meaning of each bit position within a
+ *        native-endianness integer.
+ *
+ *      * In indexed formats such as INDEX4LSB, each pixel is represented
+ *        by encoding an index into the palette into the indicated number
+ *        of bits, with multiple pixels packed into each byte if appropriate.
+ *        In LSB formats, the first (leftmost) pixel is stored in the
+ *        least-significant bits of the byte; in MSB formats, it's stored
+ *        in the most-significant bits. INDEX8 does not need LSB/MSB
+ *        variants, because each pixel exactly fills one byte.
+ *
+ *  The 32-bit byte-array encodings such as RGBA32 are aliases for the
+ *  appropriate 8888 encoding for the current platform. For example,
+ *  RGBA32 is an alias for ABGR8888 on little-endian CPUs like x86,
+ *  or an alias for RGBA8888 on big-endian CPUs.
  */
 
 #ifndef SDL_pixels_h_
 #define SDL_pixels_h_
 
 #include <SDL3/SDL_stdinc.h>
-#include <SDL3/SDL_error.h>
 #include <SDL3/SDL_endian.h>
 
 #include <SDL3/SDL_begin_code.h>
@@ -49,7 +84,7 @@ extern "C" {
 /* @} */
 
 /** Pixel type. */
-typedef enum SDL_PixelType
+typedef enum
 {
     SDL_PIXELTYPE_UNKNOWN,
     SDL_PIXELTYPE_INDEX1,
@@ -68,7 +103,7 @@ typedef enum SDL_PixelType
 } SDL_PixelType;
 
 /** Bitmap pixel order, high bit -> low bit. */
-typedef enum SDL_BitmapOrder
+typedef enum
 {
     SDL_BITMAPORDER_NONE,
     SDL_BITMAPORDER_4321,
@@ -76,7 +111,7 @@ typedef enum SDL_BitmapOrder
 } SDL_BitmapOrder;
 
 /** Packed component order, high bit -> low bit. */
-typedef enum SDL_PackedOrder
+typedef enum
 {
     SDL_PACKEDORDER_NONE,
     SDL_PACKEDORDER_XRGB,
@@ -90,7 +125,7 @@ typedef enum SDL_PackedOrder
 } SDL_PackedOrder;
 
 /** Array component order, low byte -> high byte. */
-typedef enum SDL_ArrayOrder
+typedef enum
 {
     SDL_ARRAYORDER_NONE,
     SDL_ARRAYORDER_RGB,
@@ -102,7 +137,7 @@ typedef enum SDL_ArrayOrder
 } SDL_ArrayOrder;
 
 /** Packed component layout. */
-typedef enum SDL_PackedLayout
+typedef enum
 {
     SDL_PACKEDLAYOUT_NONE,
     SDL_PACKEDLAYOUT_332,
@@ -175,46 +210,8 @@ typedef enum SDL_PackedLayout
 #define SDL_ISPIXELFORMAT_FOURCC(format)    \
     ((format) && (SDL_PIXELFLAG(format) != 1))
 
-/* Note: If you modify this enum, update SDL_GetPixelFormatName() */
-
-/**
- * All pixel formats known to SDL.
- *
- * SDL's pixel formats have the following naming convention:
- *
- * - Names with a list of components and a single bit count, such as RGB24 and
- *   ABGR32, define a platform-independent encoding into bytes in the order
- *   specified. For example, in RGB24 data, each pixel is encoded in 3 bytes
- *   (red, green, blue) in that order, and in ABGR32 data, each pixel is
- *   encoded in 4 bytes alpha, blue, green, red) in that order. Use these
- *   names if the property of a format that is important to you is the order
- *   of the bytes in memory or on disk.
- * - Names with a bit count per component, such as ARGB8888 and XRGB1555, are
- *   "packed" into an appropriately-sized integer in the platform's native
- *   endianness. For example, ARGB8888 is a sequence of 32-bit integers; in
- *   each integer, the most significant bits are alpha, and the least
- *   significant bits are blue. On a little-endian CPU such as x86, the least
- *   significant bits of each integer are arranged first in memory, but on a
- *   big-endian CPU such as s390x, the most significant bits are arranged
- *   first. Use these names if the property of a format that is important to
- *   you is the meaning of each bit position within a native-endianness
- *   integer.
- * - In indexed formats such as INDEX4LSB, each pixel is represented by
- *   encoding an index into the palette into the indicated number of bits,
- *   with multiple pixels packed into each byte if appropriate. In LSB
- *   formats, the first (leftmost) pixel is stored in the least-significant
- *   bits of the byte; in MSB formats, it's stored in the most-significant
- *   bits. INDEX8 does not need LSB/MSB variants, because each pixel exactly
- *   fills one byte.
- *
- * The 32-bit byte-array encodings such as RGBA32 are aliases for the
- * appropriate 8888 encoding for the current platform. For example, RGBA32 is
- * an alias for ABGR8888 on little-endian CPUs like x86, or an alias for
- * RGBA8888 on big-endian CPUs.
- *
- * \since This enum is available since SDL 3.0.0.
- */
-typedef enum SDL_PixelFormatEnum
+/* Note: If you modify this list, update SDL_GetPixelFormatName() */
+typedef enum
 {
     SDL_PIXELFORMAT_UNKNOWN,
     SDL_PIXELFORMAT_INDEX1LSB =
@@ -243,15 +240,19 @@ typedef enum SDL_PixelFormatEnum
     SDL_PIXELFORMAT_XRGB4444 =
         SDL_DEFINE_PIXELFORMAT(SDL_PIXELTYPE_PACKED16, SDL_PACKEDORDER_XRGB,
                                SDL_PACKEDLAYOUT_4444, 12, 2),
+    SDL_PIXELFORMAT_RGB444 = SDL_PIXELFORMAT_XRGB4444,
     SDL_PIXELFORMAT_XBGR4444 =
         SDL_DEFINE_PIXELFORMAT(SDL_PIXELTYPE_PACKED16, SDL_PACKEDORDER_XBGR,
                                SDL_PACKEDLAYOUT_4444, 12, 2),
+    SDL_PIXELFORMAT_BGR444 = SDL_PIXELFORMAT_XBGR4444,
     SDL_PIXELFORMAT_XRGB1555 =
         SDL_DEFINE_PIXELFORMAT(SDL_PIXELTYPE_PACKED16, SDL_PACKEDORDER_XRGB,
                                SDL_PACKEDLAYOUT_1555, 15, 2),
+    SDL_PIXELFORMAT_RGB555 = SDL_PIXELFORMAT_XRGB1555,
     SDL_PIXELFORMAT_XBGR1555 =
         SDL_DEFINE_PIXELFORMAT(SDL_PIXELTYPE_PACKED16, SDL_PACKEDORDER_XBGR,
                                SDL_PACKEDLAYOUT_1555, 15, 2),
+    SDL_PIXELFORMAT_BGR555 = SDL_PIXELFORMAT_XBGR1555,
     SDL_PIXELFORMAT_ARGB4444 =
         SDL_DEFINE_PIXELFORMAT(SDL_PIXELTYPE_PACKED16, SDL_PACKEDORDER_ARGB,
                                SDL_PACKEDLAYOUT_4444, 16, 2),
@@ -446,10 +447,8 @@ typedef enum SDL_PixelFormatEnum
 
 /**
  * The color type
- *
- * \since This enum is available since SDL 3.0.0.
  */
-typedef enum SDL_ColorType
+typedef enum
 {
     SDL_COLOR_TYPE_UNKNOWN = 0,
     SDL_COLOR_TYPE_RGB = 1,
@@ -457,12 +456,9 @@ typedef enum SDL_ColorType
 } SDL_ColorType;
 
 /**
- * The color range, as described by
- * https://www.itu.int/rec/R-REC-BT.2100-2-201807-I/en
- *
- * \since This enum is available since SDL 3.0.0.
+ * The color range, as described by https://www.itu.int/rec/R-REC-BT.2100-2-201807-I/en
  */
-typedef enum SDL_ColorRange
+typedef enum
 {
     SDL_COLOR_RANGE_UNKNOWN = 0,
     SDL_COLOR_RANGE_LIMITED = 1, /**< Narrow range, e.g. 16-235 for 8-bit RGB and luma, and 16-240 for 8-bit chroma */
@@ -470,44 +466,37 @@ typedef enum SDL_ColorRange
 } SDL_ColorRange;
 
 /**
- * The color primaries, as described by
- * https://www.itu.int/rec/T-REC-H.273-201612-S/en
- *
- * \since This enum is available since SDL 3.0.0.
+ * The color primaries, as described by https://www.itu.int/rec/T-REC-H.273-201612-S/en
  */
-typedef enum SDL_ColorPrimaries
+typedef enum
 {
     SDL_COLOR_PRIMARIES_UNKNOWN = 0,
-    SDL_COLOR_PRIMARIES_BT709 = 1,                  /**< ITU-R BT.709-6 */
+    SDL_COLOR_PRIMARIES_BT709 = 1,
     SDL_COLOR_PRIMARIES_UNSPECIFIED = 2,
-    SDL_COLOR_PRIMARIES_BT470M = 4,                 /**< ITU-R BT.470-6 System M */
-    SDL_COLOR_PRIMARIES_BT470BG = 5,                /**< ITU-R BT.470-6 System B, G / ITU-R BT.601-7 625 */
-    SDL_COLOR_PRIMARIES_BT601 = 6,                  /**< ITU-R BT.601-7 525, SMPTE 170M */
-    SDL_COLOR_PRIMARIES_SMPTE240 = 7,               /**< SMPTE 240M, functionally the same as SDL_COLOR_PRIMARIES_BT601 */
-    SDL_COLOR_PRIMARIES_GENERIC_FILM = 8,           /**< Generic film (color filters using Illuminant C) */
-    SDL_COLOR_PRIMARIES_BT2020 = 9,                 /**< ITU-R BT.2020-2 / ITU-R BT.2100-0 */
-    SDL_COLOR_PRIMARIES_XYZ = 10,                   /**< SMPTE ST 428-1 */
-    SDL_COLOR_PRIMARIES_SMPTE431 = 11,              /**< SMPTE RP 431-2 */
-    SDL_COLOR_PRIMARIES_SMPTE432 = 12,              /**< SMPTE EG 432-1 / DCI P3 */
-    SDL_COLOR_PRIMARIES_EBU3213 = 22,               /**< EBU Tech. 3213-E */
+    SDL_COLOR_PRIMARIES_BT470M = 4,
+    SDL_COLOR_PRIMARIES_BT470BG = 5,
+    SDL_COLOR_PRIMARIES_BT601 = 6,
+    SDL_COLOR_PRIMARIES_SMPTE240 = 7,
+    SDL_COLOR_PRIMARIES_GENERIC_FILM = 8,
+    SDL_COLOR_PRIMARIES_BT2020 = 9,
+    SDL_COLOR_PRIMARIES_XYZ = 10,
+    SDL_COLOR_PRIMARIES_SMPTE431 = 11,
+    SDL_COLOR_PRIMARIES_SMPTE432 = 12, /* DCI P3 */
+    SDL_COLOR_PRIMARIES_EBU3213 = 22,
     SDL_COLOR_PRIMARIES_CUSTOM = 31
 } SDL_ColorPrimaries;
 
 /**
- * The color transfer characteristics.
- *
- * These are as described by https://www.itu.int/rec/T-REC-H.273-201612-S/en
- *
- * \since This enum is available since SDL 3.0.0.
+ * The transfer characteristics, as described by https://www.itu.int/rec/T-REC-H.273-201612-S/en
  */
-typedef enum SDL_TransferCharacteristics
+typedef enum
 {
     SDL_TRANSFER_CHARACTERISTICS_UNKNOWN = 0,
-    SDL_TRANSFER_CHARACTERISTICS_BT709 = 1,         /**< Rec. ITU-R BT.709-6 / ITU-R BT1361 */
+    SDL_TRANSFER_CHARACTERISTICS_BT709 = 1,         /**< ITU-R BT1361 */
     SDL_TRANSFER_CHARACTERISTICS_UNSPECIFIED = 2,
-    SDL_TRANSFER_CHARACTERISTICS_GAMMA22 = 4,       /**< ITU-R BT.470-6 System M / ITU-R BT1700 625 PAL & SECAM */
-    SDL_TRANSFER_CHARACTERISTICS_GAMMA28 = 5,       /**< ITU-R BT.470-6 System B, G */
-    SDL_TRANSFER_CHARACTERISTICS_BT601 = 6,         /**< SMPTE ST 170M / ITU-R BT.601-7 525 or 625 */
+    SDL_TRANSFER_CHARACTERISTICS_GAMMA22 = 4,       /**< ITU-R BT470M / ITU-R BT1700 625 PAL & SECAM */
+    SDL_TRANSFER_CHARACTERISTICS_GAMMA28 = 5,       /**< ITU-R BT470BG */
+    SDL_TRANSFER_CHARACTERISTICS_BT601 = 6,         /**< SMPTE ST 170M */
     SDL_TRANSFER_CHARACTERISTICS_SMPTE240 = 7,      /**< SMPTE ST 240M */
     SDL_TRANSFER_CHARACTERISTICS_LINEAR = 8,
     SDL_TRANSFER_CHARACTERISTICS_LOG100 = 9,
@@ -519,46 +508,40 @@ typedef enum SDL_TransferCharacteristics
     SDL_TRANSFER_CHARACTERISTICS_BT2020_12BIT = 15, /**< ITU-R BT2020 for 12-bit system */
     SDL_TRANSFER_CHARACTERISTICS_PQ = 16,           /**< SMPTE ST 2084 for 10-, 12-, 14- and 16-bit systems */
     SDL_TRANSFER_CHARACTERISTICS_SMPTE428 = 17,     /**< SMPTE ST 428-1 */
-    SDL_TRANSFER_CHARACTERISTICS_HLG = 18,          /**< ARIB STD-B67, known as "hybrid log-gamma" (HLG) */
+    SDL_TRANSFER_CHARACTERISTICS_HLG = 18,          /**< ARIB STD-B67, known as "Hybrid log-gamma" */
     SDL_TRANSFER_CHARACTERISTICS_CUSTOM = 31
 } SDL_TransferCharacteristics;
 
 /**
- * The matrix coefficients.
- *
- * These are as described by https://www.itu.int/rec/T-REC-H.273-201612-S/en
- *
- * \since This enum is available since SDL 3.0.0.
+ * The matrix coefficients, as described by https://www.itu.int/rec/T-REC-H.273-201612-S/en
  */
-typedef enum SDL_MatrixCoefficients
+typedef enum
 {
     SDL_MATRIX_COEFFICIENTS_IDENTITY = 0,
-    SDL_MATRIX_COEFFICIENTS_BT709 = 1,              /**< ITU-R BT.709-6 */
+    SDL_MATRIX_COEFFICIENTS_BT709 = 1,
     SDL_MATRIX_COEFFICIENTS_UNSPECIFIED = 2,
-    SDL_MATRIX_COEFFICIENTS_FCC = 4,                /**< US FCC Title 47 */
-    SDL_MATRIX_COEFFICIENTS_BT470BG = 5,            /**< ITU-R BT.470-6 System B, G / ITU-R BT.601-7 625, functionally the same as SDL_MATRIX_COEFFICIENTS_BT601 */
-    SDL_MATRIX_COEFFICIENTS_BT601 = 6,              /**< ITU-R BT.601-7 525 */
-    SDL_MATRIX_COEFFICIENTS_SMPTE240 = 7,           /**< SMPTE 240M */
+    SDL_MATRIX_COEFFICIENTS_FCC = 4,
+    SDL_MATRIX_COEFFICIENTS_BT470BG = 5,
+    SDL_MATRIX_COEFFICIENTS_BT601 = 6,
+    SDL_MATRIX_COEFFICIENTS_SMPTE240 = 7,
     SDL_MATRIX_COEFFICIENTS_YCGCO = 8,
-    SDL_MATRIX_COEFFICIENTS_BT2020_NCL = 9,         /**< ITU-R BT.2020-2 non-constant luminance */
-    SDL_MATRIX_COEFFICIENTS_BT2020_CL = 10,         /**< ITU-R BT.2020-2 constant luminance */
-    SDL_MATRIX_COEFFICIENTS_SMPTE2085 = 11,         /**< SMPTE ST 2085 */
+    SDL_MATRIX_COEFFICIENTS_BT2020_NCL = 9,
+    SDL_MATRIX_COEFFICIENTS_BT2020_CL = 10,
+    SDL_MATRIX_COEFFICIENTS_SMPTE2085 = 11,
     SDL_MATRIX_COEFFICIENTS_CHROMA_DERIVED_NCL = 12,
     SDL_MATRIX_COEFFICIENTS_CHROMA_DERIVED_CL = 13,
-    SDL_MATRIX_COEFFICIENTS_ICTCP = 14,             /**< ITU-R BT.2100-0 ICTCP */
+    SDL_MATRIX_COEFFICIENTS_ICTCP = 14,
     SDL_MATRIX_COEFFICIENTS_CUSTOM = 31
 } SDL_MatrixCoefficients;
 
 /**
- * The chroma sample location.
- *
- * \since This enum is available since SDL 3.0.0.
+ * The chroma sample location
  */
-typedef enum SDL_ChromaLocation
+typedef enum
 {
     SDL_CHROMA_LOCATION_NONE = 0,   /**< RGB, no chroma sampling */
-    SDL_CHROMA_LOCATION_LEFT = 1,   /**< In MPEG-2, MPEG-4, and AVC, Cb and Cr are taken on midpoint of the left-edge of the 2x2 square. In other words, they have the same horizontal location as the top-left pixel, but is shifted one-half pixel down vertically. */
-    SDL_CHROMA_LOCATION_CENTER = 2, /**< In JPEG/JFIF, H.261, and MPEG-1, Cb and Cr are taken at the center of the 2x2 square. In other words, they are offset one-half pixel to the right and one-half pixel down compared to the top-left pixel. */
+    SDL_CHROMA_LOCATION_LEFT = 1,   /**< In MPEG-2, MPEG-4, and AVC, Cb and Cr are taken on midpoint of the left-edge of the 2×2 square. In other words, they have the same horizontal location as the top-left pixel, but is shifted one-half pixel down vertically. */
+    SDL_CHROMA_LOCATION_CENTER = 2, /**< In JPEG/JFIF, H.261, and MPEG-1, Cb and Cr are taken at the center of 2×2 the square. In other words, they are offset one-half pixel to the right and one-half pixel down compared to the top-left pixel. */
     SDL_CHROMA_LOCATION_TOPLEFT = 3 /**< In HEVC for BT.2020 and BT.2100 content (in particular on Blu-rays), Cb and Cr are sampled at the same location as the group's top-left Y pixel ("co-sited", "co-located"). */
 } SDL_ChromaLocation;
 
@@ -575,13 +558,13 @@ typedef enum SDL_ChromaLocation
 #define SDL_COLORSPACETRANSFER(X)   (SDL_TransferCharacteristics)(((X) >> 5) & 0x1F)
 #define SDL_COLORSPACEMATRIX(X)     (SDL_MatrixCoefficients)((X) & 0x1F)
 
-#define SDL_ISCOLORSPACE_MATRIX_BT601(X)        (SDL_COLORSPACEMATRIX(X) == SDL_MATRIX_COEFFICIENTS_BT601 || SDL_COLORSPACEMATRIX(X) == SDL_MATRIX_COEFFICIENTS_BT470BG)
-#define SDL_ISCOLORSPACE_MATRIX_BT709(X)        (SDL_COLORSPACEMATRIX(X) == SDL_MATRIX_COEFFICIENTS_BT709)
-#define SDL_ISCOLORSPACE_MATRIX_BT2020_NCL(X)   (SDL_COLORSPACEMATRIX(X) == SDL_MATRIX_COEFFICIENTS_BT2020_NCL)
-#define SDL_ISCOLORSPACE_LIMITED_RANGE(X)       (SDL_COLORSPACERANGE(X) != SDL_COLOR_RANGE_FULL)
-#define SDL_ISCOLORSPACE_FULL_RANGE(X)          (SDL_COLORSPACERANGE(X) == SDL_COLOR_RANGE_FULL)
+#define SDL_ISCOLORSPACE_YUV_BT601(X)       (SDL_COLORSPACEMATRIX(X) == SDL_MATRIX_COEFFICIENTS_BT601 || SDL_COLORSPACEMATRIX(X) == SDL_MATRIX_COEFFICIENTS_BT470BG)
+#define SDL_ISCOLORSPACE_YUV_BT709(X)       (SDL_COLORSPACEMATRIX(X) == SDL_MATRIX_COEFFICIENTS_BT709)
+#define SDL_ISCOLORSPACE_YUV_BT2020(X)      (SDL_COLORSPACEMATRIX(X) == SDL_MATRIX_COEFFICIENTS_BT2020_NCL || SDL_COLORSPACEMATRIX(X) == SDL_MATRIX_COEFFICIENTS_BT2020_CL)
+#define SDL_ISCOLORSPACE_LIMITED_RANGE(X)   (SDL_COLORSPACERANGE(X) != SDL_COLOR_RANGE_FULL)
+#define SDL_ISCOLORSPACE_FULL_RANGE(X)      (SDL_COLORSPACERANGE(X) == SDL_COLOR_RANGE_FULL)
 
-typedef enum SDL_Colorspace
+typedef enum
 {
     SDL_COLORSPACE_UNKNOWN,
 
@@ -672,19 +655,14 @@ typedef enum SDL_Colorspace
     SDL_COLORSPACE_RGB_DEFAULT = SDL_COLORSPACE_SRGB,
 
     /* The default colorspace for YUV surfaces if no colorspace is specified */
-    SDL_COLORSPACE_YUV_DEFAULT = SDL_COLORSPACE_JPEG
+    SDL_COLORSPACE_YUV_DEFAULT = SDL_COLORSPACE_JPEG,
 
 } SDL_Colorspace;
 
 /**
- * A structure that represents a color as RGBA components.
- *
- * The bits of this structure can be directly reinterpreted as an
- * integer-packed color which uses the SDL_PIXELFORMAT_RGBA32 format
- * (SDL_PIXELFORMAT_ABGR8888 on little-endian systems and
- * SDL_PIXELFORMAT_RGBA8888 on big-endian systems).
- *
- * \since This struct is available since SDL 3.0.0.
+ * The bits of this structure can be directly reinterpreted as an integer-packed
+ * color which uses the SDL_PIXELFORMAT_RGBA32 format (SDL_PIXELFORMAT_ABGR8888
+ * on little-endian systems and SDL_PIXELFORMAT_RGBA8888 on big-endian systems).
  */
 typedef struct SDL_Color
 {
@@ -693,12 +671,11 @@ typedef struct SDL_Color
     Uint8 b;
     Uint8 a;
 } SDL_Color;
+#define SDL_Colour SDL_Color
 
 /**
  * The bits of this structure can be directly reinterpreted as a float-packed
  * color which uses the SDL_PIXELFORMAT_RGBA128_FLOAT format
- *
- * \since This struct is available since SDL 3.0.0.
  */
 typedef struct SDL_FColor
 {
@@ -707,34 +684,22 @@ typedef struct SDL_FColor
     float b;
     float a;
 } SDL_FColor;
+#define SDL_FColour SDL_FColor
 
-/**
- * A set of indexed colors representing a palette.
- *
- * \since This struct is available since SDL 3.0.0.
- *
- * \sa SDL_PixelFormat
- * \sa SDL_SetPaletteColors
- */
 typedef struct SDL_Palette
 {
-    int ncolors;        /**< number of elements in `colors`. */
-    SDL_Color *colors;  /**< an array of colors, `ncolors` long. */
-    Uint32 version;     /**< internal use only, do not touch. */
-    int refcount;       /**< internal use only, do not touch. */
+    int ncolors;
+    SDL_Color *colors;
+    Uint32 version;
+    int refcount;
 } SDL_Palette;
 
 /**
- * Details about the format of a pixel.
- *
- * Generally this is used with SDL_Surface, and covers many possible
- * configurations, including paletted data and various bit patterns.
- *
- * \since This struct is available since SDL 3.0.0.
+ *  \note Everything in the pixel format structure is read-only.
  */
 typedef struct SDL_PixelFormat
 {
-    SDL_PixelFormatEnum format;
+    Uint32 format;
     SDL_Palette *palette;
     Uint8 bits_per_pixel;
     Uint8 bytes_per_pixel;
@@ -758,25 +723,23 @@ typedef struct SDL_PixelFormat
 /**
  * Get the human readable name of a pixel format.
  *
- * The returned string follows the SDL_GetStringRule.
- *
- * \param format the pixel format to query.
+ * \param format the pixel format to query
  * \returns the human readable name of the specified pixel format or
  *          `SDL_PIXELFORMAT_UNKNOWN` if the format isn't recognized.
  *
  * \since This function is available since SDL 3.0.0.
  */
-extern SDL_DECLSPEC const char* SDLCALL SDL_GetPixelFormatName(SDL_PixelFormatEnum format);
+extern DECLSPEC const char* SDLCALL SDL_GetPixelFormatName(Uint32 format);
 
 /**
  * Convert one of the enumerated pixel formats to a bpp value and RGBA masks.
  *
- * \param format one of the SDL_PixelFormatEnum values.
- * \param bpp a bits per pixel value; usually 15, 16, or 32.
- * \param Rmask a pointer filled in with the red mask for the format.
- * \param Gmask a pointer filled in with the green mask for the format.
- * \param Bmask a pointer filled in with the blue mask for the format.
- * \param Amask a pointer filled in with the alpha mask for the format.
+ * \param format one of the SDL_PixelFormatEnum values
+ * \param bpp a bits per pixel value; usually 15, 16, or 32
+ * \param Rmask a pointer filled in with the red mask for the format
+ * \param Gmask a pointer filled in with the green mask for the format
+ * \param Bmask a pointer filled in with the blue mask for the format
+ * \param Amask a pointer filled in with the alpha mask for the format
  * \returns SDL_TRUE on success or SDL_FALSE if the conversion wasn't
  *          possible; call SDL_GetError() for more information.
  *
@@ -784,7 +747,7 @@ extern SDL_DECLSPEC const char* SDLCALL SDL_GetPixelFormatName(SDL_PixelFormatEn
  *
  * \sa SDL_GetPixelFormatEnumForMasks
  */
-extern SDL_DECLSPEC SDL_bool SDLCALL SDL_GetMasksForPixelFormatEnum(SDL_PixelFormatEnum format,
+extern DECLSPEC SDL_bool SDLCALL SDL_GetMasksForPixelFormatEnum(Uint32 format,
                                                             int *bpp,
                                                             Uint32 * Rmask,
                                                             Uint32 * Gmask,
@@ -797,19 +760,18 @@ extern SDL_DECLSPEC SDL_bool SDLCALL SDL_GetMasksForPixelFormatEnum(SDL_PixelFor
  * This will return `SDL_PIXELFORMAT_UNKNOWN` if the conversion wasn't
  * possible.
  *
- * \param bpp a bits per pixel value; usually 15, 16, or 32.
- * \param Rmask the red mask for the format.
- * \param Gmask the green mask for the format.
- * \param Bmask the blue mask for the format.
- * \param Amask the alpha mask for the format.
- * \returns the SDL_PixelFormatEnum value corresponding to the format masks,
- *          or SDL_PIXELFORMAT_UNKNOWN if there isn't a match.
+ * \param bpp a bits per pixel value; usually 15, 16, or 32
+ * \param Rmask the red mask for the format
+ * \param Gmask the green mask for the format
+ * \param Bmask the blue mask for the format
+ * \param Amask the alpha mask for the format
+ * \returns one of the SDL_PixelFormatEnum values
  *
  * \since This function is available since SDL 3.0.0.
  *
  * \sa SDL_GetMasksForPixelFormatEnum
  */
-extern SDL_DECLSPEC SDL_PixelFormatEnum SDLCALL SDL_GetPixelFormatEnumForMasks(int bpp,
+extern DECLSPEC Uint32 SDLCALL SDL_GetPixelFormatEnumForMasks(int bpp,
                                                           Uint32 Rmask,
                                                           Uint32 Gmask,
                                                           Uint32 Bmask,
@@ -822,34 +784,33 @@ extern SDL_DECLSPEC SDL_PixelFormatEnum SDLCALL SDL_GetPixelFormatEnumForMasks(i
  * allocated), and hence should not be modified, especially the palette. Weird
  * errors such as `Blit combination not supported` may occur.
  *
- * \param pixel_format one of the SDL_PixelFormatEnum values.
+ * \param pixel_format one of the SDL_PixelFormatEnum values
  * \returns the new SDL_PixelFormat structure or NULL on failure; call
  *          SDL_GetError() for more information.
  *
  * \since This function is available since SDL 3.0.0.
  *
  * \sa SDL_DestroyPixelFormat
- * \sa SDL_SetPixelFormatPalette
  */
-extern SDL_DECLSPEC SDL_PixelFormat * SDLCALL SDL_CreatePixelFormat(SDL_PixelFormatEnum pixel_format);
+extern DECLSPEC SDL_PixelFormat * SDLCALL SDL_CreatePixelFormat(Uint32 pixel_format);
 
 /**
  * Free an SDL_PixelFormat structure allocated by SDL_CreatePixelFormat().
  *
- * \param format the SDL_PixelFormat structure to free.
+ * \param format the SDL_PixelFormat structure to free
  *
  * \since This function is available since SDL 3.0.0.
  *
  * \sa SDL_CreatePixelFormat
  */
-extern SDL_DECLSPEC void SDLCALL SDL_DestroyPixelFormat(SDL_PixelFormat *format);
+extern DECLSPEC void SDLCALL SDL_DestroyPixelFormat(SDL_PixelFormat *format);
 
 /**
  * Create a palette structure with the specified number of color entries.
  *
  * The palette entries are initialized to white.
  *
- * \param ncolors represents the number of color entries in the color palette.
+ * \param ncolors represents the number of color entries in the color palette
  * \returns a new SDL_Palette structure on success or NULL on failure (e.g. if
  *          there wasn't enough memory); call SDL_GetError() for more
  *          information.
@@ -857,50 +818,54 @@ extern SDL_DECLSPEC void SDLCALL SDL_DestroyPixelFormat(SDL_PixelFormat *format)
  * \since This function is available since SDL 3.0.0.
  *
  * \sa SDL_DestroyPalette
- * \sa SDL_SetPaletteColors
- * \sa SDL_SetPixelFormatPalette
  */
-extern SDL_DECLSPEC SDL_Palette *SDLCALL SDL_CreatePalette(int ncolors);
+extern DECLSPEC SDL_Palette *SDLCALL SDL_CreatePalette(int ncolors);
 
 /**
  * Set the palette for a pixel format structure.
  *
- * \param format the SDL_PixelFormat structure that will use the palette.
- * \param palette the SDL_Palette structure that will be used.
+ * \param format the SDL_PixelFormat structure that will use the palette
+ * \param palette the SDL_Palette structure that will be used
  * \returns 0 on success or a negative error code on failure; call
  *          SDL_GetError() for more information.
  *
  * \since This function is available since SDL 3.0.0.
+ *
+ * \sa SDL_CreatePalette
+ * \sa SDL_DestroyPalette
  */
-extern SDL_DECLSPEC int SDLCALL SDL_SetPixelFormatPalette(SDL_PixelFormat * format,
+extern DECLSPEC int SDLCALL SDL_SetPixelFormatPalette(SDL_PixelFormat * format,
                                                       SDL_Palette *palette);
 
 /**
  * Set a range of colors in a palette.
  *
- * \param palette the SDL_Palette structure to modify.
- * \param colors an array of SDL_Color structures to copy into the palette.
- * \param firstcolor the index of the first palette entry to modify.
- * \param ncolors the number of entries to modify.
+ * \param palette the SDL_Palette structure to modify
+ * \param colors an array of SDL_Color structures to copy into the palette
+ * \param firstcolor the index of the first palette entry to modify
+ * \param ncolors the number of entries to modify
  * \returns 0 on success or a negative error code on failure; call
  *          SDL_GetError() for more information.
  *
  * \since This function is available since SDL 3.0.0.
+ *
+ * \sa SDL_CreatePalette
+ * \sa SDL_CreateSurface
  */
-extern SDL_DECLSPEC int SDLCALL SDL_SetPaletteColors(SDL_Palette * palette,
+extern DECLSPEC int SDLCALL SDL_SetPaletteColors(SDL_Palette * palette,
                                                  const SDL_Color * colors,
                                                  int firstcolor, int ncolors);
 
 /**
  * Free a palette created with SDL_CreatePalette().
  *
- * \param palette the SDL_Palette structure to be freed.
+ * \param palette the SDL_Palette structure to be freed
  *
  * \since This function is available since SDL 3.0.0.
  *
  * \sa SDL_CreatePalette
  */
-extern SDL_DECLSPEC void SDLCALL SDL_DestroyPalette(SDL_Palette * palette);
+extern DECLSPEC void SDLCALL SDL_DestroyPalette(SDL_Palette * palette);
 
 /**
  * Map an RGB triple to an opaque pixel value for a given pixel format.
@@ -920,11 +885,11 @@ extern SDL_DECLSPEC void SDLCALL SDL_DestroyPalette(SDL_Palette * palette);
  * format the return value can be assigned to a Uint16, and similarly a Uint8
  * for an 8-bpp format).
  *
- * \param format an SDL_PixelFormat structure describing the pixel format.
- * \param r the red component of the pixel in the range 0-255.
- * \param g the green component of the pixel in the range 0-255.
- * \param b the blue component of the pixel in the range 0-255.
- * \returns a pixel value.
+ * \param format an SDL_PixelFormat structure describing the pixel format
+ * \param r the red component of the pixel in the range 0-255
+ * \param g the green component of the pixel in the range 0-255
+ * \param b the blue component of the pixel in the range 0-255
+ * \returns a pixel value
  *
  * \since This function is available since SDL 3.0.0.
  *
@@ -932,7 +897,7 @@ extern SDL_DECLSPEC void SDLCALL SDL_DestroyPalette(SDL_Palette * palette);
  * \sa SDL_GetRGBA
  * \sa SDL_MapRGBA
  */
-extern SDL_DECLSPEC Uint32 SDLCALL SDL_MapRGB(const SDL_PixelFormat * format,
+extern DECLSPEC Uint32 SDLCALL SDL_MapRGB(const SDL_PixelFormat * format,
                                           Uint8 r, Uint8 g, Uint8 b);
 
 /**
@@ -954,12 +919,12 @@ extern SDL_DECLSPEC Uint32 SDLCALL SDL_MapRGB(const SDL_PixelFormat * format,
  * for an 8-bpp format).
  *
  * \param format an SDL_PixelFormat structure describing the format of the
- *               pixel.
- * \param r the red component of the pixel in the range 0-255.
- * \param g the green component of the pixel in the range 0-255.
- * \param b the blue component of the pixel in the range 0-255.
- * \param a the alpha component of the pixel in the range 0-255.
- * \returns a pixel value.
+ *               pixel
+ * \param r the red component of the pixel in the range 0-255
+ * \param g the green component of the pixel in the range 0-255
+ * \param b the blue component of the pixel in the range 0-255
+ * \param a the alpha component of the pixel in the range 0-255
+ * \returns a pixel value
  *
  * \since This function is available since SDL 3.0.0.
  *
@@ -967,7 +932,7 @@ extern SDL_DECLSPEC Uint32 SDLCALL SDL_MapRGB(const SDL_PixelFormat * format,
  * \sa SDL_GetRGBA
  * \sa SDL_MapRGB
  */
-extern SDL_DECLSPEC Uint32 SDLCALL SDL_MapRGBA(const SDL_PixelFormat * format,
+extern DECLSPEC Uint32 SDLCALL SDL_MapRGBA(const SDL_PixelFormat * format,
                                            Uint8 r, Uint8 g, Uint8 b,
                                            Uint8 a);
 
@@ -979,12 +944,12 @@ extern SDL_DECLSPEC Uint32 SDLCALL SDL_MapRGBA(const SDL_PixelFormat * format,
  * (e.g., a completely white pixel in 16-bit RGB565 format would return [0xff,
  * 0xff, 0xff] not [0xf8, 0xfc, 0xf8]).
  *
- * \param pixel a pixel value.
+ * \param pixel a pixel value
  * \param format an SDL_PixelFormat structure describing the format of the
- *               pixel.
- * \param r a pointer filled in with the red component.
- * \param g a pointer filled in with the green component.
- * \param b a pointer filled in with the blue component.
+ *               pixel
+ * \param r a pointer filled in with the red component
+ * \param g a pointer filled in with the green component
+ * \param b a pointer filled in with the blue component
  *
  * \since This function is available since SDL 3.0.0.
  *
@@ -992,7 +957,7 @@ extern SDL_DECLSPEC Uint32 SDLCALL SDL_MapRGBA(const SDL_PixelFormat * format,
  * \sa SDL_MapRGB
  * \sa SDL_MapRGBA
  */
-extern SDL_DECLSPEC void SDLCALL SDL_GetRGB(Uint32 pixel,
+extern DECLSPEC void SDLCALL SDL_GetRGB(Uint32 pixel,
                                         const SDL_PixelFormat * format,
                                         Uint8 * r, Uint8 * g, Uint8 * b);
 
@@ -1007,13 +972,13 @@ extern SDL_DECLSPEC void SDLCALL SDL_GetRGB(Uint32 pixel,
  * If the surface has no alpha component, the alpha will be returned as 0xff
  * (100% opaque).
  *
- * \param pixel a pixel value.
+ * \param pixel a pixel value
  * \param format an SDL_PixelFormat structure describing the format of the
- *               pixel.
- * \param r a pointer filled in with the red component.
- * \param g a pointer filled in with the green component.
- * \param b a pointer filled in with the blue component.
- * \param a a pointer filled in with the alpha component.
+ *               pixel
+ * \param r a pointer filled in with the red component
+ * \param g a pointer filled in with the green component
+ * \param b a pointer filled in with the blue component
+ * \param a a pointer filled in with the alpha component
  *
  * \since This function is available since SDL 3.0.0.
  *
@@ -1021,7 +986,7 @@ extern SDL_DECLSPEC void SDLCALL SDL_GetRGB(Uint32 pixel,
  * \sa SDL_MapRGB
  * \sa SDL_MapRGBA
  */
-extern SDL_DECLSPEC void SDLCALL SDL_GetRGBA(Uint32 pixel,
+extern DECLSPEC void SDLCALL SDL_GetRGBA(Uint32 pixel,
                                          const SDL_PixelFormat * format,
                                          Uint8 * r, Uint8 * g, Uint8 * b,
                                          Uint8 * a);

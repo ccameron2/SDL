@@ -19,6 +19,9 @@
 #include <emscripten/emscripten.h>
 #endif
 
+#include <stdlib.h>
+#include <time.h>
+
 static SDLTest_CommonState *state;
 static int i, done;
 static float mouseX, mouseY;
@@ -44,8 +47,6 @@ static void loop(void)
             mouseX += event.motion.xrel;
             mouseY += event.motion.yrel;
         } break;
-        default:
-            break;
         }
     }
     for (i = 0; i < state->num_windows; ++i) {
@@ -87,7 +88,7 @@ int main(int argc, char *argv[])
 {
 
     /* Enable standard application logging */
-    SDL_SetLogPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
+    SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
 
     /* Initialize test framework */
     state = SDLTest_CommonCreateState(argv, SDL_INIT_VIDEO);
@@ -112,6 +113,7 @@ int main(int argc, char *argv[])
         SDL_RenderClear(renderer);
     }
 
+    srand((unsigned int)time(NULL));
     if (SDL_SetRelativeMouseMode(SDL_TRUE) < 0) {
         return 3;
     }

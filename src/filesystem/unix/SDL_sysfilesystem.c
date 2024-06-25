@@ -25,7 +25,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 /* System dependent filesystem routines                                */
 
-#include <stdio.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <dirent.h>
@@ -514,7 +513,6 @@ char *SDL_GetUserFolder(SDL_Folder folder)
 {
     const char *param = NULL;
     char *retval;
-    char *newretval;
 
     /* According to `man xdg-user-dir`, the possible values are:
         DESKTOP
@@ -535,8 +533,7 @@ char *SDL_GetUserFolder(SDL_Folder folder)
             return NULL;
         }
 
-        retval = SDL_strdup(param);
-        goto append_slash;
+        return SDL_strdup(param);
 
     case SDL_FOLDER_DESKTOP:
         param = "DESKTOP";
@@ -595,17 +592,6 @@ char *SDL_GetUserFolder(SDL_Folder folder)
         SDL_SetError("XDG directory not available");
         return NULL;
     }
-
-append_slash:
-    newretval = (char *) SDL_realloc(retval, SDL_strlen(retval) + 2);
-
-    if (!newretval) {
-        SDL_free(retval);
-        return NULL;
-    }
-
-    retval = newretval;
-    SDL_strlcat(retval, "/", SDL_strlen(retval) + 2);
 
     return retval;
 }

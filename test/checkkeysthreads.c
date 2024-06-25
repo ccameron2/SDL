@@ -23,6 +23,7 @@
 #include <emscripten/emscripten.h>
 #endif
 
+#include <stdio.h>
 #include <stdlib.h>
 
 static int done;
@@ -120,7 +121,7 @@ PrintModifierState(void)
 }
 
 static void
-PrintKey(SDL_KeyboardEvent *event)
+PrintKey(SDL_Keysym *sym, SDL_bool pressed, SDL_bool repeat)
 {
     char message[512];
     char *spot;
@@ -130,22 +131,22 @@ PrintKey(SDL_KeyboardEvent *event)
     left = sizeof(message);
 
     /* Print the keycode, name and state */
-    if (event->key) {
+    if (sym->sym) {
         print_string(&spot, &left,
                      "Key %s:  scancode %d = %s, keycode 0x%08X = %s ",
-                     event->state ? "pressed " : "released",
-                     event->scancode,
-                     SDL_GetScancodeName(event->scancode),
-                     event->key, SDL_GetKeyName(event->key));
+                     pressed ? "pressed " : "released",
+                     sym->scancode,
+                     SDL_GetScancodeName(sym->scancode),
+                     sym->sym, SDL_GetKeyName(sym->sym));
     } else {
         print_string(&spot, &left,
                      "Unknown Key (scancode %d = %s) %s ",
-                     event->scancode,
-                     SDL_GetScancodeName(event->scancode),
-                     event->state ? "pressed " : "released");
+                     sym->scancode,
+                     SDL_GetScancodeName(sym->scancode),
+                     pressed ? "pressed " : "released");
     }
     print_modifiers(&spot, &left);
-    if (event->repeat) {
+    if (repeat) {
         print_string(&spot, &left, " (repeat)");
     }
     SDL_Log("%s\n", message);
@@ -171,13 +172,14 @@ static void loop(void)
     /* Check for events */
     /*SDL_WaitEvent(&event); emscripten does not like waiting*/
 
-    SDL_Log("starting loop\n");
+    (void)fprintf(stderr, "starting loop\n");
+    (void)fflush(stderr);
     while (!done && SDL_WaitEvent(&event)) {
         SDL_Log("Got event type: %" SDL_PRIu32 "\n", event.type);
         switch (event.type) {
         case SDL_EVENT_KEY_DOWN:
         case SDL_EVENT_KEY_UP:
-            PrintKey(&event.key);
+            PrintKey(&event.key.keysym, (event.key.state == SDL_PRESSED), (event.key.repeat > 0));
             break;
         case SDL_EVENT_TEXT_EDITING:
             PrintText("EDIT", event.text.text);
@@ -186,33 +188,32 @@ static void loop(void)
             PrintText("INPUT", event.text.text);
             break;
         case SDL_EVENT_MOUSE_BUTTON_DOWN:
-        {
-            SDL_Window *window = SDL_GetWindowFromID(event.button.windowID);
-
             /* Left button quits the app, other buttons toggles text input */
-            SDL_Log("mouse button down button: %d (LEFT=%d)\n", event.button.button, SDL_BUTTON_LEFT);
+            (void)fprintf(stderr, "mouse button down button: %d (LEFT=%d)\n", event.button.button, SDL_BUTTON_LEFT);
+            (void)fflush(stderr);
             if (event.button.button == SDL_BUTTON_LEFT) {
                 done = 1;
             } else {
-                if (SDL_TextInputActive(window)) {
+                if (SDL_TextInputActive()) {
                     SDL_Log("Stopping text input\n");
-                    SDL_StopTextInput(window);
+                    SDL_StopTextInput();
                 } else {
                     SDL_Log("Starting text input\n");
-                    SDL_StartTextInput(window);
+                    SDL_StartTextInput();
                 }
             }
             break;
-        }
         case SDL_EVENT_QUIT:
             done = 1;
             break;
         default:
             break;
         }
-        SDL_Log("waiting new event\n");
+        (void)fprintf(stderr, "waiting new event\n");
+        (void)fflush(stderr);
     }
-    SDL_Log("exiting event loop\n");
+    (void)fprintf(stderr, "exiting event loop\n");
+    (void)fflush(stderr);
 #ifdef SDL_PLATFORM_EMSCRIPTEN
     if (done) {
         emscripten_cancel_main_loop();
@@ -225,13 +226,14 @@ static int SDLCALL ping_thread(void *ptr)
 {
     int cnt;
     SDL_Event sdlevent;
-    SDL_zero(sdlevent);
+    SDL_memset(&sdlevent, 0, sizeof(SDL_Event));
     for (cnt = 0; cnt < 10; ++cnt) {
-        SDL_Log("sending event (%d/%d) from thread.\n", cnt + 1, 10);
+        (void)fprintf(stderr, "sending event (%d/%d) from thread.\n", cnt + 1, 10);
+        (void)fflush(stderr);
         sdlevent.type = SDL_EVENT_KEY_DOWN;
-        sdlevent.key.key = SDLK_1;
+        sdlevent.key.keysym.sym = SDLK_1;
         SDL_PushEvent(&sdlevent);
-        SDL_Delay(1000 + SDL_rand(1000));
+        SDL_Delay(1000 + rand() % 1000);
     }
     return cnt;
 }
@@ -250,7 +252,7 @@ int main(int argc, char *argv[])
     }
 
     /* Enable standard application logging */
-    SDL_SetLogPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
+    SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
 
     /* Parse commandline */
     if (!SDLTest_CommonDefaultArgs(state, argc, argv)) {
@@ -274,7 +276,7 @@ int main(int argc, char *argv[])
     /* On wayland, no window will actually show until something has
        actually been displayed.
     */
-    renderer = SDL_CreateRenderer(window, NULL);
+    renderer = SDL_CreateRenderer(window, NULL, 0);
     SDL_RenderPresent(renderer);
 
 #ifdef SDL_PLATFORM_IOS
@@ -282,7 +284,7 @@ int main(int argc, char *argv[])
     SDL_GL_CreateContext(window);
 #endif
 
-    SDL_StartTextInput(window);
+    SDL_StartTextInput();
 
     /* Print initial modifier state */
     SDL_PumpEvents();

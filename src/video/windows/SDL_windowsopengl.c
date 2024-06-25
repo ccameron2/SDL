@@ -220,7 +220,7 @@ SDL_FunctionPointer WIN_GL_GetProcAddress(SDL_VideoDevice *_this, const char *pr
     func = (SDL_FunctionPointer)_this->gl_data->wglGetProcAddress(proc);
     if (!func) {
         /* This is probably a normal GL function */
-        func = (SDL_FunctionPointer)GetProcAddress((HMODULE)_this->gl_config.dll_handle, proc);
+        func = (SDL_FunctionPointer)GetProcAddress(_this->gl_config.dll_handle, proc);
     }
     return func;
 }
@@ -756,8 +756,8 @@ SDL_GLContext WIN_GL_CreateContext(SDL_VideoDevice *_this, SDL_Window *window)
         }
 
         /* Make the context current */
-        if (WIN_GL_MakeCurrent(_this, window, (SDL_GLContext)temp_context) < 0) {
-            WIN_GL_DeleteContext(_this, (SDL_GLContext)temp_context);
+        if (WIN_GL_MakeCurrent(_this, window, temp_context) < 0) {
+            WIN_GL_DeleteContext(_this, temp_context);
             return NULL;
         }
 
@@ -819,12 +819,12 @@ SDL_GLContext WIN_GL_CreateContext(SDL_VideoDevice *_this, SDL_Window *window)
         return NULL;
     }
 
-    if (WIN_GL_MakeCurrent(_this, window, (SDL_GLContext)context) < 0) {
-        WIN_GL_DeleteContext(_this, (SDL_GLContext)context);
+    if (WIN_GL_MakeCurrent(_this, window, context) < 0) {
+        WIN_GL_DeleteContext(_this, context);
         return NULL;
     }
 
-    return (SDL_GLContext)context;
+    return context;
 }
 
 int WIN_GL_MakeCurrent(SDL_VideoDevice *_this, SDL_Window *window, SDL_GLContext context)

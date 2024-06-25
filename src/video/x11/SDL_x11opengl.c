@@ -716,8 +716,7 @@ SDL_GLContext X11_GL_CreateContext(SDL_VideoDevice *_this, SDL_Window *window)
     XWindowAttributes xattr;
     XVisualInfo v, *vinfo;
     int n;
-    SDL_GLContext context = NULL;
-    GLXContext share_context;
+    GLXContext context = NULL, share_context;
     const int transparent = (window->flags & SDL_WINDOW_TRANSPARENT) ? SDL_TRUE : SDL_FALSE;
 
     if (_this->gl_config.share_with_current_context) {
@@ -742,7 +741,7 @@ SDL_GLContext X11_GL_CreateContext(SDL_VideoDevice *_this, SDL_Window *window)
             _this->gl_config.flags == 0 && !transparent) {
             /* Create legacy context */
             context =
-                (SDL_GLContext)_this->gl_data->glXCreateContext(display, vinfo, share_context, True);
+                _this->gl_data->glXCreateContext(display, vinfo, share_context, True);
         } else {
             /* max 14 attributes plus terminator */
             int attribs[15] = {
@@ -814,7 +813,7 @@ SDL_GLContext X11_GL_CreateContext(SDL_VideoDevice *_this, SDL_Window *window)
                     }
 
                     if (framebuffer_config) {
-                        context = (SDL_GLContext)_this->gl_data->glXCreateContextAttribsARB(display,
+                        context = _this->gl_data->glXCreateContextAttribsARB(display,
                                                                              framebuffer_config[0],
                                                                              share_context, True, attribs);
                         X11_XFree(framebuffer_config);

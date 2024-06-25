@@ -403,7 +403,7 @@ static int OutOfMemory(void)
     return -1;
 }
 
-int MINGW32_FORCEALIGN SDL_RunApp(int _argc, char* _argv[], SDL_main_func mainFunction, void * reserved)
+DECLSPEC int MINGW32_FORCEALIGN SDL_RunApp(int _argc, char* _argv[], SDL_main_func mainFunction, void * reserved)
 {
 
     /* Gets the arguments with GetCommandLine, converts them to argc and argv
@@ -431,21 +431,18 @@ int MINGW32_FORCEALIGN SDL_RunApp(int _argc, char* _argv[], SDL_main_func mainFu
         return OutOfMemory();
     }
     for (i = 0; i < argc; ++i) {
-        const int utf8size = WideCharToMultiByte(CP_UTF8, 0, argvw[i], -1, NULL, 0, NULL, NULL);
-        if (!utf8size) {  // uhoh?
-            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Fatal Error", "Error processing command line arguments", NULL);
-            return -1;
+        DWORD len;
+        char *arg = WIN_StringToUTF8W(argvw[i]);
+        if (!arg) {
+            return OutOfMemory();
         }
-
-        argv[i] = (char *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, utf8size);  // this size includes the null-terminator character.
+        len = (DWORD)SDL_strlen(arg);
+        argv[i] = (char *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len + 1);
         if (!argv[i]) {
             return OutOfMemory();
         }
-
-        if (WideCharToMultiByte(CP_UTF8, 0, argvw[i], -1, argv[i], utf8size, NULL, NULL) == 0) {  // failed? uhoh!
-            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Fatal Error", "Error processing command line arguments", NULL);
-            return -1;
-        }
+        SDL_memcpy(argv[i], arg, len);
+        SDL_free(arg);
     }
     argv[i] = NULL;
     LocalFree(argvw);

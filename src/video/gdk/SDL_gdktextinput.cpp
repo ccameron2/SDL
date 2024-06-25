@@ -178,7 +178,7 @@ void GDK_EnsureHints(void)
     }
 }
 
-int GDK_StartTextInput(SDL_VideoDevice *_this, SDL_Window *window)
+void GDK_StartTextInput(SDL_VideoDevice *_this)
 {
     /*
      * Currently a stub, since all input is handled by the virtual keyboard,
@@ -191,16 +191,14 @@ int GDK_StartTextInput(SDL_VideoDevice *_this, SDL_Window *window)
      * Right now this function isn't implemented on Desktop
      * and seems to be present only in the docs? So I didn't bother.
      */
-    return 0;
 }
 
-int GDK_StopTextInput(SDL_VideoDevice *_this, SDL_Window *window)
+void GDK_StopTextInput(SDL_VideoDevice *_this)
 {
     /* See notice in GDK_StartTextInput */
-    return 0;
 }
 
-int GDK_UpdateTextInputRect(SDL_VideoDevice *_this, SDL_Window *window)
+int GDK_SetTextInputRect(SDL_VideoDevice *_this, const SDL_Rect *rect)
 {
     /*
      * XGameUiShowTextEntryAsync does not allow you to set
@@ -214,10 +212,20 @@ int GDK_UpdateTextInputRect(SDL_VideoDevice *_this, SDL_Window *window)
     return 0;
 }
 
-int GDK_ClearComposition(SDL_VideoDevice *_this, SDL_Window *window)
+void GDK_ClearComposition(SDL_VideoDevice *_this)
 {
     /* See notice in GDK_StartTextInput */
-    return 0;
+}
+
+SDL_bool GDK_IsTextInputShown(SDL_VideoDevice *_this)
+{
+    /*
+     * The XGameUiShowTextEntryAsync window
+     * does specify potential input candidates
+     * just below the text box, so technically
+     * this is true whenever the window is shown.
+     */
+    return (g_TextBlock != NULL);
 }
 
 SDL_bool GDK_HasScreenKeyboardSupport(SDL_VideoDevice *_this)
@@ -279,7 +287,8 @@ void GDK_HideScreenKeyboard(SDL_VideoDevice *_this, SDL_Window *window)
 
 SDL_bool GDK_IsScreenKeyboardShown(SDL_VideoDevice *_this, SDL_Window *window)
 {
-    return (g_TextBlock != NULL);
+    /* See notice in GDK_IsTextInputShown */
+    return GDK_IsTextInputShown(_this);
 }
 
 #ifdef __cplusplus

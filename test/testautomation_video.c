@@ -13,11 +13,9 @@
 static SDL_Window *createVideoSuiteTestWindow(const char *title)
 {
     SDL_Window *window;
-    SDL_Window **windows;
     SDL_Event event;
     int w, h;
-    int count;
-    SDL_WindowFlags flags;
+    Uint32 flags;
     SDL_bool needs_renderer = SDL_FALSE;
     SDL_bool needs_events_pumped = SDL_FALSE;
 
@@ -27,14 +25,8 @@ static SDL_Window *createVideoSuiteTestWindow(const char *title)
     flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_BORDERLESS;
 
     window = SDL_CreateWindow(title, w, h, flags);
-    SDLTest_AssertPass("Call to SDL_CreateWindow('Title',%d,%d,%" SDL_PRIu64 ")", w, h, flags);
+    SDLTest_AssertPass("Call to SDL_CreateWindow('Title',%d,%d,%" SDL_PRIu32 ")", w, h, flags);
     SDLTest_AssertCheck(window != NULL, "Validate that returned window struct is not NULL");
-
-    /* Check the window is available in the window list */
-    windows = SDL_GetWindows(&count);
-    SDLTest_AssertCheck(windows != NULL, "Validate that returned window list is not NULL");
-    SDLTest_AssertCheck(windows[0] == window, "Validate that the window is first in the window list");
-    SDL_free(windows);
 
     /* Wayland and XWayland windows require that a frame be presented before they are fully mapped and visible onscreen.
      * This is required for the mouse/keyboard grab tests to pass.
@@ -53,7 +45,7 @@ static SDL_Window *createVideoSuiteTestWindow(const char *title)
     }
 
     if (needs_renderer) {
-        SDL_Renderer *renderer = SDL_CreateRenderer(window, NULL);
+        SDL_Renderer *renderer = SDL_CreateRenderer(window, NULL, 0);
         if (renderer) {
             SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xFF);
             SDL_RenderClear(renderer);
@@ -83,10 +75,6 @@ static SDL_Window *createVideoSuiteTestWindow(const char *title)
 static void destroyVideoSuiteTestWindow(SDL_Window *window)
 {
     if (window != NULL) {
-        SDL_Renderer *renderer = SDL_GetRenderer(window);
-        if (renderer) {
-            SDL_DestroyRenderer(renderer);
-        }
         SDL_DestroyWindow(window);
         window = NULL;
         SDLTest_AssertPass("Call to SDL_DestroyWindow()");
@@ -209,7 +197,7 @@ static int video_createWindowVariousFlags(void *arg)
     const char *title = "video_createWindowVariousFlags Test Window";
     int w, h;
     int fVariation;
-    SDL_WindowFlags flags;
+    Uint32 flags;
 
     /* Standard window */
     w = SDLTest_RandomIntegerInRange(320, 1024);
@@ -264,7 +252,7 @@ static int video_createWindowVariousFlags(void *arg)
         }
 
         window = SDL_CreateWindow(title, w, h, flags);
-        SDLTest_AssertPass("Call to SDL_CreateWindow('Title',%d,%d,%" SDL_PRIu64 ")", w, h, flags);
+        SDLTest_AssertPass("Call to SDL_CreateWindow('Title',%d,%d,%" SDL_PRIu32 ")", w, h, flags);
         SDLTest_AssertCheck(window != NULL, "Validate that returned window struct is not NULL");
 
         /* Clean up */
@@ -281,8 +269,8 @@ static int video_getWindowFlags(void *arg)
 {
     SDL_Window *window;
     const char *title = "video_getWindowFlags Test Window";
-    SDL_WindowFlags flags;
-    SDL_WindowFlags actualFlags;
+    Uint32 flags;
+    Uint32 actualFlags;
 
     /* Reliable flag set always set in test window */
     flags = 0;
@@ -292,7 +280,7 @@ static int video_getWindowFlags(void *arg)
     if (window != NULL) {
         actualFlags = SDL_GetWindowFlags(window);
         SDLTest_AssertPass("Call to SDL_GetWindowFlags()");
-        SDLTest_AssertCheck((flags & actualFlags) == flags, "Verify returned value has flags %" SDL_PRIu64 " set, got: %" SDL_PRIu64, flags, actualFlags);
+        SDLTest_AssertCheck((flags & actualFlags) == flags, "Verify returned value has flags %" SDL_PRIu32 " set, got: %" SDL_PRIu32, flags, actualFlags);
     }
 
     /* Clean up */
@@ -503,6 +491,9 @@ static void setAndCheckWindowMouseGrabState(SDL_Window *window, SDL_bool desired
             SDL_GetGrabbedWindow() == window,
             "Grabbed window should be to our window");
         SDLTest_AssertCheck(
+            SDL_GetWindowGrab(window),
+            "SDL_GetWindowGrab() should return SDL_TRUE");
+        SDLTest_AssertCheck(
             SDL_GetWindowFlags(window) & SDL_WINDOW_MOUSE_GRABBED,
             "SDL_WINDOW_MOUSE_GRABBED should be set");
     } else {
@@ -535,6 +526,9 @@ static void setAndCheckWindowKeyboardGrabState(SDL_Window *window, SDL_bool desi
             SDL_GetGrabbedWindow() == window,
             "Grabbed window should be set to our window");
         SDLTest_AssertCheck(
+            SDL_GetWindowGrab(window),
+            "SDL_GetWindowGrab() should return SDL_TRUE");
+        SDLTest_AssertCheck(
             SDL_GetWindowFlags(window) & SDL_WINDOW_KEYBOARD_GRABBED,
             "SDL_WINDOW_KEYBOARD_GRABBED should be set");
     } else {
@@ -547,10 +541,8 @@ static void setAndCheckWindowKeyboardGrabState(SDL_Window *window, SDL_bool desi
 /**
  * Tests keyboard and mouse grab support
  *
- * \sa SDL_GetWindowMouseGrab
- * \sa SDL_GetWindowKeyboardGrab
- * \sa SDL_SetWindowMouseGrab
- * \sa SDL_SetWindowKeyboardGrab
+ * \sa SDL_GetWindowGrab
+ * \sa SDL_SetWindowGrab
  */
 static int video_getSetWindowGrab(void *arg)
 {
@@ -596,6 +588,8 @@ static int video_getSetWindowGrab(void *arg)
     /* F */
     setAndCheckWindowKeyboardGrabState(window, SDL_FALSE);
     setAndCheckWindowMouseGrabState(window, SDL_FALSE);
+    SDLTest_AssertCheck(!SDL_GetWindowGrab(window),
+                        "SDL_GetWindowGrab should return SDL_FALSE");
     SDLTest_AssertCheck(SDL_GetGrabbedWindow() == NULL,
                         "Expected NULL grabbed window");
 
@@ -608,47 +602,92 @@ static int video_getSetWindowGrab(void *arg)
     /* F --> T */
     setAndCheckWindowMouseGrabState(window, SDL_TRUE);
     setAndCheckWindowKeyboardGrabState(window, SDL_TRUE);
+    SDLTest_AssertCheck(SDL_GetWindowGrab(window),
+                        "SDL_GetWindowGrab() should return SDL_TRUE");
 
     /* T --> T */
     setAndCheckWindowKeyboardGrabState(window, SDL_TRUE);
     setAndCheckWindowMouseGrabState(window, SDL_TRUE);
+    SDLTest_AssertCheck(SDL_GetWindowGrab(window),
+                        "SDL_GetWindowGrab() should return SDL_TRUE");
 
     /* M: T --> F */
     /* K: T --> T */
     setAndCheckWindowKeyboardGrabState(window, SDL_TRUE);
     setAndCheckWindowMouseGrabState(window, SDL_FALSE);
+    SDLTest_AssertCheck(SDL_GetWindowGrab(window),
+                        "SDL_GetWindowGrab() should return SDL_TRUE");
 
     /* M: F --> T */
     /* K: T --> F */
     setAndCheckWindowMouseGrabState(window, SDL_TRUE);
     setAndCheckWindowKeyboardGrabState(window, SDL_FALSE);
+    SDLTest_AssertCheck(SDL_GetWindowGrab(window),
+                        "SDL_GetWindowGrab() should return SDL_TRUE");
 
     /* M: T --> F */
     /* K: F --> F */
     setAndCheckWindowMouseGrabState(window, SDL_FALSE);
     setAndCheckWindowKeyboardGrabState(window, SDL_FALSE);
+    SDLTest_AssertCheck(!SDL_GetWindowGrab(window),
+                        "SDL_GetWindowGrab() should return SDL_FALSE");
     SDLTest_AssertCheck(SDL_GetGrabbedWindow() == NULL,
                         "Expected NULL grabbed window");
 
+    /* Using the older SDL_SetWindowGrab API should only grab mouse by default */
+    SDL_SetWindowGrab(window, SDL_TRUE);
+    SDLTest_AssertPass("Call to SDL_SetWindowGrab(SDL_TRUE)");
+    SDLTest_AssertCheck(SDL_GetWindowGrab(window),
+                        "SDL_GetWindowGrab() should return SDL_TRUE");
+    SDLTest_AssertCheck(SDL_GetWindowMouseGrab(window),
+                        "SDL_GetWindowMouseGrab() should return SDL_TRUE");
+    SDLTest_AssertCheck(!SDL_GetWindowKeyboardGrab(window),
+                        "SDL_GetWindowKeyboardGrab() should return SDL_FALSE");
+    SDL_SetWindowGrab(window, SDL_FALSE);
+    SDLTest_AssertCheck(!SDL_GetWindowGrab(window),
+                        "SDL_GetWindowGrab() should return SDL_FALSE");
+    SDLTest_AssertCheck(!SDL_GetWindowMouseGrab(window),
+                        "SDL_GetWindowMouseGrab() should return SDL_FALSE");
+    SDLTest_AssertCheck(!SDL_GetWindowKeyboardGrab(window),
+                        "SDL_GetWindowKeyboardGrab() should return SDL_FALSE");
+
+    /* Now test with SDL_HINT_GRAB_KEYBOARD set. We should get keyboard grab now. */
+    SDL_SetHint(SDL_HINT_GRAB_KEYBOARD, "1");
+    SDL_SetWindowGrab(window, SDL_TRUE);
+    SDLTest_AssertPass("Call to SDL_SetWindowGrab(SDL_TRUE)");
+    SDLTest_AssertCheck(SDL_GetWindowGrab(window),
+                        "SDL_GetWindowGrab() should return SDL_TRUE");
+    SDLTest_AssertCheck(SDL_GetWindowMouseGrab(window),
+                        "SDL_GetWindowMouseGrab() should return SDL_TRUE");
+    SDLTest_AssertCheck(SDL_GetWindowKeyboardGrab(window),
+                        "SDL_GetWindowKeyboardGrab() should return SDL_TRUE");
+    SDL_SetWindowGrab(window, SDL_FALSE);
+    SDLTest_AssertCheck(!SDL_GetWindowGrab(window),
+                        "SDL_GetWindowGrab() should return SDL_FALSE");
+    SDLTest_AssertCheck(!SDL_GetWindowMouseGrab(window),
+                        "SDL_GetWindowMouseGrab() should return SDL_FALSE");
+    SDLTest_AssertCheck(!SDL_GetWindowKeyboardGrab(window),
+                        "SDL_GetWindowKeyboardGrab() should return SDL_FALSE");
+
     /* Negative tests */
-    SDL_GetWindowMouseGrab(NULL);
-    SDLTest_AssertPass("Call to SDL_GetWindowMouseGrab(window=NULL)");
+    SDL_GetWindowGrab(NULL);
+    SDLTest_AssertPass("Call to SDL_GetWindowGrab(window=NULL)");
     checkInvalidWindowError();
 
     SDL_GetWindowKeyboardGrab(NULL);
     SDLTest_AssertPass("Call to SDL_GetWindowKeyboardGrab(window=NULL)");
     checkInvalidWindowError();
 
-    SDL_SetWindowMouseGrab(NULL, SDL_FALSE);
-    SDLTest_AssertPass("Call to SDL_SetWindowMouseGrab(window=NULL,SDL_FALSE)");
+    SDL_SetWindowGrab(NULL, SDL_FALSE);
+    SDLTest_AssertPass("Call to SDL_SetWindowGrab(window=NULL,SDL_FALSE)");
     checkInvalidWindowError();
 
     SDL_SetWindowKeyboardGrab(NULL, SDL_FALSE);
     SDLTest_AssertPass("Call to SDL_SetWindowKeyboardGrab(window=NULL,SDL_FALSE)");
     checkInvalidWindowError();
 
-    SDL_SetWindowMouseGrab(NULL, SDL_TRUE);
-    SDLTest_AssertPass("Call to SDL_SetWindowMouseGrab(window=NULL,SDL_TRUE)");
+    SDL_SetWindowGrab(NULL, SDL_TRUE);
+    SDLTest_AssertPass("Call to SDL_SetWindowGrab(window=NULL,SDL_TRUE)");
     checkInvalidWindowError();
 
     SDL_SetWindowKeyboardGrab(NULL, SDL_TRUE);
@@ -1688,15 +1727,15 @@ static int video_setWindowCenteredOnDisplay(void *arg)
     if (displays) {
 
         /* Get display bounds */
-        result = SDL_GetDisplayUsableBounds(displays[0 % displayNum], &display0);
-        SDLTest_AssertPass("SDL_GetDisplayUsableBounds()");
+        result = SDL_GetDisplayBounds(displays[0 % displayNum], &display0);
+        SDLTest_AssertPass("SDL_GetDisplayBounds()");
         SDLTest_AssertCheck(result == 0, "Verify return value; expected: 0, got: %d", result);
         if (result != 0) {
             return TEST_ABORTED;
         }
 
-        result = SDL_GetDisplayUsableBounds(displays[1 % displayNum], &display1);
-        SDLTest_AssertPass("SDL_GetDisplayUsableBounds()");
+        result = SDL_GetDisplayBounds(displays[1 % displayNum], &display1);
+        SDLTest_AssertPass("SDL_GetDisplayBounds()");
         SDLTest_AssertCheck(result == 0, "Verify return value; expected: 0, got: %d", result);
         if (result != 0) {
             return TEST_ABORTED;
@@ -1736,7 +1775,7 @@ static int video_setWindowCenteredOnDisplay(void *arg)
 
                 /* Wayland windows require that a frame be presented before they are fully mapped and visible onscreen. */
                 if (video_driver_is_wayland) {
-                    SDL_Renderer *renderer = SDL_CreateRenderer(window, NULL);
+                    SDL_Renderer *renderer = SDL_CreateRenderer(window, NULL, 0);
 
                     if (renderer) {
                         SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xFF);
@@ -1892,14 +1931,14 @@ static int video_getSetWindowState(void *arg)
     SDL_Window *window;
     int result;
     SDL_Rect display;
-    SDL_WindowFlags flags;
+    Uint32 flags;
     int windowedX, windowedY;
     int currentX, currentY;
     int desiredX = 0, desiredY = 0;
     int windowedW, windowedH;
     int currentW, currentH;
     int desiredW = 0, desiredH = 0;
-    SDL_WindowFlags skipFlags = 0;
+    Uint32 skipFlags = 0;
     const SDL_bool restoreHint = SDL_GetHintBoolean("SDL_BORDERLESS_RESIZABLE_STYLE", SDL_TRUE);
     const SDL_bool skipPos = SDL_strcmp(SDL_GetCurrentVideoDriver(), "wayland") == 0;
 
@@ -2278,7 +2317,7 @@ static const SDLTest_TestCaseReference videoTest9 = {
 };
 
 static const SDLTest_TestCaseReference videoTest10 = {
-    (SDLTest_TestCaseFp)video_getSetWindowGrab, "video_getSetWindowGrab", "Checks input grab positive and negative cases", TEST_ENABLED
+    (SDLTest_TestCaseFp)video_getSetWindowGrab, "video_getSetWindowGrab", "Checks SDL_GetWindowGrab and SDL_SetWindowGrab positive and negative cases", TEST_ENABLED
 };
 
 static const SDLTest_TestCaseReference videoTest11 = {

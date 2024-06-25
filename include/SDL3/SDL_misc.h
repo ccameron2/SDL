@@ -20,16 +20,15 @@
 */
 
 /**
- * # CategoryMisc
+ *  \file SDL_misc.h
  *
- * SDL API functions that don't fit elsewhere.
+ *  Include file for SDL API functions that don't fit elsewhere.
  */
 
 #ifndef SDL_misc_h_
 #define SDL_misc_h_
 
 #include <SDL3/SDL_stdinc.h>
-#include <SDL3/SDL_error.h>
 
 #include <SDL3/SDL_begin_code.h>
 
@@ -60,14 +59,14 @@ extern "C" {
  * All this to say: this function can be useful, but you should definitely
  * test it on every platform you target.
  *
- * \param url a valid URL/URI to open. Use `file:///full/path/to/file` for
+ * \param url A valid URL/URI to open. Use `file:///full/path/to/file` for
  *            local files, if supported.
  * \returns 0 on success or a negative error code on failure; call
  *          SDL_GetError() for more information.
  *
  * \since This function is available since SDL 3.0.0.
  */
-extern SDL_DECLSPEC int SDLCALL SDL_OpenURL(const char *url);
+extern DECLSPEC int SDLCALL SDL_OpenURL(const char *url);
 
 /* Ends C function definitions when using C++ */
 #ifdef __cplusplus

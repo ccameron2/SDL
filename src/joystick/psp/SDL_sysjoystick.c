@@ -41,23 +41,29 @@ static const enum PspCtrlButtons button_map[] = {
 };
 static int analog_map[256]; /* Map analog inputs to -32768 -> 32767 */
 
+typedef struct
+{
+    int x;
+    int y;
+} point;
+
 /* 4 points define the bezier-curve. */
-static SDL_Point a = { 0, 0 };
-static SDL_Point b = { 50, 0 };
-static SDL_Point c = { 78, 32767 };
-static SDL_Point d = { 128, 32767 };
+static point a = { 0, 0 };
+static point b = { 50, 0 };
+static point c = { 78, 32767 };
+static point d = { 128, 32767 };
 
 /* simple linear interpolation between two points */
-static SDL_INLINE void lerp(SDL_Point *dest, const SDL_Point *pt_a, const SDL_Point *pt_b, float t)
+static SDL_INLINE void lerp(point *dest, point *pt_a, point *pt_b, float t)
 {
-    dest->x = pt_a->x + (int)((pt_b->x - pt_a->x) * t);
-    dest->y = pt_a->y + (int)((pt_b->y - pt_a->y) * t);
+    dest->x = pt_a->x + (pt_b->x - pt_a->x) * t;
+    dest->y = pt_a->y + (pt_b->y - pt_a->y) * t;
 }
 
 /* evaluate a point on a bezier-curve. t goes from 0 to 1.0 */
 static int calc_bezier_y(float t)
 {
-    SDL_Point ab, bc, cd, abbc, bccd, dest;
+    point ab, bc, cd, abbc, bccd, dest;
     lerp(&ab, &a, &b, t);         /* point between a and b */
     lerp(&bc, &b, &c, t);         /* point between b and c */
     lerp(&cd, &c, &d, t);         /* point between c and d */
@@ -86,8 +92,6 @@ static int PSP_JoystickInit(void)
         analog_map[i + 128] = calc_bezier_y(t);
         analog_map[127 - i] = -1 * analog_map[i + 128];
     }
-
-    SDL_PrivateJoystickAdded(1);
 
     return 1;
 }
@@ -160,6 +164,7 @@ static int PSP_JoystickOpen(SDL_Joystick *joystick, int device_index)
     joystick->nbuttons = SDL_arraysize(button_map);
     joystick->naxes = 2;
     joystick->nhats = 0;
+    joystick->instance_id = device_index;
 
     return 0;
 }
@@ -204,9 +209,7 @@ static void PSP_JoystickUpdate(SDL_Joystick *joystick)
     static unsigned char old_x = 0, old_y = 0;
     Uint64 timestamp = SDL_GetTicksNS();
 
-    if (sceCtrlPeekBufferPositive(&pad, 1) <= 0) {
-        return;
-    }
+    sceCtrlReadBufferPositive(&pad, 1);
     buttons = pad.Buttons;
     x = pad.Lx;
     y = pad.Ly;

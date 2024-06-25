@@ -56,12 +56,13 @@ static SDL_AtomicInt SDL_sensor_lock_pending;
 static int SDL_sensors_locked;
 static SDL_bool SDL_sensors_initialized;
 static SDL_Sensor *SDL_sensors SDL_GUARDED_BY(SDL_sensor_lock) = NULL;
+static char SDL_sensor_magic;
 
-#define CHECK_SENSOR_MAGIC(sensor, retval)                  \
-    if (!SDL_ObjectValid(sensor, SDL_OBJECT_TYPE_SENSOR)) { \
-        SDL_InvalidParamError("sensor");                    \
-        SDL_UnlockSensors();                                \
-        return retval;                                      \
+#define CHECK_SENSOR_MAGIC(sensor, retval)              \
+    if (!sensor || sensor->magic != &SDL_sensor_magic) { \
+        SDL_InvalidParamError("sensor");                \
+        SDL_UnlockSensors();                            \
+        return retval;                                  \
     }
 
 SDL_bool SDL_SensorsInitialized(void)
@@ -250,7 +251,8 @@ const char *SDL_GetSensorInstanceName(SDL_SensorID instance_id)
     }
     SDL_UnlockSensors();
 
-    return name ? SDL_FreeLater(SDL_strdup(name)) : NULL;
+    /* FIXME: Really we should reference count this name so it doesn't go away after unlock */
+    return name;
 }
 
 SDL_SensorType SDL_GetSensorInstanceType(SDL_SensorID instance_id)
@@ -325,14 +327,13 @@ SDL_Sensor *SDL_OpenSensor(SDL_SensorID instance_id)
         SDL_UnlockSensors();
         return NULL;
     }
-    SDL_SetObjectValid(sensor, SDL_OBJECT_TYPE_SENSOR, SDL_TRUE);
+    sensor->magic = &SDL_sensor_magic;
     sensor->driver = driver;
     sensor->instance_id = instance_id;
     sensor->type = driver->GetDeviceType(device_index);
     sensor->non_portable_type = driver->GetDeviceNonPortableType(device_index);
 
     if (driver->Open(sensor, device_index) < 0) {
-        SDL_SetObjectValid(sensor, SDL_OBJECT_TYPE_SENSOR, SDL_FALSE);
         SDL_free(sensor);
         SDL_UnlockSensors();
         return NULL;
@@ -507,7 +508,6 @@ void SDL_CloseSensor(SDL_Sensor *sensor)
 
         sensor->driver->Close(sensor);
         sensor->hwdata = NULL;
-        SDL_SetObjectValid(sensor, SDL_OBJECT_TYPE_SENSOR, SDL_FALSE);
 
         sensorlist = SDL_sensors;
         sensorlistprev = NULL;
@@ -526,7 +526,7 @@ void SDL_CloseSensor(SDL_Sensor *sensor)
         }
 
         /* Free the data associated with this sensor */
-        SDL_FreeLater(sensor->name);  // this pointer gets handed to the app by SDL_GetSensorName().
+        SDL_free(sensor->name);
         SDL_free(sensor);
     }
     SDL_UnlockSensors();

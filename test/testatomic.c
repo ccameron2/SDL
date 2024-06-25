@@ -128,8 +128,7 @@ static int SDLCALL adder(void *junk)
 static void runAdder(void)
 {
     Uint64 start, end;
-    int i;
-    SDL_Thread *threads[NThreads];
+    int T = NThreads;
 
     start = SDL_GetTicksNS();
 
@@ -137,16 +136,12 @@ static void runAdder(void)
 
     SDL_AtomicSet(&threadsRunning, NThreads);
 
-    for (i = 0; i < NThreads; i++) {
-        threads[i] = SDL_CreateThread(adder, "Adder", NULL);
+    while (T--) {
+        SDL_CreateThread(adder, "Adder", NULL);
     }
 
     while (SDL_AtomicGet(&threadsRunning) > 0) {
         SDL_WaitSemaphore(threadDone);
-    }
-
-    for (i = 0; i < NThreads; i++) {
-        SDL_WaitThread(threads[i], NULL);
     }
 
     SDL_DestroySemaphore(threadDone);
@@ -711,7 +706,7 @@ int main(int argc, char *argv[])
     }
 
     /* Enable standard application logging */
-    SDL_SetLogPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
+    SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
 
     /* Parse commandline */
     if (!SDLTest_CommonDefaultArgs(state, argc, argv)) {
@@ -731,7 +726,6 @@ int main(int argc, char *argv[])
     RunFIFOTest(SDL_FALSE);
 #endif
     RunFIFOTest(SDL_TRUE);
-    SDL_Quit();
     SDLTest_CommonDestroyState(state);
     return 0;
 }

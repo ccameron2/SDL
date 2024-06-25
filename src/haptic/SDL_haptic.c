@@ -25,9 +25,10 @@
 #include "../joystick/SDL_joystick_c.h" /* For SDL_IsJoystickValid */
 
 static SDL_Haptic *SDL_haptics = NULL;
+static char SDL_haptic_magic;
 
 #define CHECK_HAPTIC_MAGIC(haptic, retval)                  \
-    if (!SDL_ObjectValid(haptic, SDL_OBJECT_TYPE_HAPTIC)) { \
+    if (!haptic || haptic->magic != &SDL_haptic_magic) {    \
         SDL_InvalidParamError("haptic");                    \
         return retval;                                      \
     }
@@ -100,7 +101,7 @@ const char *SDL_GetHapticInstanceName(SDL_HapticID instance_id)
     if (SDL_GetHapticIndex(instance_id, &device_index)) {
         name = SDL_SYS_HapticName(device_index);
     }
-    return name ? SDL_FreeLater(SDL_strdup(name)) : NULL;
+    return name;
 }
 
 SDL_Haptic *SDL_OpenHaptic(SDL_HapticID instance_id)
@@ -134,7 +135,7 @@ SDL_Haptic *SDL_OpenHaptic(SDL_HapticID instance_id)
     }
 
     /* Initialize the haptic device */
-    SDL_SetObjectValid(haptic, SDL_OBJECT_TYPE_HAPTIC, SDL_TRUE);
+    haptic->magic = &SDL_haptic_magic;
     haptic->instance_id = instance_id;
     haptic->rumble_id = -1;
     if (SDL_SYS_HapticOpen(haptic) < 0) {
@@ -223,7 +224,9 @@ SDL_bool SDL_IsJoystickHaptic(SDL_Joystick *joystick)
         /* Must be a valid joystick */
         if (SDL_IsJoystickValid(joystick) &&
             !SDL_IsGamepad(SDL_GetJoystickInstanceID(joystick))) {
-            result = SDL_SYS_JoystickIsHaptic(joystick);
+            if (SDL_SYS_JoystickIsHaptic(joystick) > 0) {
+                result = SDL_TRUE;
+            }
         }
     }
     SDL_UnlockJoysticks();
@@ -315,7 +318,7 @@ void SDL_CloseHaptic(SDL_Haptic *haptic)
         }
     }
     SDL_SYS_HapticClose(haptic);
-    SDL_SetObjectValid(haptic, SDL_OBJECT_TYPE_HAPTIC, SDL_FALSE);
+    haptic->magic = NULL;
 
     /* Remove from the list */
     hapticlist = SDL_haptics;
@@ -336,7 +339,7 @@ void SDL_CloseHaptic(SDL_Haptic *haptic)
     }
 
     /* Free the data associated with this device */
-    SDL_FreeLater(haptic->name);  // this pointer is handed to the app in SDL_GetHapticName()
+    SDL_free(haptic->name);
     SDL_free(haptic);
 }
 
