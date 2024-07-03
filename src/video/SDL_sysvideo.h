@@ -103,6 +103,7 @@ struct SDL_Window
 
     SDL_bool text_input_active;
     SDL_Rect text_input_rect;
+    int text_input_cursor;
 
     SDL_Rect mouse_rect;
 
@@ -251,7 +252,6 @@ struct SDL_VideoDevice
     void (*GetWindowSizeInPixels)(SDL_VideoDevice *_this, SDL_Window *window, int *w, int *h);
     int (*SetWindowOpacity)(SDL_VideoDevice *_this, SDL_Window *window, float opacity);
     int (*SetWindowModalFor)(SDL_VideoDevice *_this, SDL_Window *modal_window, SDL_Window *parent_window);
-    int (*SetWindowInputFocus)(SDL_VideoDevice *_this, SDL_Window *window);
     void (*ShowWindow)(SDL_VideoDevice *_this, SDL_Window *window);
     void (*HideWindow)(SDL_VideoDevice *_this, SDL_Window *window);
     void (*RaiseWindow)(SDL_VideoDevice *_this, SDL_Window *window);
@@ -302,7 +302,7 @@ struct SDL_VideoDevice
     int (*Vulkan_LoadLibrary)(SDL_VideoDevice *_this, const char *path);
     void (*Vulkan_UnloadLibrary)(SDL_VideoDevice *_this);
     char const* const* (*Vulkan_GetInstanceExtensions)(SDL_VideoDevice *_this, Uint32 *count);
-    SDL_bool (*Vulkan_CreateSurface)(SDL_VideoDevice *_this, SDL_Window *window, VkInstance instance, const struct VkAllocationCallbacks *allocator, VkSurfaceKHR *surface);
+    int (*Vulkan_CreateSurface)(SDL_VideoDevice *_this, SDL_Window *window, VkInstance instance, const struct VkAllocationCallbacks *allocator, VkSurfaceKHR *surface);
     void (*Vulkan_DestroySurface)(SDL_VideoDevice *_this, VkInstance instance, VkSurfaceKHR surface, const struct VkAllocationCallbacks *allocator);
 
     /* * * */
@@ -327,7 +327,7 @@ struct SDL_VideoDevice
     /* Text input */
     int (*StartTextInput)(SDL_VideoDevice *_this, SDL_Window *window);
     int (*StopTextInput)(SDL_VideoDevice *_this, SDL_Window *window);
-    int (*UpdateTextInputRect)(SDL_VideoDevice *_this, SDL_Window *window);
+    int (*UpdateTextInputArea)(SDL_VideoDevice *_this, SDL_Window *window);
     int (*ClearComposition)(SDL_VideoDevice *_this, SDL_Window *window);
 
     /* Screen keyboard */

@@ -37,7 +37,7 @@
  * independent of language and keyboard mapping.
  *
  * Values of this type are used to represent keyboard keys, among other places
- * in the `keysym.scancode` field of the SDL_KeyboardEvent structure.
+ * in the `scancode` field of the SDL_KeyboardEvent structure.
  *
  * The values in this enumeration are based on the USB usage page standard:
  * https://usb.org/sites/default/files/hut1_5.pdf
@@ -414,6 +414,8 @@ typedef enum SDL_Scancode
     /* @} *//* Mobile keys */
 
     /* Add any other keys here. */
+
+    SDL_SCANCODE_RESERVED = 400,    /**< 400-500 reserved for dynamic keycodes */
 
     SDL_NUM_SCANCODES = 512 /**< not a key, just marks the number of scancodes
                                  for array bounds */

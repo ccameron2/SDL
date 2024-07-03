@@ -148,13 +148,13 @@ Devices are not opened by an arbitrary string name anymore, but by device instan
 
 Many functions that would accept a device index and an `iscapture` parameter now just take an SDL_AudioDeviceID, as they are unique across all devices, instead of separate indices into playback and recording device lists.
 
-Rather than iterating over audio devices using a device index, there are new functions, SDL_GetAudioOutputDevices() and SDL_GetAudioCaptureDevices(), to get the current list of devices, and new functions to get information about devices from their instance ID:
+Rather than iterating over audio devices using a device index, there are new functions, SDL_GetAudioPlaybackDevices() and SDL_GetAudioRecordingDevices(), to get the current list of devices, and new functions to get information about devices from their instance ID:
 
 ```c
 {
     if (SDL_InitSubSystem(SDL_INIT_AUDIO) == 0) {
         int i, num_devices;
-        SDL_AudioDeviceID *devices = SDL_GetAudioOutputDevices(&num_devices);
+        SDL_AudioDeviceID *devices = SDL_GetAudioPlaybackDevices(&num_devices);
         if (devices) {
             for (i = 0; i < num_devices; ++i) {
                 SDL_AudioDeviceID instance_id = devices[i];
@@ -362,7 +362,7 @@ now looks like this:
     SDL_Keymod mod = event.key.mod;
 ```
 
-The keycode in key events is affected by modifiers by default. e.g. pressing the A key would generate the keycode `SDLK_a`, or 'a', and pressing it while holding the shift key would generate the keycode `SDLK_A`, or 'A'. This behavior can be customized with `SDL_HINT_KEYCODE_OPTIONS`.
+The keycode in key events is affected by modifiers by default. e.g. pressing the A key would generate the keycode `SDLK_A`, or 'a', and pressing it while holding the shift key would generate the keycode `SDLK_A`, or 'A'. This behavior can be customized with `SDL_HINT_KEYCODE_OPTIONS`.
 
 The gamepad event structures caxis, cbutton, cdevice, ctouchpad, and csensor have been renamed gaxis, gbutton, gdevice, gtouchpad, and gsensor.
 
@@ -757,9 +757,11 @@ The following hints have been removed:
 * SDL_HINT_GAMECONTROLLER_USE_BUTTON_LABELS - gamepad buttons are always positional
 * SDL_HINT_GRAB_KEYBOARD - use SDL_SetWindowKeyboardGrab() instead
 * SDL_HINT_IDLE_TIMER_DISABLED - use SDL_DisableScreenSaver() instead
+* SDL_HINT_IME_INTERNAL_EDITING - replaced with SDL_HINT_IME_IMPLEMENTED_UI
+* SDL_HINT_IME_SHOW_UI - replaced with SDL_HINT_IME_IMPLEMENTED_UI
 * SDL_HINT_IME_SUPPORT_EXTENDED_TEXT - the normal text editing event has extended text
 * SDL_HINT_MOUSE_RELATIVE_SCALING - mouse coordinates are no longer automatically scaled by the SDL renderer
-* SDL_HINT_PS2_DYNAMIC_VSYNC - use SDL_SetRendererVSync(renderer, -1) instead
+* SDL_HINT_PS2_DYNAMIC_VSYNC - use SDL_SetRenderVSync(renderer, -1) instead
 * SDL_HINT_RENDER_BATCHING - Render batching is always enabled, apps should call SDL_FlushRenderer() before calling into a lower-level graphics API.
 * SDL_HINT_RENDER_LOGICAL_SIZE_MODE - the logical size mode is explicitly set with SDL_SetRenderLogicalPresentation()
 * SDL_HINT_RENDER_OPENGL_SHADERS - shaders are always used if they are available
@@ -917,6 +919,7 @@ The following functions have been renamed:
 
 The following functions have been removed:
 * SDL_IsTextInputShown()
+* SDL_SetTextInputRect() - replaced with SDL_SetTextInputArea()
 
 The following structures have been removed:
 * SDL_Keysym
@@ -972,6 +975,32 @@ The following symbols have been renamed:
 * SDLK_MEDIASELECT => SDLK_MEDIA_SELECT
 * SDLK_QUOTE => SDLK_APOSTROPHE
 * SDLK_QUOTEDBL => SDLK_DBLAPOSTROPHE
+* SDLK_a => SDLK_A
+* SDLK_b => SDLK_B
+* SDLK_c => SDLK_C
+* SDLK_d => SDLK_D
+* SDLK_e => SDLK_E
+* SDLK_f => SDLK_F
+* SDLK_g => SDLK_G
+* SDLK_h => SDLK_H
+* SDLK_i => SDLK_I
+* SDLK_j => SDLK_J
+* SDLK_k => SDLK_K
+* SDLK_l => SDLK_L
+* SDLK_m => SDLK_M
+* SDLK_n => SDLK_N
+* SDLK_o => SDLK_O
+* SDLK_p => SDLK_P
+* SDLK_q => SDLK_Q
+* SDLK_r => SDLK_R
+* SDLK_s => SDLK_S
+* SDLK_t => SDLK_T
+* SDLK_u => SDLK_U
+* SDLK_v => SDLK_V
+* SDLK_w => SDLK_W
+* SDLK_x => SDLK_X
+* SDLK_y => SDLK_Y
+* SDLK_z => SDLK_Z
 
 ## SDL_loadso.h
 
@@ -1954,6 +1983,7 @@ The following functions have been removed:
 * SDL_GetWindowData() - use SDL_GetWindowProperties() instead
 * SDL_SetWindowData() - use SDL_GetWindowProperties() instead
 * SDL_CreateWindowFrom() - use SDL_CreateWindowWithProperties() with the properties that allow you to wrap an existing window
+* SDL_SetWindowInputFocus() - use SDL_RaiseWindow() instead
 
 The SDL_Window id type is named SDL_WindowID
 
@@ -1978,9 +2008,11 @@ The following symbols have been renamed:
 * SDL_WINDOWEVENT_RESTORED => SDL_EVENT_WINDOW_RESTORED
 * SDL_WINDOWEVENT_SHOWN => SDL_EVENT_WINDOW_SHOWN
 * SDL_WINDOWEVENT_SIZE_CHANGED => SDL_EVENT_WINDOW_SIZE_CHANGED
-* SDL_WINDOWEVENT_TAKE_FOCUS => SDL_EVENT_WINDOW_TAKE_FOCUS
 * SDL_WINDOW_ALLOW_HIGHDPI => SDL_WINDOW_HIGH_PIXEL_DENSITY
 * SDL_WINDOW_INPUT_GRABBED => SDL_WINDOW_MOUSE_GRABBED
+
+The following symbols have been removed:
+* SDL_WINDOWEVENT_TAKE_FOCUS
 
 The following window operations are now considered to be asynchronous requests and should not be assumed to succeed unless
 a corresponding event has been received:
@@ -2004,6 +2036,8 @@ or not contain the expected values.
 SDL_Vulkan_GetInstanceExtensions() no longer takes a window parameter, and no longer makes the app allocate query/allocate space for the result, instead returning a static const internal string.
 
 SDL_Vulkan_GetVkGetInstanceProcAddr() now returns `SDL_FunctionPointer` instead of `void *`, and should be cast to PFN_vkGetInstanceProcAddr.
+
+SDL_Vulkan_CreateSurface() now returns an int (0=success, -1=error) instead of an SDL_bool (true=success, false=error).
 
 SDL_Vulkan_CreateSurface() now takes a VkAllocationCallbacks pointer as its third parameter. If you don't have an allocator to supply, pass a NULL here to use the system default allocator (SDL2 always used the system default allocator here).
 

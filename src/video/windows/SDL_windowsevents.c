@@ -43,7 +43,9 @@
 #include <tpcshrd.h>
 #endif /* HAVE_TPCSHRD_H */
 
-/* #define WMMSG_DEBUG */
+#if 0
+#define WMMSG_DEBUG
+#endif
 #ifdef WMMSG_DEBUG
 #include <stdio.h>
 #include "wmmsg.h"
@@ -1051,7 +1053,7 @@ LRESULT CALLBACK WIN_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 #endif /* WMMSG_DEBUG */
 
 #if !defined(SDL_PLATFORM_XBOXONE) && !defined(SDL_PLATFORM_XBOXSERIES)
-    if (IME_HandleMessage(hwnd, msg, wParam, &lParam, data->videodata)) {
+    if (WIN_HandleIMEMessage(hwnd, msg, wParam, &lParam, data->videodata)) {
         return 0;
     }
 #endif
@@ -1237,12 +1239,11 @@ LRESULT CALLBACK WIN_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
         SDL_bool virtual_key = SDL_FALSE;
         Uint16 rawcode = 0;
         SDL_Scancode code = WindowsScanCodeToSDLScanCode(lParam, wParam, &rawcode, &virtual_key);
-        const Uint8 *keyboardState = SDL_GetKeyboardState(NULL);
 
         /* Detect relevant keyboard shortcuts */
-        if (keyboardState[SDL_SCANCODE_LALT] == SDL_PRESSED || keyboardState[SDL_SCANCODE_RALT] == SDL_PRESSED) {
+        if (code == SDL_SCANCODE_F4 && (SDL_GetModState() & SDL_KMOD_ALT)) {
             /* ALT+F4: Close window */
-            if (code == SDL_SCANCODE_F4 && ShouldGenerateWindowCloseOnAltF4()) {
+            if (ShouldGenerateWindowCloseOnAltF4()) {
                 SDL_SendWindowEvent(data->window, SDL_EVENT_WINDOW_CLOSE_REQUESTED, 0, 0);
             }
         }
@@ -2301,6 +2302,8 @@ void WIN_PumpEvents(SDL_VideoDevice *_this)
     WIN_CheckKeyboardAndMouseHotplug(_this, SDL_FALSE);
 
 #endif /*!defined(SDL_PLATFORM_XBOXONE) && !defined(SDL_PLATFORM_XBOXSERIES)*/
+
+    WIN_UpdateIMECandidates(_this);
 
 #ifdef SDL_PLATFORM_GDK
     GDK_DispatchTaskQueue();

@@ -191,6 +191,7 @@
 #define SDL_GetAndroidSDKVersion SDL_GetAndroidSDKVersion_REAL
 #define SDL_GetAssertionHandler SDL_GetAssertionHandler_REAL
 #define SDL_GetAssertionReport SDL_GetAssertionReport_REAL
+#define SDL_GetAudioDeviceGain SDL_GetAudioDeviceGain_REAL
 #define SDL_GetAudioDeviceFormat SDL_GetAudioDeviceFormat_REAL
 #define SDL_GetAudioDeviceName SDL_GetAudioDeviceName_REAL
 #define SDL_GetAudioDriver SDL_GetAudioDriver_REAL
@@ -201,6 +202,7 @@
 #define SDL_GetAudioStreamDevice SDL_GetAudioStreamDevice_REAL
 #define SDL_GetAudioStreamFormat SDL_GetAudioStreamFormat_REAL
 #define SDL_GetAudioStreamFrequencyRatio SDL_GetAudioStreamFrequencyRatio_REAL
+#define SDL_GetAudioStreamGain SDL_GetAudioStreamGain_REAL
 #define SDL_GetAudioStreamProperties SDL_GetAudioStreamProperties_REAL
 #define SDL_GetAudioStreamQueued SDL_GetAudioStreamQueued_REAL
 #define SDL_GetBasePath SDL_GetBasePath_REAL
@@ -418,6 +420,7 @@
 #define SDL_GetRenderDrawColorFloat SDL_GetRenderDrawColorFloat_REAL
 #define SDL_GetRenderDriver SDL_GetRenderDriver_REAL
 #define SDL_GetRenderLogicalPresentation SDL_GetRenderLogicalPresentation_REAL
+#define SDL_GetRenderLogicalPresentationRect SDL_GetRenderLogicalPresentationRect_REAL
 #define SDL_GetRenderMetalCommandEncoder SDL_GetRenderMetalCommandEncoder_REAL
 #define SDL_GetRenderMetalLayer SDL_GetRenderMetalLayer_REAL
 #define SDL_GetRenderOutputSize SDL_GetRenderOutputSize_REAL
@@ -462,6 +465,7 @@
 #define SDL_GetSystemRAM SDL_GetSystemRAM_REAL
 #define SDL_GetSystemTheme SDL_GetSystemTheme_REAL
 #define SDL_GetTLS SDL_GetTLS_REAL
+#define SDL_GetTextInputArea SDL_GetTextInputArea_REAL
 #define SDL_GetTextureAlphaMod SDL_GetTextureAlphaMod_REAL
 #define SDL_GetTextureAlphaModFloat SDL_GetTextureAlphaModFloat_REAL
 #define SDL_GetTextureBlendMode SDL_GetTextureBlendMode_REAL
@@ -669,7 +673,6 @@
 #define SDL_RenderFillRects SDL_RenderFillRects_REAL
 #define SDL_RenderGeometry SDL_RenderGeometry_REAL
 #define SDL_RenderGeometryRaw SDL_RenderGeometryRaw_REAL
-#define SDL_RenderGeometryRawFloat SDL_RenderGeometryRawFloat_REAL
 #define SDL_RenderLine SDL_RenderLine_REAL
 #define SDL_RenderLines SDL_RenderLines_REAL
 #define SDL_RenderPoint SDL_RenderPoint_REAL
@@ -706,9 +709,11 @@
 #define SDL_SendJoystickEffect SDL_SendJoystickEffect_REAL
 #define SDL_SendJoystickVirtualSensorData SDL_SendJoystickVirtualSensorData_REAL
 #define SDL_SetAssertionHandler SDL_SetAssertionHandler_REAL
+#define SDL_SetAudioDeviceGain SDL_SetAudioDeviceGain_REAL
 #define SDL_SetAudioPostmixCallback SDL_SetAudioPostmixCallback_REAL
 #define SDL_SetAudioStreamFormat SDL_SetAudioStreamFormat_REAL
 #define SDL_SetAudioStreamFrequencyRatio SDL_SetAudioStreamFrequencyRatio_REAL
+#define SDL_SetAudioStreamGain SDL_SetAudioStreamGain_REAL
 #define SDL_SetAudioStreamGetCallback SDL_SetAudioStreamGetCallback_REAL
 #define SDL_SetAudioStreamPutCallback SDL_SetAudioStreamPutCallback_REAL
 #define SDL_SetBooleanProperty SDL_SetBooleanProperty_REAL
@@ -770,7 +775,7 @@
 #define SDL_SetSurfacePalette SDL_SetSurfacePalette_REAL
 #define SDL_SetSurfaceRLE SDL_SetSurfaceRLE_REAL
 #define SDL_SetTLS SDL_SetTLS_REAL
-#define SDL_SetTextInputRect SDL_SetTextInputRect_REAL
+#define SDL_SetTextInputArea SDL_SetTextInputArea_REAL
 #define SDL_SetTextureAlphaMod SDL_SetTextureAlphaMod_REAL
 #define SDL_SetTextureAlphaModFloat SDL_SetTextureAlphaModFloat_REAL
 #define SDL_SetTextureBlendMode SDL_SetTextureBlendMode_REAL
@@ -786,7 +791,6 @@
 #define SDL_SetWindowFullscreenMode SDL_SetWindowFullscreenMode_REAL
 #define SDL_SetWindowHitTest SDL_SetWindowHitTest_REAL
 #define SDL_SetWindowIcon SDL_SetWindowIcon_REAL
-#define SDL_SetWindowInputFocus SDL_SetWindowInputFocus_REAL
 #define SDL_SetWindowKeyboardGrab SDL_SetWindowKeyboardGrab_REAL
 #define SDL_SetWindowMaximumSize SDL_SetWindowMaximumSize_REAL
 #define SDL_SetWindowMinimumSize SDL_SetWindowMinimumSize_REAL
@@ -813,6 +817,7 @@
 #define SDL_SignalCondition SDL_SignalCondition_REAL
 #define SDL_SoftStretch SDL_SoftStretch_REAL
 #define SDL_StartTextInput SDL_StartTextInput_REAL
+#define SDL_StepUTF8 SDL_StepUTF8_REAL
 #define SDL_StopHapticEffect SDL_StopHapticEffect_REAL
 #define SDL_StopHapticEffects SDL_StopHapticEffects_REAL
 #define SDL_StopHapticRumble SDL_StopHapticRumble_REAL

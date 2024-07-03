@@ -288,7 +288,7 @@ static void UpdateKeymap(SDL_CocoaVideoData *data, SDL_bool send_event)
             /* Make sure this scancode is a valid character scancode */
             SDL_Scancode scancode = darwin_scancode_table[i];
             if (scancode == SDL_SCANCODE_UNKNOWN ||
-                (SDL_GetDefaultKeyFromScancode(scancode, SDL_KMOD_NONE) & SDLK_SCANCODE_MASK)) {
+                scancode >= SDL_SCANCODE_CAPSLOCK) {
                 continue;
             }
 
@@ -368,7 +368,7 @@ int Cocoa_StartTextInput(SDL_VideoDevice *_this, SDL_Window *window)
             [nswindow makeFirstResponder:data.fieldEdit];
         }
     }
-    return Cocoa_UpdateTextInputRect(_this, window);
+    return Cocoa_UpdateTextInputArea(_this, window);
 }
 
 int Cocoa_StopTextInput(SDL_VideoDevice *_this, SDL_Window *window)
@@ -384,7 +384,7 @@ int Cocoa_StopTextInput(SDL_VideoDevice *_this, SDL_Window *window)
     return 0;
 }
 
-int Cocoa_UpdateTextInputRect(SDL_VideoDevice *_this, SDL_Window *window)
+int Cocoa_UpdateTextInputArea(SDL_VideoDevice *_this, SDL_Window *window)
 {
     SDL_CocoaVideoData *data = (__bridge SDL_CocoaVideoData *)_this->driverdata;
     if (data.fieldEdit) {
