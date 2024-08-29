@@ -42,6 +42,7 @@
 #define HAVE_MATH_H 1
 #define HAVE_SIGNAL_H 1
 #define HAVE_STDARG_H 1
+#define HAVE_STDBOOL_H 1
 #define HAVE_STDDEF_H 1
 #define HAVE_STDINT_H 1
 #define HAVE_STDIO_H 1
@@ -58,7 +59,6 @@
 #define HAVE_REALLOC    1
 #define HAVE_FREE   1
 #define HAVE_GETENV 1
-#define HAVE_SETENV 1
 #define HAVE_PUTENV 1
 #define HAVE_SETENV 1
 #define HAVE_UNSETENV   1
@@ -145,7 +145,6 @@
 
 /* Enable various audio drivers */
 #ifndef SDL_AUDIO_DISABLED
-#define SDL_AUDIO_DRIVER_ANDROID    1
 #define SDL_AUDIO_DRIVER_OPENSLES   1
 #define SDL_AUDIO_DRIVER_AAUDIO     1
 #endif /* SDL_AUDIO_DISABLED */
@@ -193,6 +192,9 @@
 #define SDL_VIDEO_VULKAN 0
 #else
 #define SDL_VIDEO_VULKAN 1
+#ifndef SDL_VIDEO_RENDER_VULKAN
+#define SDL_VIDEO_RENDER_VULKAN    1
+#endif
 #endif
 
 /* Enable system power support */

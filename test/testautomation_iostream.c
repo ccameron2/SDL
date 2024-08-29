@@ -275,7 +275,7 @@ static int iostrm_testMem(void *arg)
     /* Close */
     result = SDL_CloseIO(rw);
     SDLTest_AssertPass("Call to SDL_CloseIO() succeeded");
-    SDLTest_AssertCheck(result == 0, "Verify result value is 0; got: %d", result);
+    SDLTest_AssertCheck(result == SDL_TRUE, "Verify result value is SDL_TRUE; got: %d", result);
 
     return TEST_COMPLETED;
 }
@@ -307,7 +307,7 @@ static int iostrm_testConstMem(void *arg)
     /* Close handle */
     result = SDL_CloseIO(rw);
     SDLTest_AssertPass("Call to SDL_CloseIO() succeeded");
-    SDLTest_AssertCheck(result == 0, "Verify result value is 0; got: %d", result);
+    SDLTest_AssertCheck(result == SDL_TRUE, "Verify result value is SDL_TRUE; got: %d", result);
 
     return TEST_COMPLETED;
 }
@@ -343,20 +343,20 @@ static int iostrm_testDynamicMem(void *arg)
     testGenericIOStreamValidations(rw, SDL_TRUE);
 
     /* Get the dynamic memory and verify it */
-    mem = (char *)SDL_GetProperty(props, SDL_PROP_IOSTREAM_DYNAMIC_MEMORY_POINTER, NULL);
-    SDLTest_AssertPass("Call to SDL_GetProperty(props, SDL_PROP_IOSTREAM_DYNAMIC_MEMORY_POINTER, NULL) succeeded");
+    mem = (char *)SDL_GetPointerProperty(props, SDL_PROP_IOSTREAM_DYNAMIC_MEMORY_POINTER, NULL);
+    SDLTest_AssertPass("Call to SDL_GetPointerProperty(props, SDL_PROP_IOSTREAM_DYNAMIC_MEMORY_POINTER, NULL) succeeded");
     SDLTest_AssertCheck(mem != NULL, "Verify memory value is not NULL");
     mem[SDL_GetIOSize(rw)] = '\0';
     SDLTest_AssertCheck(SDL_strcmp(mem, IOStreamHelloWorldTestString) == 0, "Verify memory value is correct");
 
     /* Take the memory and free it ourselves */
-    SDL_SetProperty(props, SDL_PROP_IOSTREAM_DYNAMIC_MEMORY_POINTER, NULL);
+    SDL_SetPointerProperty(props, SDL_PROP_IOSTREAM_DYNAMIC_MEMORY_POINTER, NULL);
     SDL_free(mem);
 
     /* Close */
     result = SDL_CloseIO(rw);
     SDLTest_AssertPass("Call to SDL_CloseIO() succeeded");
-    SDLTest_AssertCheck(result == 0, "Verify result value is 0; got: %d", result);
+    SDLTest_AssertCheck(result == SDL_TRUE, "Verify result value is SDL_TRUE; got: %d", result);
 
     return TEST_COMPLETED;
 }
@@ -388,7 +388,7 @@ static int iostrm_testFileRead(void *arg)
     /* Close handle */
     result = SDL_CloseIO(rw);
     SDLTest_AssertPass("Call to SDL_CloseIO() succeeded");
-    SDLTest_AssertCheck(result == 0, "Verify result value is 0; got: %d", result);
+    SDLTest_AssertCheck(result == SDL_TRUE, "Verify result value is SDL_TRUE; got: %d", result);
 
     return TEST_COMPLETED;
 }
@@ -420,7 +420,7 @@ static int iostrm_testFileWrite(void *arg)
     /* Close handle */
     result = SDL_CloseIO(rw);
     SDLTest_AssertPass("Call to SDL_CloseIO() succeeded");
-    SDLTest_AssertCheck(result == 0, "Verify result value is 0; got: %d", result);
+    SDLTest_AssertCheck(result == SDL_TRUE, "Verify result value is SDL_TRUE; got: %d", result);
 
     return TEST_COMPLETED;
 }
@@ -486,7 +486,7 @@ static int iostrm_testCompareRWFromMemWithRWFromFile(void *arg)
         SDLTest_AssertPass("Call to SDL_SeekIO(mem,SEEK_END)");
         result = SDL_CloseIO(iostrm_mem);
         SDLTest_AssertPass("Call to SDL_CloseIO(mem)");
-        SDLTest_AssertCheck(result == 0, "Verify result value is 0; got: %d", result);
+        SDLTest_AssertCheck(result == SDL_TRUE, "Verify result value is SDL_TRUE; got: %d", result);
 
         /* Read/see from file */
         iostrm_file = SDL_IOFromFile(IOStreamAlphabetFilename, "r");
@@ -497,7 +497,7 @@ static int iostrm_testCompareRWFromMemWithRWFromFile(void *arg)
         SDLTest_AssertPass("Call to SDL_SeekIO(file,SEEK_END)");
         result = SDL_CloseIO(iostrm_file);
         SDLTest_AssertPass("Call to SDL_CloseIO(file)");
-        SDLTest_AssertCheck(result == 0, "Verify result value is 0; got: %d", result);
+        SDLTest_AssertCheck(result == SDL_TRUE, "Verify result value is SDL_TRUE; got: %d", result);
 
         /* Compare */
         SDLTest_AssertCheck(rv_mem == rv_file, "Verify returned read blocks matches for mem and file reads; got: rv_mem=%d rv_file=%d", (int)rv_mem, (int)rv_file);
@@ -641,7 +641,7 @@ static int iostrm_testFileWriteReadEndian(void *arg)
         /* Close handle */
         cresult = SDL_CloseIO(rw);
         SDLTest_AssertPass("Call to SDL_CloseIO() succeeded");
-        SDLTest_AssertCheck(cresult == 0, "Verify result value is 0; got: %d", cresult);
+        SDLTest_AssertCheck(cresult == SDL_TRUE, "Verify result value is SDL_TRUE; got: %d", cresult);
     }
 
     return TEST_COMPLETED;

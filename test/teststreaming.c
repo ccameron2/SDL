@@ -85,7 +85,7 @@ static void UpdateTexture(SDL_Texture *texture)
     void *pixels;
     int pitch;
 
-    if (SDL_LockTexture(texture, NULL, &pixels, &pitch) < 0) {
+    if (!SDL_LockTexture(texture, NULL, &pixels, &pitch)) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't lock texture: %s\n", SDL_GetError());
         quit(5);
     }
@@ -149,11 +149,12 @@ int main(int argc, char **argv)
     SDL_SetLogPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
 
     if (!SDLTest_CommonDefaultArgs(state, argc, argv)) {
+        SDL_Quit();
         SDLTest_CommonDestroyState(state);
         return 1;
     }
 
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+    if (!SDL_Init(SDL_INIT_VIDEO)) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't initialize SDL: %s\n", SDL_GetError());
         return 1;
     }

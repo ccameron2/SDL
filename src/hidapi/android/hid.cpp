@@ -1030,18 +1030,18 @@ extern "C"
 {
 
 // !!! FIXME: make this non-blocking!
-static void SDLCALL AndroidRequestPermissionBlockingCallback(void *userdata, const char *permission, SDL_bool granted)
+static void SDLCALL RequestAndroidPermissionBlockingCallback(void *userdata, const char *permission, SDL_bool granted)
 {
     SDL_AtomicSet((SDL_AtomicInt *) userdata, granted ? 1 : -1);
 }
 
-static SDL_bool RequestBluetoothPermissions(const char *permission)
+static bool RequestBluetoothPermissions(const char *permission)
 {
     // !!! FIXME: make this non-blocking!
     SDL_AtomicInt permission_response;
     SDL_AtomicSet(&permission_response, 0);
-    if (SDL_AndroidRequestPermission(permission, AndroidRequestPermissionBlockingCallback, &permission_response) == -1) {
-        return SDL_FALSE;
+    if (!SDL_RequestAndroidPermission(permission, RequestAndroidPermissionBlockingCallback, &permission_response)) {
+        return false;
     }
 
     while (SDL_AtomicGet(&permission_response) == 0) {
@@ -1067,7 +1067,7 @@ int hid_init(void)
 			// before initializing Bluetooth, which will prompt the user for permission.
 			bool init_usb = true;
 			bool init_bluetooth = false;
-			if (SDL_GetHintBoolean(SDL_HINT_JOYSTICK_HIDAPI_STEAM, SDL_FALSE)) {
+			if (SDL_GetHintBoolean(SDL_HINT_JOYSTICK_HIDAPI_STEAM, false)) {
 				if (SDL_GetAndroidSDKVersion() < 31 ||
 					RequestBluetoothPermissions("android.permission.BLUETOOTH_CONNECT")) {
 					init_bluetooth = true;

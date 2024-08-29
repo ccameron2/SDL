@@ -44,7 +44,8 @@ static void SDLCALL callback(void* userdata, const char* const* files, int filte
     }
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
     SDL_Window *w;
     SDL_Renderer *r;
     SDLTest_CommonState *state;
@@ -52,7 +53,7 @@ int main(int argc, char *argv[]) {
     const SDL_FRect save_file_rect = { 50, 290, 220, 140 };
     const SDL_FRect open_folder_rect = { 370, 50, 220, 140 };
     int i;
-    char *initial_path = NULL;
+    const char *initial_path = NULL;
     const int nfilters = sizeof(filters) / sizeof(*filters);
 
     /* Initialize test framework */
@@ -79,11 +80,11 @@ int main(int argc, char *argv[]) {
         i += consumed;
     }
 
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+    if (!SDL_Init(SDL_INIT_VIDEO)) {
         SDL_Log("SDL_Init failed (%s)", SDL_GetError());
         return 1;
     }
-    if (SDL_CreateWindowAndRenderer("testdialog", 640, 480, 0, &w, &r) < 0) {
+    if (!SDL_CreateWindowAndRenderer("testdialog", 640, 480, 0, &w, &r)) {
         SDL_Log("Failed to create window and/or renderer: %s\n", SDL_GetError());
         SDL_Quit();
         return 1;
@@ -145,10 +146,6 @@ int main(int argc, char *argv[]) {
         SDLTest_DrawString(r, open_folder_rect.x+5, open_folder_rect.y+open_folder_rect.h/2, "Open Folder...");
 
         SDL_RenderPresent(r);
-    }
-
-    if (initial_path) {
-        SDL_free(initial_path);
     }
 
     SDLTest_CleanupTextDrawing();

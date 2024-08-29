@@ -62,7 +62,7 @@ static int LoadSprite(const char *file)
         if (!sprites[i]) {
             return -1;
         }
-        if (SDL_SetTextureBlendMode(sprites[i], blendMode) < 0) {
+        if (!SDL_SetTextureBlendMode(sprites[i], blendMode)) {
             SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't set blend mode: %s\n", SDL_GetError());
             SDL_DestroyTexture(sprites[i]);
             return -1;
@@ -81,7 +81,9 @@ static void MoveSprites(SDL_Renderer *renderer, SDL_Texture *sprite)
     SDL_FRect *position, *velocity;
 
     /* Query the sizes */
-    SDL_GetRenderViewport(renderer, &viewport);
+    SDL_SetRenderViewport(renderer, NULL);
+    SDL_GetRenderSafeArea(renderer, &viewport);
+    SDL_SetRenderViewport(renderer, &viewport);
 
     /* Cycle the color and alpha, if desired */
     if (cycle_color) {
@@ -383,47 +385,9 @@ static void MoveSprites(SDL_Renderer *renderer, SDL_Texture *sprite)
     SDL_RenderPresent(renderer);
 }
 
-int SDL_AppEvent(void *appstate, const SDL_Event *event)
+SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 {
-    return SDLTest_CommonEventMainCallbacks(state, event);
-}
-
-int SDL_AppIterate(void *appstate)
-{
-    Uint64 now;
-    int i;
-    int active_windows = 0;
-
-    for (i = 0; i < state->num_windows; ++i) {
-        if (state->windows[i] == NULL ||
-            (suspend_when_occluded && (SDL_GetWindowFlags(state->windows[i]) & SDL_WINDOW_OCCLUDED))) {
-            continue;
-        }
-        ++active_windows;
-        MoveSprites(state->renderers[i], sprites[i]);
-    }
-
-    /* If all windows are occluded, throttle the event polling to 15hz. */
-    if (!active_windows) {
-        SDL_DelayNS(SDL_NS_PER_SECOND / 15);
-    }
-
-    frames++;
-    now = SDL_GetTicks();
-    if (now >= next_fps_check) {
-        /* Print out some timing information */
-        const Uint64 then = next_fps_check - fps_check_delay;
-        const double fps = ((double)frames * 1000) / (now - then);
-        SDL_Log("%2.2f frames per second\n", fps);
-        next_fps_check = now + fps_check_delay;
-        frames = 0;
-    }
-
-    return SDL_APP_CONTINUE;
-}
-
-int SDL_AppInit(void **appstate, int argc, char *argv[])
-{
+    SDL_Rect safe_area;
     int i;
     Uint64 seed;
     const char *icon = "icon.bmp";
@@ -451,8 +415,14 @@ int SDL_AppInit(void **appstate, int argc, char *argv[])
                     } else if (SDL_strcasecmp(argv[i + 1], "blend") == 0) {
                         blendMode = SDL_BLENDMODE_BLEND;
                         consumed = 2;
+                    } else if (SDL_strcasecmp(argv[i + 1], "blend_premultiplied") == 0) {
+                        blendMode = SDL_BLENDMODE_BLEND_PREMULTIPLIED;
+                        consumed = 2;
                     } else if (SDL_strcasecmp(argv[i + 1], "add") == 0) {
                         blendMode = SDL_BLENDMODE_ADD;
+                        consumed = 2;
+                    } else if (SDL_strcasecmp(argv[i + 1], "add_premultiplied") == 0) {
+                        blendMode = SDL_BLENDMODE_ADD_PREMULTIPLIED;
                         consumed = 2;
                     } else if (SDL_strcasecmp(argv[i + 1], "mod") == 0) {
                         blendMode = SDL_BLENDMODE_MOD;
@@ -479,7 +449,7 @@ int SDL_AppInit(void **appstate, int argc, char *argv[])
             } else if (SDL_strcasecmp(argv[i], "--cyclealpha") == 0) {
                 cycle_alpha = SDL_TRUE;
                 consumed = 1;
-            } else if(SDL_strcasecmp(argv[i], "--suspend-when-occluded") == 0) {
+            } else if (SDL_strcasecmp(argv[i], "--suspend-when-occluded") == 0) {
                 suspend_when_occluded = SDL_TRUE;
                 consumed = 1;
             } else if (SDL_strcasecmp(argv[i], "--use-rendergeometry") == 0) {
@@ -506,7 +476,7 @@ int SDL_AppInit(void **appstate, int argc, char *argv[])
         }
         if (consumed < 0) {
             static const char *options[] = {
-                "[--blend none|blend|add|mod|mul|sub]",
+                "[--blend none|blend|blend_premultiplied|add|add_premultiplied|mod|mul|sub]",
                 "[--cyclecolor]",
                 "[--cyclealpha]",
                 "[--suspend-when-occluded]",
@@ -550,6 +520,8 @@ int SDL_AppInit(void **appstate, int argc, char *argv[])
     }
 
     /* Position sprites and set their velocities using the fuzzer */
+    /* Really we should be using per-window safe area, but this is fine for a simple test */
+    SDL_GetRenderSafeArea(state->renderers[0], &safe_area);
     if (iterations >= 0) {
         /* Deterministic seed - used for visual tests */
         seed = (Uint64)iterations;
@@ -559,8 +531,8 @@ int SDL_AppInit(void **appstate, int argc, char *argv[])
     }
     SDLTest_FuzzerInit(seed);
     for (i = 0; i < num_sprites; ++i) {
-        positions[i].x = (float)SDLTest_RandomIntegerInRange(0, (int)(state->window_w - sprite_w));
-        positions[i].y = (float)SDLTest_RandomIntegerInRange(0, (int)(state->window_h - sprite_h));
+        positions[i].x = (float)SDLTest_RandomIntegerInRange(0, (int)(safe_area.w - sprite_w));
+        positions[i].y = (float)SDLTest_RandomIntegerInRange(0, (int)(safe_area.h - sprite_h));
         positions[i].w = sprite_w;
         positions[i].h = sprite_h;
         velocities[i].x = 0;
@@ -578,3 +550,42 @@ int SDL_AppInit(void **appstate, int argc, char *argv[])
     return SDL_APP_CONTINUE;
 }
 
+
+SDL_AppResult SDL_AppEvent(void *appstate, const SDL_Event *event)
+{
+    return SDLTest_CommonEventMainCallbacks(state, event);
+}
+
+SDL_AppResult SDL_AppIterate(void *appstate)
+{
+    Uint64 now;
+    int i;
+    int active_windows = 0;
+
+    for (i = 0; i < state->num_windows; ++i) {
+        if (state->windows[i] == NULL ||
+            (suspend_when_occluded && (SDL_GetWindowFlags(state->windows[i]) & SDL_WINDOW_OCCLUDED))) {
+            continue;
+        }
+        ++active_windows;
+        MoveSprites(state->renderers[i], sprites[i]);
+    }
+
+    /* If all windows are occluded, throttle the event polling to 15hz. */
+    if (!active_windows) {
+        SDL_DelayNS(SDL_NS_PER_SECOND / 15);
+    }
+
+    frames++;
+    now = SDL_GetTicks();
+    if (now >= next_fps_check) {
+        /* Print out some timing information */
+        const Uint64 then = next_fps_check - fps_check_delay;
+        const double fps = ((double)frames * 1000) / (now - then);
+        SDL_Log("%2.2f frames per second\n", fps);
+        next_fps_check = now + fps_check_delay;
+        frames = 0;
+    }
+
+    return SDL_APP_CONTINUE;
+}

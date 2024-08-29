@@ -750,7 +750,7 @@ void SetGamepadDisplayArea(GamepadDisplay *ctx, const SDL_FRect *area)
     SDL_copyp(&ctx->area, area);
 }
 
-static SDL_bool GetBindingString(const char *label, char *mapping, char *text, size_t size)
+static SDL_bool GetBindingString(const char *label, const char *mapping, char *text, size_t size)
 {
     char *key;
     char *value, *end;
@@ -791,7 +791,7 @@ static SDL_bool GetBindingString(const char *label, char *mapping, char *text, s
     return found;
 }
 
-static SDL_bool GetButtonBindingString(SDL_GamepadButton button, char *mapping, char *text, size_t size)
+static SDL_bool GetButtonBindingString(SDL_GamepadButton button, const char *mapping, char *text, size_t size)
 {
     char label[32];
     SDL_bool baxy_mapping = SDL_FALSE;
@@ -839,7 +839,7 @@ static SDL_bool GetButtonBindingString(SDL_GamepadButton button, char *mapping, 
     }
 }
 
-static SDL_bool GetAxisBindingString(SDL_GamepadAxis axis, int direction, char *mapping, char *text, size_t size)
+static SDL_bool GetAxisBindingString(SDL_GamepadAxis axis, int direction, const char *mapping, char *text, size_t size)
 {
     char label[32];
 
@@ -1022,7 +1022,7 @@ void RenderGamepadDisplay(GamepadDisplay *ctx, SDL_Gamepad *gamepad)
     const float arrow_extent = 48.0f;
     SDL_FRect dst, rect, highlight;
     Uint8 r, g, b, a;
-    char *mapping = NULL;
+    char *mapping;
     SDL_bool has_accel;
     SDL_bool has_gyro;
 
@@ -1223,7 +1223,7 @@ void RenderGamepadDisplay(GamepadDisplay *ctx, SDL_Gamepad *gamepad)
                 Uint8 state;
                 float finger_x, finger_y, finger_pressure;
 
-                if (SDL_GetGamepadTouchpadFinger(gamepad, 0, i, &state, &finger_x, &finger_y, &finger_pressure) < 0) {
+                if (!SDL_GetGamepadTouchpadFinger(gamepad, 0, i, &state, &finger_x, &finger_y, &finger_pressure)) {
                     continue;
                 }
 
@@ -1286,7 +1286,6 @@ void RenderGamepadDisplay(GamepadDisplay *ctx, SDL_Gamepad *gamepad)
             }
         }
     }
-
     SDL_free(mapping);
 }
 
@@ -2689,12 +2688,12 @@ SDL_bool MappingHasBindings(const char *mapping)
 SDL_bool MappingHasName(const char *mapping)
 {
     MappingParts parts;
-    SDL_bool retval;
+    SDL_bool result;
 
     SplitMapping(mapping, &parts);
-    retval = parts.name ? SDL_TRUE : SDL_FALSE;
+    result = parts.name ? SDL_TRUE : SDL_FALSE;
     FreeMappingParts(&parts);
-    return retval;
+    return result;
 }
 
 char *GetMappingName(const char *mapping)

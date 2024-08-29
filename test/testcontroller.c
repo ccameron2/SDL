@@ -351,7 +351,6 @@ static void RefreshControllerName(void)
         }
     }
 
-    SDL_free(controller_name);
     if (name) {
         controller_name = SDL_strdup(name);
     } else {
@@ -683,12 +682,12 @@ static void PasteMapping(void)
         char *mapping = SDL_GetClipboardText();
         if (MappingHasBindings(mapping)) {
             StopBinding();
-            SetAndFreeGamepadMapping(mapping);
+            SDL_SetGamepadMapping(controller->id, mapping);
             RefreshControllerName();
         } else {
             /* Not a valid mapping, ignore it */
-            SDL_free(mapping);
         }
+        SDL_free(mapping);
     }
 }
 
@@ -921,7 +920,7 @@ static void AddController(SDL_JoystickID id, SDL_bool verbose)
             const char *path = SDL_GetJoystickPath(joystick);
             char guid[33];
             SDL_Log("Opened joystick %s%s%s\n", name, path ? ", " : "", path ? path : "");
-            SDL_GetJoystickGUIDString(SDL_GetJoystickGUID(joystick), guid, sizeof(guid));
+            SDL_GUIDToString(SDL_GetJoystickGUID(joystick), guid, sizeof(guid));
             SDL_Log("No gamepad mapping for %s\n", guid);
         }
     } else {
@@ -1131,22 +1130,22 @@ static void SDLCALL VirtualGamepadSetPlayerIndex(void *userdata, int player_inde
     SDL_Log("Virtual Gamepad: player index set to %d\n", player_index);
 }
 
-static int SDLCALL VirtualGamepadRumble(void *userdata, Uint16 low_frequency_rumble, Uint16 high_frequency_rumble)
+static SDL_bool SDLCALL VirtualGamepadRumble(void *userdata, Uint16 low_frequency_rumble, Uint16 high_frequency_rumble)
 {
     SDL_Log("Virtual Gamepad: rumble set to %d/%d\n", low_frequency_rumble, high_frequency_rumble);
-    return 0;
+    return SDL_TRUE;
 }
 
-static int SDLCALL VirtualGamepadRumbleTriggers(void *userdata, Uint16 left_rumble, Uint16 right_rumble)
+static SDL_bool SDLCALL VirtualGamepadRumbleTriggers(void *userdata, Uint16 left_rumble, Uint16 right_rumble)
 {
     SDL_Log("Virtual Gamepad: trigger rumble set to %d/%d\n", left_rumble, right_rumble);
-    return 0;
+    return SDL_TRUE;
 }
 
-static int SDLCALL VirtualGamepadSetLED(void *userdata, Uint8 red, Uint8 green, Uint8 blue)
+static SDL_bool SDLCALL VirtualGamepadSetLED(void *userdata, Uint8 red, Uint8 green, Uint8 blue)
 {
     SDL_Log("Virtual Gamepad: LED set to RGB %d,%d,%d\n", red, green, blue);
-    return 0;
+    return SDL_TRUE;
 }
 
 static void OpenVirtualGamepad(void)
@@ -1371,7 +1370,7 @@ static void DrawGamepadInfo(SDL_Renderer *renderer)
     }
 
     if (controller->joystick) {
-        SDL_snprintf(text, sizeof(text), "(%" SDL_PRIu32 ")", SDL_GetJoystickInstanceID(controller->joystick));
+        SDL_snprintf(text, sizeof(text), "(%" SDL_PRIu32 ")", SDL_GetJoystickID(controller->joystick));
         x = SCREEN_WIDTH - (FONT_CHARACTER_SIZE * SDL_strlen(text)) - 8.0f;
         y = 8.0f;
         SDLTest_DrawString(renderer, x, y, text);
@@ -2045,7 +2044,7 @@ int main(int argc, char *argv[])
     }
 
     /* Initialize SDL (Note: video is required to start event loop) */
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_GAMEPAD) < 0) {
+    if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_GAMEPAD)) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't initialize SDL: %s\n", SDL_GetError());
         return 1;
     }

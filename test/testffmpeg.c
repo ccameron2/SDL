@@ -151,7 +151,7 @@ static SDL_bool CreateWindowAndRenderer(SDL_WindowFlags window_flags, const char
 
     props = SDL_CreateProperties();
     SDL_SetStringProperty(props, SDL_PROP_RENDERER_CREATE_NAME_STRING, driver);
-    SDL_SetProperty(props, SDL_PROP_RENDERER_CREATE_WINDOW_POINTER, window);
+    SDL_SetPointerProperty(props, SDL_PROP_RENDERER_CREATE_WINDOW_POINTER, window);
     if (useVulkan) {
         SetupVulkanRenderProperties(vulkan_context, props);
     }
@@ -217,7 +217,7 @@ static SDL_bool CreateWindowAndRenderer(SDL_WindowFlags window_flags, const char
 #endif /* HAVE_EGL */
 
 #ifdef SDL_PLATFORM_WIN32
-    d3d11_device = (ID3D11Device *)SDL_GetProperty(SDL_GetRendererProperties(renderer), SDL_PROP_RENDERER_D3D11_DEVICE_POINTER, NULL);
+    d3d11_device = (ID3D11Device *)SDL_GetPointerProperty(SDL_GetRendererProperties(renderer), SDL_PROP_RENDERER_D3D11_DEVICE_POINTER, NULL);
     if (d3d11_device) {
         ID3D11Device_AddRef(d3d11_device);
         ID3D11Device_GetImmediateContext(d3d11_device, &d3d11_context);
@@ -236,7 +236,7 @@ static SDL_Texture *CreateTexture(SDL_Renderer *r, unsigned char *data, unsigned
         surface = SDL_LoadBMP_IO(src, SDL_TRUE);
         if (surface) {
             /* Treat white as transparent */
-            SDL_SetSurfaceColorKey(surface, SDL_TRUE, SDL_MapRGB(surface->format, 255, 255, 255));
+            SDL_SetSurfaceColorKey(surface, SDL_TRUE, SDL_MapSurfaceRGB(surface, 255, 255, 255));
 
             texture = SDL_CreateTextureFromSurface(r, surface);
             *w = surface->w;
@@ -279,7 +279,7 @@ static void MoveSprite(void)
     }
 }
 
-static SDL_PixelFormatEnum GetTextureFormat(enum AVPixelFormat format)
+static SDL_PixelFormat GetTextureFormat(enum AVPixelFormat format)
 {
     switch (format) {
     case AV_PIX_FMT_RGB8:
@@ -511,7 +511,7 @@ static SDL_Colorspace GetFrameColorspace(AVFrame *frame)
     return colorspace;
 }
 
-static SDL_PropertiesID CreateVideoTextureProperties(AVFrame *frame, SDL_PixelFormatEnum format, int access)
+static SDL_PropertiesID CreateVideoTextureProperties(AVFrame *frame, SDL_PixelFormat format, int access)
 {
     AVFrameSideData *pSideData;
     SDL_PropertiesID props;
@@ -571,12 +571,12 @@ static void SDLCALL FreeSwsContextContainer(void *userdata, void *value)
 static SDL_bool GetTextureForMemoryFrame(AVFrame *frame, SDL_Texture **texture)
 {
     int texture_width = 0, texture_height = 0;
-    SDL_PixelFormatEnum texture_format = SDL_PIXELFORMAT_UNKNOWN;
-    SDL_PixelFormatEnum frame_format = GetTextureFormat(frame->format);
+    SDL_PixelFormat texture_format = SDL_PIXELFORMAT_UNKNOWN;
+    SDL_PixelFormat frame_format = GetTextureFormat(frame->format);
 
     if (*texture) {
         SDL_PropertiesID props = SDL_GetTextureProperties(*texture);
-        texture_format = (SDL_PixelFormatEnum)SDL_GetNumberProperty(props, SDL_PROP_TEXTURE_FORMAT_NUMBER, SDL_PIXELFORMAT_UNKNOWN);
+        texture_format = (SDL_PixelFormat)SDL_GetNumberProperty(props, SDL_PROP_TEXTURE_FORMAT_NUMBER, SDL_PIXELFORMAT_UNKNOWN);
         texture_width = (int)SDL_GetNumberProperty(props, SDL_PROP_TEXTURE_WIDTH_NUMBER, 0);
         texture_height = (int)SDL_GetNumberProperty(props, SDL_PROP_TEXTURE_HEIGHT_NUMBER, 0);
     }
@@ -611,19 +611,19 @@ static SDL_bool GetTextureForMemoryFrame(AVFrame *frame, SDL_Texture **texture)
     case SDL_PIXELFORMAT_UNKNOWN:
     {
         SDL_PropertiesID props = SDL_GetTextureProperties(*texture);
-        struct SwsContextContainer *sws_container = (struct SwsContextContainer *)SDL_GetProperty(props, SWS_CONTEXT_CONTAINER_PROPERTY, NULL);
+        struct SwsContextContainer *sws_container = (struct SwsContextContainer *)SDL_GetPointerProperty(props, SWS_CONTEXT_CONTAINER_PROPERTY, NULL);
         if (!sws_container) {
             sws_container = (struct SwsContextContainer *)SDL_calloc(1, sizeof(*sws_container));
             if (!sws_container) {
                 return SDL_FALSE;
             }
-            SDL_SetPropertyWithCleanup(props, SWS_CONTEXT_CONTAINER_PROPERTY, sws_container, FreeSwsContextContainer, NULL);
+            SDL_SetPointerPropertyWithCleanup(props, SWS_CONTEXT_CONTAINER_PROPERTY, sws_container, FreeSwsContextContainer, NULL);
         }
         sws_container->context = sws_getCachedContext(sws_container->context, frame->width, frame->height, frame->format, frame->width, frame->height, AV_PIX_FMT_BGRA, SWS_POINT, NULL, NULL, NULL);
         if (sws_container->context) {
             uint8_t *pixels[4];
             int pitch[4];
-            if (SDL_LockTexture(*texture, NULL, (void **)&pixels[0], &pitch[0]) == 0) {
+            if (SDL_LockTexture(*texture, NULL, (void **)&pixels[0], &pitch[0])) {
                 sws_scale(sws_container->context, (const uint8_t *const *)frame->data, frame->linesize, 0, frame->height, pixels, pitch);
                 SDL_UnlockTexture(*texture);
             }
@@ -657,9 +657,98 @@ static SDL_bool GetTextureForMemoryFrame(AVFrame *frame, SDL_Texture **texture)
 
 #ifdef HAVE_EGL
 
+static SDL_bool GetNV12TextureForDRMFrame(AVFrame *frame, SDL_Texture **texture)
+{
+    AVHWFramesContext *frames = (AVHWFramesContext *)(frame->hw_frames_ctx ? frame->hw_frames_ctx->data : NULL);
+    const AVDRMFrameDescriptor *desc = (const AVDRMFrameDescriptor *)frame->data[0];
+    int i, j, image_index;
+    EGLDisplay display = eglGetCurrentDisplay();
+    SDL_PropertiesID props;
+    GLuint textures[2];
+
+    if (*texture) {
+        /* Free the previous texture now that we're about to render a new one */
+        SDL_DestroyTexture(*texture);
+    } else {
+        /* First time set up for NV12 textures */
+        SDL_SetHint("SDL_RENDER_OPENGL_NV12_RG_SHADER", "1");
+    }
+
+    props = CreateVideoTextureProperties(frame, SDL_PIXELFORMAT_NV12, SDL_TEXTUREACCESS_STATIC);
+    *texture = SDL_CreateTextureWithProperties(renderer, props);
+    SDL_DestroyProperties(props);
+    if (!*texture) {
+        return SDL_FALSE;
+    }
+    SDL_SetTextureBlendMode(*texture, SDL_BLENDMODE_NONE);
+    SDL_SetTextureScaleMode(*texture, SDL_SCALEMODE_LINEAR);
+
+    props = SDL_GetTextureProperties(*texture);
+    textures[0] = (GLuint)SDL_GetNumberProperty(props, SDL_PROP_TEXTURE_OPENGLES2_TEXTURE_NUMBER, 0);
+    textures[1] = (GLuint)SDL_GetNumberProperty(props, SDL_PROP_TEXTURE_OPENGLES2_TEXTURE_UV_NUMBER, 0);
+    if (!textures[0] || !textures[1]) {
+        SDL_SetError("Couldn't get NV12 OpenGL textures");
+        return SDL_FALSE;
+    }
+
+    /* import the frame into OpenGL */
+    image_index = 0;
+    for (i = 0; i < desc->nb_layers; ++i) {
+        const AVDRMLayerDescriptor *layer = &desc->layers[i];
+        for (j = 0; j < layer->nb_planes; ++j) {
+            const AVDRMPlaneDescriptor *plane = &layer->planes[j];
+            const AVDRMObjectDescriptor *object = &desc->objects[plane->object_index];
+
+            EGLAttrib attr[32];
+            size_t k = 0;
+
+            attr[k++] = EGL_LINUX_DRM_FOURCC_EXT;
+            attr[k++] = layer->format;
+
+            attr[k++] = EGL_WIDTH;
+            attr[k++] = (frames ? frames->width : frame->width) / (image_index + 1); /* half size for chroma */
+
+            attr[k++] = EGL_HEIGHT;
+            attr[k++] = (frames ? frames->height : frame->height) / (image_index + 1);
+
+            attr[k++] = EGL_DMA_BUF_PLANE0_FD_EXT;
+            attr[k++] = object->fd;
+
+            attr[k++] = EGL_DMA_BUF_PLANE0_OFFSET_EXT;
+            attr[k++] = plane->offset;
+
+            attr[k++] = EGL_DMA_BUF_PLANE0_PITCH_EXT;
+            attr[k++] = plane->pitch;
+
+            if (has_EGL_EXT_image_dma_buf_import_modifiers) {
+                attr[k++] = EGL_DMA_BUF_PLANE0_MODIFIER_LO_EXT;
+                attr[k++] = (object->format_modifier >> 0) & 0xFFFFFFFF;
+
+                attr[k++] = EGL_DMA_BUF_PLANE0_MODIFIER_HI_EXT;
+                attr[k++] = (object->format_modifier >> 32) & 0xFFFFFFFF;
+            }
+
+            attr[k++] = EGL_NONE;
+
+            EGLImage image = eglCreateImage(display, EGL_NO_CONTEXT, EGL_LINUX_DMA_BUF_EXT, NULL, attr);
+            if (image == EGL_NO_IMAGE) {
+                SDL_Log("Couldn't create image: %d\n", glGetError());
+                return SDL_FALSE;
+            }
+
+            glActiveTextureARBFunc(GL_TEXTURE0_ARB + image_index);
+            glBindTexture(GL_TEXTURE_2D, textures[image_index]);
+            glEGLImageTargetTexture2DOESFunc(GL_TEXTURE_2D, image);
+            ++image_index;
+        }
+    }
+
+    return SDL_TRUE;
+}
+
 static SDL_bool GetOESTextureForDRMFrame(AVFrame *frame, SDL_Texture **texture)
 {
-    AVHWFramesContext *frames = (AVHWFramesContext *)(frame->hw_frames_ctx->data);
+    AVHWFramesContext *frames = (AVHWFramesContext *)(frame->hw_frames_ctx ? frame->hw_frames_ctx->data : NULL);
     const AVDRMFrameDescriptor *desc = (const AVDRMFrameDescriptor *)frame->data[0];
     int i, j, k, image_index;
     EGLDisplay display = eglGetCurrentDisplay();
@@ -695,9 +784,9 @@ static SDL_bool GetOESTextureForDRMFrame(AVFrame *frame, SDL_Texture **texture)
     attr[k++] = EGL_LINUX_DRM_FOURCC_EXT;
     attr[k++] = desc->layers[0].format;
     attr[k++] = EGL_WIDTH;
-    attr[k++] = frames->width;
+    attr[k++] = frames ? frames->width : frame->width;
     attr[k++] = EGL_HEIGHT;
-    attr[k++] = frames->height;
+    attr[k++] = frames ? frames->height : frame->height;
     image_index = 0;
     for (i = 0; i < desc->nb_layers; ++i) {
         const AVDRMLayerDescriptor *layer = &desc->layers[i];
@@ -842,108 +931,15 @@ static SDL_bool GetOESTextureForDRMFrame(AVFrame *frame, SDL_Texture **texture)
 static SDL_bool GetTextureForDRMFrame(AVFrame *frame, SDL_Texture **texture)
 {
 #ifdef HAVE_EGL
-    AVHWFramesContext *frames = (AVHWFramesContext *)(frame->hw_frames_ctx->data);
     const AVDRMFrameDescriptor *desc = (const AVDRMFrameDescriptor *)frame->data[0];
-    int i, j, image_index, num_planes;
-    EGLDisplay display = eglGetCurrentDisplay();
-    SDL_PropertiesID props;
-    GLuint textures[2];
-    uint64_t format_modifier = desc->objects[0].format_modifier;
 
-    if (format_modifier != DRM_FORMAT_MOD_INVALID &&
-        format_modifier != DRM_FORMAT_MOD_LINEAR) {
+    if (desc->nb_layers == 2 &&
+        desc->layers[0].format == DRM_FORMAT_R8 &&
+        desc->layers[1].format == DRM_FORMAT_GR88) {
+        return GetNV12TextureForDRMFrame(frame, texture);
+    } else {
         return GetOESTextureForDRMFrame(frame, texture);
     }
-
-    /* FIXME: Assuming NV12 data format */
-    num_planes = 0;
-    for (i = 0; i < desc->nb_layers; ++i) {
-        num_planes += desc->layers[i].nb_planes;
-    }
-    if (num_planes != 2) {
-        SDL_SetError("Expected NV12 frames with 2 planes, instead got %d planes", num_planes);
-        return SDL_FALSE;
-    }
-
-    if (*texture) {
-        /* Free the previous texture now that we're about to render a new one */
-        SDL_DestroyTexture(*texture);
-    } else {
-        /* First time set up for NV12 textures */
-        SDL_SetHint("SDL_RENDER_OPENGL_NV12_RG_SHADER", "1");
-    }
-
-    props = CreateVideoTextureProperties(frame, SDL_PIXELFORMAT_NV12, SDL_TEXTUREACCESS_STATIC);
-    *texture = SDL_CreateTextureWithProperties(renderer, props);
-    SDL_DestroyProperties(props);
-    if (!*texture) {
-        return SDL_FALSE;
-    }
-    SDL_SetTextureBlendMode(*texture, SDL_BLENDMODE_NONE);
-    SDL_SetTextureScaleMode(*texture, SDL_SCALEMODE_LINEAR);
-
-    props = SDL_GetTextureProperties(*texture);
-    textures[0] = (GLuint)SDL_GetNumberProperty(props, SDL_PROP_TEXTURE_OPENGLES2_TEXTURE_NUMBER, 0);
-    textures[1] = (GLuint)SDL_GetNumberProperty(props, SDL_PROP_TEXTURE_OPENGLES2_TEXTURE_UV_NUMBER, 0);
-    if (!textures[0] || !textures[1]) {
-        SDL_SetError("Couldn't get NV12 OpenGL textures");
-        return SDL_FALSE;
-    }
-
-    /* import the frame into OpenGL */
-    image_index = 0;
-    for (i = 0; i < desc->nb_layers; ++i) {
-        const AVDRMLayerDescriptor *layer = &desc->layers[i];
-        for (j = 0; j < layer->nb_planes; ++j) {
-            static const uint32_t formats[2] = { DRM_FORMAT_R8, DRM_FORMAT_GR88 };
-            const AVDRMPlaneDescriptor *plane = &layer->planes[j];
-            const AVDRMObjectDescriptor *object = &desc->objects[plane->object_index];
-
-            EGLAttrib attr[32];
-            size_t k = 0;
-
-            attr[k++] = EGL_LINUX_DRM_FOURCC_EXT;
-            attr[k++] = formats[i];
-
-            attr[k++] = EGL_WIDTH;
-            attr[k++] = frames->width / (image_index + 1); /* half size for chroma */
-
-            attr[k++] = EGL_HEIGHT;
-            attr[k++] = frames->height / (image_index + 1);
-
-            attr[k++] = EGL_DMA_BUF_PLANE0_FD_EXT;
-            attr[k++] = object->fd;
-
-            attr[k++] = EGL_DMA_BUF_PLANE0_OFFSET_EXT;
-            attr[k++] = plane->offset;
-
-            attr[k++] = EGL_DMA_BUF_PLANE0_PITCH_EXT;
-            attr[k++] = plane->pitch;
-
-            if (has_EGL_EXT_image_dma_buf_import_modifiers) {
-                attr[k++] = EGL_DMA_BUF_PLANE0_MODIFIER_LO_EXT;
-                attr[k++] = (object->format_modifier >> 0) & 0xFFFFFFFF;
-
-                attr[k++] = EGL_DMA_BUF_PLANE0_MODIFIER_HI_EXT;
-                attr[k++] = (object->format_modifier >> 32) & 0xFFFFFFFF;
-            }
-
-            attr[k++] = EGL_NONE;
-
-            EGLImage image = eglCreateImage(display, EGL_NO_CONTEXT, EGL_LINUX_DMA_BUF_EXT, NULL, attr);
-            if (image == EGL_NO_IMAGE) {
-                SDL_Log("Couldn't create image: %d\n", glGetError());
-                return SDL_FALSE;
-            }
-
-            glActiveTextureARBFunc(GL_TEXTURE0_ARB + image_index);
-            glBindTexture(GL_TEXTURE_2D, textures[image_index]);
-            glEGLImageTargetTexture2DOESFunc(GL_TEXTURE_2D, image);
-            ++image_index;
-        }
-    }
-
-    return SDL_TRUE;
 #else
     return SDL_FALSE;
 #endif
@@ -993,7 +989,7 @@ static SDL_bool GetTextureForD3D11Frame(AVFrame *frame, SDL_Texture **texture)
         }
     }
 
-    ID3D11Resource *dx11_resource = SDL_GetProperty(SDL_GetTextureProperties(*texture), SDL_PROP_TEXTURE_D3D11_TEXTURE_POINTER, NULL);
+    ID3D11Resource *dx11_resource = SDL_GetPointerProperty(SDL_GetTextureProperties(*texture), SDL_PROP_TEXTURE_D3D11_TEXTURE_POINTER, NULL);
     if (!dx11_resource) {
         SDL_SetError("Couldn't get texture ID3D11Resource interface");
         return SDL_FALSE;
@@ -1019,7 +1015,7 @@ static SDL_bool GetTextureForVideoToolboxFrame(AVFrame *frame, SDL_Texture **tex
     }
 
     props = CreateVideoTextureProperties(frame, SDL_PIXELFORMAT_UNKNOWN, SDL_TEXTUREACCESS_STATIC);
-    SDL_SetProperty(props, SDL_PROP_TEXTURE_CREATE_METAL_PIXELBUFFER_POINTER, pPixelBuffer);
+    SDL_SetPointerProperty(props, SDL_PROP_TEXTURE_CREATE_METAL_PIXELBUFFER_POINTER, pPixelBuffer);
     *texture = SDL_CreateTextureWithProperties(renderer, props);
     SDL_DestroyProperties(props);
     if (!*texture) {
@@ -1167,10 +1163,10 @@ static AVCodecContext *OpenAudioStream(AVFormatContext *ic, int stream, const AV
         return NULL;
     }
 
-    SDL_AudioSpec spec = { SDL_AUDIO_F32, codecpar->ch_layout.nb_channels, codecpar->sample_rate, SDL_FALSE };
+    SDL_AudioSpec spec = { SDL_AUDIO_F32, codecpar->ch_layout.nb_channels, codecpar->sample_rate };
     audio = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, NULL, NULL);
     if (audio) {
-        SDL_ResumeAudioDevice(SDL_GetAudioStreamDevice(audio));
+        SDL_ResumeAudioStreamDevice(audio);
     } else {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't open audio: %s", SDL_GetError());
     }
@@ -1240,7 +1236,7 @@ static void InterleaveAudio(AVFrame *frame, const SDL_AudioSpec *spec)
 static void HandleAudioFrame(AVFrame *frame)
 {
     if (audio) {
-        SDL_AudioSpec spec = { GetAudioFormat(frame->format), frame->ch_layout.nb_channels, frame->sample_rate, SDL_FALSE };
+        SDL_AudioSpec spec = { GetAudioFormat(frame->format), frame->ch_layout.nb_channels, frame->sample_rate };
         SDL_SetAudioStreamFormat(audio, &spec, NULL);
 
         if (frame->ch_layout.nb_channels > 1 && IsPlanarAudioFormat(frame->format)) {
@@ -1370,7 +1366,7 @@ int main(int argc, char *argv[])
         goto quit;
     }
 
-    if (SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO) < 0) {
+    if (!SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO)) {
         return_code = 2;
         goto quit;
     }
@@ -1407,7 +1403,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    if (SDL_SetWindowTitle(window, file) < 0) {
+    if (!SDL_SetWindowTitle(window, file)) {
         SDL_Log("SDL_SetWindowTitle: %s", SDL_GetError());
     }
 

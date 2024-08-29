@@ -34,7 +34,7 @@ print_mode(const char *prefix, const SDL_DisplayMode *mode)
 int main(int argc, char *argv[])
 {
     SDL_DisplayID *displays;
-    const SDL_DisplayMode **modes;
+    SDL_DisplayMode **modes;
     const SDL_DisplayMode *mode;
     int num_displays, i;
     SDLTest_CommonState *state;
@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
     }
 
     /* Load the SDL library */
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+    if (!SDL_Init(SDL_INIT_VIDEO)) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't initialize SDL: %s\n", SDL_GetError());
         return 1;
     }
@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
             (void)SDL_snprintf(prefix, sizeof(prefix), "    MODE %d", m);
             print_mode(prefix, modes[m]);
         }
-        SDL_free((void*)modes);
+        SDL_free(modes);
 
         SDL_Log("\n");
     }

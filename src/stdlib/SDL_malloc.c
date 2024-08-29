@@ -5196,6 +5196,17 @@ static void  SDLCALL real_free(void *p) { free(p); }
 #define real_free dlfree
 #endif
 
+// mark the allocator entry points as KEEPALIVE so we can call these from JavaScript.
+// otherwise they could could get so aggressively inlined that their symbols
+// don't exist at all in the final binary!
+#ifdef SDL_PLATFORM_EMSCRIPTEN
+#include <emscripten/emscripten.h>
+extern SDL_DECLSPEC SDL_MALLOC EMSCRIPTEN_KEEPALIVE void * SDLCALL SDL_malloc(size_t size);
+extern SDL_DECLSPEC SDL_MALLOC SDL_ALLOC_SIZE2(1, 2) EMSCRIPTEN_KEEPALIVE void * SDLCALL SDL_calloc(size_t nmemb, size_t size);
+extern SDL_DECLSPEC SDL_ALLOC_SIZE(2) EMSCRIPTEN_KEEPALIVE void * SDLCALL SDL_realloc(void *mem, size_t size);
+extern SDL_DECLSPEC EMSCRIPTEN_KEEPALIVE void SDLCALL SDL_free(void *mem);
+#endif
+
 /* Memory functions used by SDL that can be replaced by the application */
 static struct
 {
@@ -5246,10 +5257,10 @@ void SDL_GetMemoryFunctions(SDL_malloc_func *malloc_func,
     }
 }
 
-int SDL_SetMemoryFunctions(SDL_malloc_func malloc_func,
-                           SDL_calloc_func calloc_func,
-                           SDL_realloc_func realloc_func,
-                           SDL_free_func free_func)
+SDL_bool SDL_SetMemoryFunctions(SDL_malloc_func malloc_func,
+                                SDL_calloc_func calloc_func,
+                                SDL_realloc_func realloc_func,
+                                SDL_free_func free_func)
 {
     if (!malloc_func) {
         return SDL_InvalidParamError("malloc_func");
@@ -5268,7 +5279,7 @@ int SDL_SetMemoryFunctions(SDL_malloc_func malloc_func,
     s_mem.calloc_func = calloc_func;
     s_mem.realloc_func = realloc_func;
     s_mem.free_func = free_func;
-    return 0;
+    return true;
 }
 
 int SDL_GetNumAllocations(void)

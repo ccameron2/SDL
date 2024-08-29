@@ -99,7 +99,7 @@ def main():
             if match:
                 continue
 
-            # Remove one line comment /* ... */
+            # Remove one line comment // ...
             # eg: extern SDL_DECLSPEC SDL_hid_device * SDLCALL SDL_hid_open_path(const char *path, int bExclusive /* = false */);
             line = reg_comment_remove_content.sub('', line)
 
@@ -482,7 +482,7 @@ def add_dyn_api(proc):
     # File: SDL_dynapi_procs.h
     #
     # Add at last
-    # SDL_DYNAPI_PROC(SDL_EGLConfig,SDL_EGL_GetCurrentEGLConfig,(void),(),return)
+    # SDL_DYNAPI_PROC(SDL_EGLConfig,SDL_EGL_GetCurrentConfig,(void),(),return)
     f = open(SDL_DYNAPI_PROCS_H, "a", newline="")
     dyn_proc = "SDL_DYNAPI_PROC(" + func_ret + "," + func_name + ",("
 

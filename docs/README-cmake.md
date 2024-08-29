@@ -44,6 +44,14 @@ cmake -S ~/sdl -B ~/build -DSDL_TEST_LIBRARY=ON -DSDL_TESTS=ON
 ```
 and then building normally. In this example, the test programs will be built and can be run from `~/build/tests/`.
 
+### Building SDL examples
+
+You can build the SDL example programs by adding `-DSDL_EXAMPLES=ON` to the first cmake command above:
+```sh
+cmake -S ~/sdl -B ~/build -DSDL_EXAMPLES=ON
+```
+and then building normally. In this example, the example programs will be built and can be run from `~/build/examples/`.
+
 ## Including SDL in your project
 
 SDL can be included in your project in 2 major ways:
@@ -377,7 +385,7 @@ int main(int argc, char *argv[]) {
     (void)argc;
     (void)argv;
 
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+    if (!SDL_Init(SDL_INIT_VIDEO)) {
         SDL_Log("SDL_Init failed (%s)", SDL_GetError());
         return 1;
     }
@@ -385,7 +393,7 @@ int main(int argc, char *argv[]) {
     SDL_Window *window = NULL;
     SDL_Renderer *renderer = NULL;
 
-    if (SDL_CreateWindowAndRenderer("SDL issue", 640, 480, 0, &window, &renderer) < 0) {
+    if (!SDL_CreateWindowAndRenderer("SDL issue", 640, 480, 0, &window, &renderer)) {
         SDL_Log("SDL_CreateWindowAndRenderer failed (%s)", SDL_GetError());
         SDL_Quit();
         return 1;

@@ -146,7 +146,7 @@ static void SDLCALL fill_buffer(void *userdata, SDL_AudioStream *stream, int len
 
 int main(int argc, char *argv[])
 {
-    SDL_AudioDeviceID *devices = NULL;
+    SDL_AudioDeviceID *devices;
     SDLTest_CommonState *state;
     int devcount = 0;
     int i;
@@ -165,7 +165,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    if (SDL_Init(SDL_INIT_AUDIO) < 0) {
+    if (!SDL_Init(SDL_INIT_AUDIO)) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't initialize SDL: %s\n", SDL_GetError());
         return 1;
     }
@@ -181,7 +181,6 @@ int main(int argc, char *argv[])
     devices = SDL_GetAudioPlaybackDevices(&devcount);
     if (!devices) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_GetAudioPlaybackDevices() failed: %s\n", SDL_GetError());
-        devcount = 0;
     }
 
     SDL_Log("Available audio devices:");
@@ -197,7 +196,7 @@ int main(int argc, char *argv[])
 
         SDL_Log("Testing audio device: %s\n", devname);
 
-        if (SDL_GetAudioDeviceFormat(devices[i], &spec, NULL) != 0) {
+        if (!SDL_GetAudioDeviceFormat(devices[i], &spec, NULL)) {
             SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_GetAudioDeviceFormat() failed: %s\n", SDL_GetError());
             continue;
         }
@@ -216,7 +215,7 @@ int main(int argc, char *argv[])
             SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_OpenAudioDeviceStream() failed: %s\n", SDL_GetError());
             continue;
         }
-        SDL_ResumeAudioDevice(SDL_GetAudioStreamDevice(stream));
+        SDL_ResumeAudioStreamDevice(stream);
 
         for (j = 0; j < total_channels; j++) {
             const int sine_freq = is_lfe_channel(j, total_channels) ? LFE_SINE_FREQ_HZ : SINE_FREQ_HZ;
@@ -233,7 +232,6 @@ int main(int argc, char *argv[])
 
         SDL_DestroyAudioStream(stream);
     }
-
     SDL_free(devices);
 
     SDL_Quit();

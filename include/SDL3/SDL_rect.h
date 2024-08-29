@@ -113,6 +113,25 @@ typedef struct SDL_FRect
 
 
 /**
+ * Convert an SDL_Rect to SDL_FRect
+ *
+ * \param rect a pointer to an SDL_Rect.
+ * \param frect a pointer filled in with the floating point representation of
+ *              `rect`.
+ *
+ * \threadsafety It is safe to call this function from any thread.
+ *
+ * \since This function is available since SDL 3.0.0.
+ */
+SDL_FORCE_INLINE void SDL_RectToFRect(const SDL_Rect *rect, SDL_FRect *frect)
+{
+    frect->x = (float)rect->x;
+    frect->y = (float)rect->y;
+    frect->w = (float)rect->w;
+    frect->h = (float)rect->h;
+}
+
+/**
  * Determine whether a point resides inside a rectangle.
  *
  * A point is considered part of a rectangle if both `p` and `r` are not NULL,
@@ -202,8 +221,7 @@ SDL_FORCE_INLINE SDL_bool SDL_RectsEqual(const SDL_Rect *a, const SDL_Rect *b)
  *
  * \sa SDL_GetRectIntersection
  */
-extern SDL_DECLSPEC SDL_bool SDLCALL SDL_HasRectIntersection(const SDL_Rect * A,
-                                                         const SDL_Rect * B);
+extern SDL_DECLSPEC SDL_bool SDLCALL SDL_HasRectIntersection(const SDL_Rect *A, const SDL_Rect *B);
 
 /**
  * Calculate the intersection of two rectangles.
@@ -220,9 +238,7 @@ extern SDL_DECLSPEC SDL_bool SDLCALL SDL_HasRectIntersection(const SDL_Rect * A,
  *
  * \sa SDL_HasRectIntersection
  */
-extern SDL_DECLSPEC SDL_bool SDLCALL SDL_GetRectIntersection(const SDL_Rect * A,
-                                                   const SDL_Rect * B,
-                                                   SDL_Rect * result);
+extern SDL_DECLSPEC SDL_bool SDLCALL SDL_GetRectIntersection(const SDL_Rect *A, const SDL_Rect *B, SDL_Rect *result);
 
 /**
  * Calculate the union of two rectangles.
@@ -231,14 +247,12 @@ extern SDL_DECLSPEC SDL_bool SDLCALL SDL_GetRectIntersection(const SDL_Rect * A,
  * \param B an SDL_Rect structure representing the second rectangle.
  * \param result an SDL_Rect structure filled in with the union of rectangles
  *               `A` and `B`.
- * \returns 0 on success or a negative error code on failure; call
- *          SDL_GetError() for more information.
+ * \returns SDL_TRUE on success or SDL_FALSE on failure; call SDL_GetError()
+ *          for more information.
  *
  * \since This function is available since SDL 3.0.0.
  */
-extern SDL_DECLSPEC int SDLCALL SDL_GetRectUnion(const SDL_Rect * A,
-                                           const SDL_Rect * B,
-                                           SDL_Rect * result);
+extern SDL_DECLSPEC SDL_bool SDLCALL SDL_GetRectUnion(const SDL_Rect *A, const SDL_Rect *B, SDL_Rect *result);
 
 /**
  * Calculate a minimal rectangle enclosing a set of points.
@@ -257,10 +271,7 @@ extern SDL_DECLSPEC int SDLCALL SDL_GetRectUnion(const SDL_Rect * A,
  *
  * \since This function is available since SDL 3.0.0.
  */
-extern SDL_DECLSPEC SDL_bool SDLCALL SDL_GetRectEnclosingPoints(const SDL_Point * points,
-                                                   int count,
-                                                   const SDL_Rect * clip,
-                                                   SDL_Rect * result);
+extern SDL_DECLSPEC SDL_bool SDLCALL SDL_GetRectEnclosingPoints(const SDL_Point *points, int count, const SDL_Rect *clip, SDL_Rect *result);
 
 /**
  * Calculate the intersection of a rectangle and line segment.
@@ -280,10 +291,7 @@ extern SDL_DECLSPEC SDL_bool SDLCALL SDL_GetRectEnclosingPoints(const SDL_Point 
  *
  * \since This function is available since SDL 3.0.0.
  */
-extern SDL_DECLSPEC SDL_bool SDLCALL SDL_GetRectAndLineIntersection(const SDL_Rect *
-                                                          rect, int *X1,
-                                                          int *Y1, int *X2,
-                                                          int *Y2);
+extern SDL_DECLSPEC SDL_bool SDLCALL SDL_GetRectAndLineIntersection(const SDL_Rect *rect, int *X1, int *Y1, int *X2, int *Y2);
 
 
 /* SDL_FRect versions... */
@@ -293,8 +301,8 @@ extern SDL_DECLSPEC SDL_bool SDLCALL SDL_GetRectAndLineIntersection(const SDL_Re
  *
  * A point is considered part of a rectangle if both `p` and `r` are not NULL,
  * and `p`'s x and y coordinates are >= to the rectangle's top left corner,
- * and < the rectangle's x+w and y+h. So a 1x1 rectangle considers point (0,0)
- * as "inside" and (0,1) as not.
+ * and <= the rectangle's x+w and y+h. So a 1x1 rectangle considers point
+ * (0,0) and (0,1) as "inside" and (0,2) as not.
  *
  * Note that this is a forced-inline function in a header, and not a public
  * API function available in the SDL library (which is to say, the code is
@@ -311,15 +319,15 @@ extern SDL_DECLSPEC SDL_bool SDLCALL SDL_GetRectAndLineIntersection(const SDL_Re
  */
 SDL_FORCE_INLINE SDL_bool SDL_PointInRectFloat(const SDL_FPoint *p, const SDL_FRect *r)
 {
-    return ( p && r && (p->x >= r->x) && (p->x < (r->x + r->w)) &&
-             (p->y >= r->y) && (p->y < (r->y + r->h)) ) ? SDL_TRUE : SDL_FALSE;
+    return ( p && r && (p->x >= r->x) && (p->x <= (r->x + r->w)) &&
+             (p->y >= r->y) && (p->y <= (r->y + r->h)) ) ? SDL_TRUE : SDL_FALSE;
 }
 
 /**
- * Determine whether a floating point rectangle has no area.
+ * Determine whether a floating point rectangle can contain any point.
  *
  * A rectangle is considered "empty" for this function if `r` is NULL, or if
- * `r`'s width and/or height are <= 0.0f.
+ * `r`'s width and/or height are < 0.0f.
  *
  * Note that this is a forced-inline function in a header, and not a public
  * API function available in the SDL library (which is to say, the code is
@@ -335,7 +343,7 @@ SDL_FORCE_INLINE SDL_bool SDL_PointInRectFloat(const SDL_FPoint *p, const SDL_FR
  */
 SDL_FORCE_INLINE SDL_bool SDL_RectEmptyFloat(const SDL_FRect *r)
 {
-    return ((!r) || (r->w <= 0.0f) || (r->h <= 0.0f)) ? SDL_TRUE : SDL_FALSE;
+    return ((!r) || (r->w < 0.0f) || (r->h < 0.0f)) ? SDL_TRUE : SDL_FALSE;
 }
 
 /**
@@ -416,8 +424,7 @@ SDL_FORCE_INLINE SDL_bool SDL_RectsEqualFloat(const SDL_FRect *a, const SDL_FRec
  *
  * \sa SDL_GetRectIntersection
  */
-extern SDL_DECLSPEC SDL_bool SDLCALL SDL_HasRectIntersectionFloat(const SDL_FRect * A,
-                                                      const SDL_FRect * B);
+extern SDL_DECLSPEC SDL_bool SDLCALL SDL_HasRectIntersectionFloat(const SDL_FRect *A, const SDL_FRect *B);
 
 /**
  * Calculate the intersection of two rectangles with float precision.
@@ -434,9 +441,7 @@ extern SDL_DECLSPEC SDL_bool SDLCALL SDL_HasRectIntersectionFloat(const SDL_FRec
  *
  * \sa SDL_HasRectIntersectionFloat
  */
-extern SDL_DECLSPEC SDL_bool SDLCALL SDL_GetRectIntersectionFloat(const SDL_FRect * A,
-                                                    const SDL_FRect * B,
-                                                    SDL_FRect * result);
+extern SDL_DECLSPEC SDL_bool SDLCALL SDL_GetRectIntersectionFloat(const SDL_FRect *A, const SDL_FRect *B, SDL_FRect *result);
 
 /**
  * Calculate the union of two rectangles with float precision.
@@ -445,14 +450,12 @@ extern SDL_DECLSPEC SDL_bool SDLCALL SDL_GetRectIntersectionFloat(const SDL_FRec
  * \param B an SDL_FRect structure representing the second rectangle.
  * \param result an SDL_FRect structure filled in with the union of rectangles
  *               `A` and `B`.
- * \returns 0 on success or a negative error code on failure; call
- *          SDL_GetError() for more information.
+ * \returns SDL_TRUE on success or SDL_FALSE on failure; call SDL_GetError()
+ *          for more information.
  *
  * \since This function is available since SDL 3.0.0.
  */
-extern SDL_DECLSPEC int SDLCALL SDL_GetRectUnionFloat(const SDL_FRect * A,
-                                            const SDL_FRect * B,
-                                            SDL_FRect * result);
+extern SDL_DECLSPEC SDL_bool SDLCALL SDL_GetRectUnionFloat(const SDL_FRect *A, const SDL_FRect *B, SDL_FRect *result);
 
 /**
  * Calculate a minimal rectangle enclosing a set of points with float
@@ -472,10 +475,7 @@ extern SDL_DECLSPEC int SDLCALL SDL_GetRectUnionFloat(const SDL_FRect * A,
  *
  * \since This function is available since SDL 3.0.0.
  */
-extern SDL_DECLSPEC SDL_bool SDLCALL SDL_GetRectEnclosingPointsFloat(const SDL_FPoint * points,
-                                                    int count,
-                                                    const SDL_FRect * clip,
-                                                    SDL_FRect * result);
+extern SDL_DECLSPEC SDL_bool SDLCALL SDL_GetRectEnclosingPointsFloat(const SDL_FPoint *points, int count, const SDL_FRect *clip, SDL_FRect *result);
 
 /**
  * Calculate the intersection of a rectangle and line segment with float
@@ -496,10 +496,7 @@ extern SDL_DECLSPEC SDL_bool SDLCALL SDL_GetRectEnclosingPointsFloat(const SDL_F
  *
  * \since This function is available since SDL 3.0.0.
  */
-extern SDL_DECLSPEC SDL_bool SDLCALL SDL_GetRectAndLineIntersectionFloat(const SDL_FRect *
-                                                           rect, float *X1,
-                                                           float *Y1, float *X2,
-                                                           float *Y2);
+extern SDL_DECLSPEC SDL_bool SDLCALL SDL_GetRectAndLineIntersectionFloat(const SDL_FRect *rect, float *X1, float *Y1, float *X2, float *Y2);
 
 /* Ends C function definitions when using C++ */
 #ifdef __cplusplus
